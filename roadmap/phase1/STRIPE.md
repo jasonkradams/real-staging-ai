@@ -1,0 +1,5 @@
+- Plans live in Stripe (e.g., `price_...`), mirrored in `plans`
+- Webhooks handled at `/v1/stripe/webhook`
+- On `checkout.session.completed`: create/update user’s `stripe_customer_id`, set plan
+- Enforce limits in API (e.g., block new jobs if over plan limit)
+- Tests: replay sample events (Stripe CLI), verify idempotency

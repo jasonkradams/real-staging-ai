@@ -1,0 +1,4 @@
+- **asynq** task types (Phase 1):
+  - `stage:run` → payload `{ image_id, original_key, style, room_type }`
+- Retries with exponential backoff; DLQ optional
+- Visibility via asynqmon (optional in later phase)

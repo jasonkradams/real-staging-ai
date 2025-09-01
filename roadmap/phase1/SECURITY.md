@@ -1,0 +1,5 @@
+- Validate JWT audience/issuer/exp
+- Least-privilege S3 IAM for presign
+- Validate content-type/size on presign requests
+- Stripe webhook signature verification + idempotency keys
+- Never trust client-provided S3 keys without prefix checks

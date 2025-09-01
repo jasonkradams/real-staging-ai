@@ -1,0 +1,4 @@
+- Use **Conventional Commits**
+- All features must include tests
+- Run `make test` before PR
+- Keep handlers thin; put logic in services/repos
