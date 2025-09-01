@@ -1,6 +1,3 @@
-> We keep commands consistent across dev & CI.
-
-```makefile
 SHELL := /bin/bash
 GO_PKGS := ./...
 MIGRATIONS_DIR := infra/migrations
@@ -46,4 +43,3 @@ test-integration:
 	make migrate-up
 	go test -v -tags=integration ./apps/api/...
 	docker compose -f infra/docker-compose.test.yml down -v
-```
