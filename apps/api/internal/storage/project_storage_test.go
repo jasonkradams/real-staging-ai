@@ -28,7 +28,8 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 	newProject := &project.Project{
 		Name: "Test Project",
 	}
-	createdProject, err := projectStorage.CreateProject(ctx, newProject)
+	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // Use seeded user ID
+	createdProject, err := projectStorage.CreateProject(ctx, newProject, userID)
 
 	// Assertions
 	assert.NoError(t, err)

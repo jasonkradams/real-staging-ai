@@ -148,7 +148,8 @@ func TestCreateProject(t *testing.T) {
 			testutil.SeedTables(t, db.GetPool())
 
 			mockS3Service := testutil.CreateMockS3Service(t)
-			server := httpLib.NewServer(db, mockS3Service)
+			mockImageService := testutil.CreateMockImageService(t)
+			server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
 			var body []byte
@@ -243,7 +244,8 @@ func TestGetProjects(t *testing.T) {
 			tc.setupData(t, db)
 
 			mockS3Service := testutil.CreateMockS3Service(t)
-			server := httpLib.NewServer(db, mockS3Service)
+			mockImageService := testutil.CreateMockImageService(t)
+			server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
@@ -324,7 +326,8 @@ func TestGetProjectByID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockS3Service := testutil.CreateMockS3Service(t)
-			server := httpLib.NewServer(db, mockS3Service)
+			mockImageService := testutil.CreateMockImageService(t)
+			server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -448,7 +451,8 @@ func TestUpdateProject(t *testing.T) {
 			tc.setupData(t, db)
 
 			mockS3Service := testutil.CreateMockS3Service(t)
-			server := httpLib.NewServer(db, mockS3Service)
+			mockImageService := testutil.CreateMockImageService(t)
+			server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
 			body, err := json.Marshal(tc.requestBody)
@@ -543,7 +547,8 @@ func TestDeleteProject(t *testing.T) {
 			tc.setupData(t, db)
 
 			mockS3Service := testutil.CreateMockS3Service(t)
-			server := httpLib.NewServer(db, mockS3Service)
+			mockImageService := testutil.CreateMockImageService(t)
+			server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -585,7 +590,8 @@ func TestProjectCRUDFlow(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	server := httpLib.NewServer(db, mockS3Service)
+	mockImageService := testutil.CreateMockImageService(t)
+	server := httpLib.NewServer(db, mockS3Service, mockImageService)
 
 	// Step 1: Create a project
 	createBody := map[string]interface{}{

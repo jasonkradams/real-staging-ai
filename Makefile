@@ -50,6 +50,7 @@ test-integration: migrate-test ## Run integration tests
 	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test
 	@echo "Running integration tests..."
 	cd apps/api && go test -v -tags=integration -p 1 ./...
+	cd apps/worker && go test -v -tags=integration -p 1 ./...
 	@echo "Stopping test database..."
 	docker-compose -f docker-compose.test.yml down
 

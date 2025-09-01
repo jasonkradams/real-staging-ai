@@ -11,20 +11,38 @@ import (
 )
 
 type Querier interface {
+	CompleteJob(ctx context.Context, id pgtype.UUID) (*Job, error)
 	CountProjectsByUserID(ctx context.Context, userID pgtype.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	CreateImage(ctx context.Context, arg CreateImageParams) (*Image, error)
+	CreateJob(ctx context.Context, arg CreateJobParams) (*Job, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
+	DeleteImage(ctx context.Context, id pgtype.UUID) error
+	DeleteImagesByProjectID(ctx context.Context, projectID pgtype.UUID) error
+	DeleteJob(ctx context.Context, id pgtype.UUID) error
+	DeleteJobsByImageID(ctx context.Context, imageID pgtype.UUID) error
 	DeleteProject(ctx context.Context, id pgtype.UUID) error
 	DeleteProjectByUserID(ctx context.Context, arg DeleteProjectByUserIDParams) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	FailJob(ctx context.Context, arg FailJobParams) (*Job, error)
 	GetAllProjects(ctx context.Context) ([]*GetAllProjectsRow, error)
+	GetImageByID(ctx context.Context, id pgtype.UUID) (*Image, error)
+	GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*Image, error)
+	GetJobByID(ctx context.Context, id pgtype.UUID) (*Job, error)
+	GetJobsByImageID(ctx context.Context, imageID pgtype.UUID) ([]*Job, error)
+	GetPendingJobs(ctx context.Context, limit int32) ([]*Job, error)
 	GetProjectByID(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error)
 	GetProjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]*GetProjectsByUserIDRow, error)
 	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error)
 	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
+	StartJob(ctx context.Context, id pgtype.UUID) (*Job, error)
+	UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*Image, error)
+	UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*Image, error)
+	UpdateImageWithStagedURL(ctx context.Context, arg UpdateImageWithStagedURLParams) (*Image, error)
+	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (*Job, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (*UpdateProjectRow, error)
 	UpdateProjectByUserID(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error)
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error)

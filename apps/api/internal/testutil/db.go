@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+	"github.com/virtual-staging-ai/api/internal/services"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/storage/mocks"
 	"go.uber.org/mock/gomock"
@@ -61,4 +62,14 @@ func CreateMockS3Service(t *testing.T) storage.S3Service {
 		AnyTimes()
 
 	return mockS3
+}
+
+func CreateMockImageService(t *testing.T) *services.ImageService {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+
+	mockImageRepo := mocks.NewMockImageRepository(ctrl)
+	mockJobRepo := mocks.NewMockJobRepository(ctrl)
+
+	return services.NewImageService(mockImageRepo, mockJobRepo)
 }

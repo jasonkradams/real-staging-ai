@@ -5,20 +5,22 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/virtual-staging-ai/api/internal/services"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 // Server holds the dependencies for the HTTP server.
 type Server struct {
-	db        *storage.DB
-	s3Service storage.S3Service
-	echo      *echo.Echo
+	db           *storage.DB
+	s3Service    storage.S3Service
+	imageService *services.ImageService
+	echo         *echo.Echo
 }
 
 // NewServer creates and configures a new Echo server.
-func NewServer(db *storage.DB, s3Service storage.S3Service) *Server {
+func NewServer(db *storage.DB, s3Service storage.S3Service, imageService *services.ImageService) *Server {
 	e := echo.New()
-	s := &Server{db: db, s3Service: s3Service, echo: e}
+	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e}
 
 	// Register routes
 	g := e.Group("/api")
@@ -30,6 +32,18 @@ func NewServer(db *storage.DB, s3Service storage.S3Service) *Server {
 
 	// Upload routes
 	g.POST("/v1/uploads/presign", s.presignUploadHandler)
+
+	// Image routes
+	g.POST("/v1/images", s.createImageHandler)
+	g.GET("/v1/images/:id", s.getImageHandler)
+	g.DELETE("/v1/images/:id", s.deleteImageHandler)
+	g.GET("/v1/projects/:project_id/images", s.getProjectImagesHandler)
+
+	// SSE routes
+	g.GET("/v1/events", s.eventsHandler)
+
+	// Stripe routes
+	g.POST("/v1/stripe/webhook", s.stripeWebhookHandler)
 
 	// Serve API documentation
 	e.Static("/api/v1/docs", "../../web/api/v1")

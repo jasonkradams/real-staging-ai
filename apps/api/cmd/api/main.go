@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/virtual-staging-ai/api/internal/http"
+	"github.com/virtual-staging-ai/api/internal/services"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
@@ -29,6 +30,13 @@ func main() {
 		log.Fatalf("failed to create S3 service: %v", err)
 	}
 
-	s := http.NewServer(db, s3Service)
+	// Create repositories
+	imageRepo := storage.NewImageRepository(db)
+	jobRepo := storage.NewJobRepository(db)
+
+	// Create services
+	imageService := services.NewImageService(imageRepo, jobRepo)
+
+	s := http.NewServer(db, s3Service, imageService)
 	s.Start(":8080")
 }

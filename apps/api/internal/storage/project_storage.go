@@ -34,13 +34,13 @@ func (s *ProjectStorage) CreateProject(ctx context.Context, p *project.Project, 
 		userID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
 	}
 
-	err := s.db.pool.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.CreatedAt)
+	err := s.db.pool.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create project: %w", err)
 	}
 
-	// Set the user ID in the project
-	p.UserID = userID
+	// Set the name in the project
+	p.Name = p.Name
 	return p, nil
 }
 
@@ -216,7 +216,7 @@ func (s *ProjectStorage) UpdateProject(ctx context.Context, projectID, name stri
 	`
 
 	var p project.Project
-	err := s.db.pool.QueryRow(ctx, query, name, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	err := s.db.pool.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
