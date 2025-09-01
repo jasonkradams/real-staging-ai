@@ -1,4 +1,4 @@
-.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs sqlc-generate generate
+.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs sqlc-generate generate lint lint-fix
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -71,3 +71,17 @@ generate: ## Generate all code (mocks, sqlc, etc.)
 		cd apps/api && go install go.uber.org/mock/mockgen@latest; \
 	fi
 	cd apps/api && go generate ./...
+
+lint: ## Run golangci-lint on all Go modules
+	@echo "Running golangci-lint..."
+	@echo "--> Linting api module"
+	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+	@echo "--> Linting worker module"
+	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+
+lint-fix: ## Run golangci-lint with --fix on all Go modules
+	@echo "Running golangci-lint with --fix..."
+	@echo "--> Linting and fixing api module"
+	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
+	@echo "--> Linting and fixing worker module"
+	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix

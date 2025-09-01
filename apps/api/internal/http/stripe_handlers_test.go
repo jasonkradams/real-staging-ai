@@ -118,9 +118,8 @@ func TestHandleSubscriptionCreated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleSubscriptionCreated(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleSubscriptionCreated(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleSubscriptionUpdated(t *testing.T) {
@@ -143,9 +142,8 @@ func TestHandleSubscriptionUpdated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleSubscriptionUpdated(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleSubscriptionUpdated(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleSubscriptionDeleted(t *testing.T) {
@@ -168,9 +166,8 @@ func TestHandleSubscriptionDeleted(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleSubscriptionDeleted(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleSubscriptionDeleted(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleInvoicePaymentSucceeded(t *testing.T) {
@@ -194,9 +191,8 @@ func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleInvoicePaymentSucceeded(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleInvoicePaymentSucceeded(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleInvoicePaymentFailed(t *testing.T) {
@@ -220,9 +216,8 @@ func TestHandleInvoicePaymentFailed(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleInvoicePaymentFailed(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleInvoicePaymentFailed(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleCustomerCreated(t *testing.T) {
@@ -245,9 +240,8 @@ func TestHandleCustomerCreated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleCustomerCreated(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleCustomerCreated(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleCustomerUpdated(t *testing.T) {
@@ -270,9 +264,8 @@ func TestHandleCustomerUpdated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleCustomerUpdated(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleCustomerUpdated(context.Background(), event)
+	assert.NoError(t, err)
 }
 
 func TestHandleCustomerDeleted(t *testing.T) {
@@ -294,7 +287,6 @@ func TestHandleCustomerDeleted(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	server.handleCustomerDeleted(context.Background(), event)
-
-	// No assertions needed as this is currently a stub function
+	err := server.handleCustomerDeleted(context.Background(), event)
+	assert.NoError(t, err)
 }

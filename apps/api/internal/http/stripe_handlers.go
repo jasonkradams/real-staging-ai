@@ -47,6 +47,7 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 	// In production, you should verify the webhook signature
 	// using the Stripe-Signature header and your webhook secret
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	//nolint:staticcheck
 	if webhookSecret != "" {
 		// TODO: Implement signature verification
 		// stripeSignature := c.Request().Header.Get("Stripe-Signature")
@@ -56,6 +57,8 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 		//         Message: "Invalid webhook signature",
 		//     })
 		// }
+	} else {
+		// TODO: Handle empty webhook secret
 	}
 
 	// Parse the webhook event

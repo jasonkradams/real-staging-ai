@@ -50,10 +50,14 @@ func main() {
 				log.Printf("Processing job %s of type %s", job.ID, job.Type)
 				if err := processor.ProcessJob(ctx, job); err != nil {
 					log.Printf("Error processing job %s: %v", job.ID, err)
-					queueClient.MarkJobFailed(ctx, job.ID, err.Error())
+					if markErr := queueClient.MarkJobFailed(ctx, job.ID, err.Error()); markErr != nil {
+						log.Printf("Failed to mark job %s as failed: %v", job.ID, markErr)
+					}
 				} else {
 					log.Printf("Successfully processed job %s", job.ID)
-					queueClient.MarkJobCompleted(ctx, job.ID)
+					if markErr := queueClient.MarkJobCompleted(ctx, job.ID); markErr != nil {
+						log.Printf("Failed to mark job %s as completed: %v", job.ID, markErr)
+					}
 				}
 			}
 		}

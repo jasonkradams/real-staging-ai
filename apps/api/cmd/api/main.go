@@ -38,5 +38,7 @@ func main() {
 	imageService := services.NewImageService(imageRepo, jobRepo)
 
 	s := http.NewServer(db, s3Service, imageService)
-	s.Start(":8080")
+	if err := s.Start(":8080"); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }

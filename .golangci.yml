@@ -1,0 +1,10 @@
+version: 2
+run:
+  timeout: 5m
+  go: '1.24'
+severity:
+  default: error
+  rules:
+    - linters:
+        - dupl
+      severity: info

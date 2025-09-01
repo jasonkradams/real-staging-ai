@@ -39,8 +39,8 @@ func (s *ProjectStorage) CreateProject(ctx context.Context, p *project.Project, 
 		return nil, fmt.Errorf("unable to create project: %w", err)
 	}
 
-	// Set the name in the project
-	p.Name = p.Name
+	// Removed self-assignment of p.Name
+
 	return p, nil
 }
 
