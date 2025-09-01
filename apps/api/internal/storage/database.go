@@ -60,6 +60,11 @@ func (db *Database) Close() {
 	db.pool.Close()
 }
 
+// Pool returns the underlying connection pool for testing
+func (db *Database) Pool() *pgxpool.Pool {
+	return db.pool
+}
+
 // QueryRow executes a query with tracing
 func (db *Database) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	ctx, span := db.tracer.Start(ctx, "db.query_row")

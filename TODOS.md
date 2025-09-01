@@ -36,8 +36,8 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ### 3.2. Authentication (Auth0)
 
-- [ ] Set up Auth0 API and SPA application
-- [ ] Implement JWT validation middleware in the API (Echo middleware)
+- [x] Set up Auth0 API and SPA application
+- [x] Implement JWT validation middleware in the API (Echo middleware)
 
 ### 3.3. Database & Schema (Postgres + pgx + sqlc)
 
@@ -59,8 +59,8 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ### 3.7. Observability
 
-- [ ] Set up OpenTelemetry collector in `docker-compose.yml`
-- [ ] Instrument the API server and other components with OpenTelemetry
+- [x] Set up OpenTelemetry collector in `docker-compose.yml`
+- [x] Instrument the API server and other components with OpenTelemetry
 
 ## Milestone 4: Frontend Implementation (Next.js)
 

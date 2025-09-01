@@ -261,7 +261,7 @@ func TestPresignUpload(t *testing.T) {
 
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
 			var body []byte
@@ -312,7 +312,7 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	testCases := []struct {
 		name                 string
@@ -415,7 +415,7 @@ func TestPresignUpload_Integration(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	// Test with valid request
 	requestBody := PresignUploadRequest{

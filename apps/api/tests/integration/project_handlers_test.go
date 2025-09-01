@@ -149,7 +149,7 @@ func TestCreateProject_Handlers(t *testing.T) {
 
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
 			var body []byte
@@ -245,7 +245,7 @@ func TestGetProjects_Handlers(t *testing.T) {
 
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
@@ -327,7 +327,7 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -452,7 +452,7 @@ func TestUpdateProject_Handlers(t *testing.T) {
 
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
 			body, err := json.Marshal(tc.requestBody)
@@ -548,7 +548,7 @@ func TestDeleteProject_Handlers(t *testing.T) {
 
 			mockS3Service := testutil.CreateMockS3Service(t)
 			mockImageService := testutil.CreateMockImageService(t)
-			server := httpLib.NewServer(db, mockS3Service, mockImageService)
+			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -591,7 +591,7 @@ func TestProjectCRUDFlow_Handlers(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	// Step 1: Create a project
 	createBody := map[string]interface{}{

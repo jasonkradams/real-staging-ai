@@ -19,8 +19,7 @@ import (
 
 func TestCreateProjectRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
@@ -29,7 +28,7 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	testCases := []struct {
 		name         string
@@ -73,8 +72,7 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 
 func TestGetProjectsRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
@@ -83,7 +81,7 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
 
@@ -107,8 +105,7 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 
 func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
@@ -117,7 +114,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 
 	mockS3Service := testutil.CreateMockS3Service(t)
 	mockImageService := testutil.CreateMockImageService(t)
-	server := httpLib.NewServer(db, mockS3Service, mockImageService)
+	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	// Test case 1: Get an existing project
 	t.Run("success: happy path", func(t *testing.T) {
