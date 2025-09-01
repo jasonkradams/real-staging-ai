@@ -1,4 +1,4 @@
-.PHONY: help test test-integration
+.PHONY: help test test-integration migrate-test migrate-up-one migrate-down
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -17,6 +17,34 @@ test: ## Run unit tests
 	@echo "--> Running worker tests"
 	cd apps/worker && go test -v ./...
 
-test-integration: ## Run integration tests
+migrate-test: migrate-down-all ## Run database migrations on the test database
+	@echo "Running database migrations on the test database..."
+	$(MAKE) migrate-up-all
+
+migrate-up-all: ## Apply all database migrations on the test database
+	@echo "Applying all database migrations on the test database..."
+	docker-compose -f docker-compose.test.yml run --rm migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up
+
+migrate-up: ## Apply one database migration on the test database
+	@echo "Applying one database migration on the test database..."
+	docker-compose -f docker-compose.test.yml run --rm migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up $(N)
+
+migrate-down-all: ## Rollback all database migrations on the test database.
+	@echo "Rolling back all database migrations on the test database..."
+	docker-compose -f docker-compose.test.yml run --rm migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down -all
+
+migrate-down: ## Rollback database migrations on the test database. Optional N=x to rollback x migrations.
+	@echo "Rolling back database migrations on the test database..."
+ifdef N
+	docker-compose -f docker-compose.test.yml run --rm migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down $(N)
+else
+	$(MAKE) migrate-down-all
+endif
+
+test-integration: migrate-test ## Run integration tests
+	@echo "Starting test database..."
+	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test
 	@echo "Running integration tests..."
 	@echo "Not implemented yet."
+	@echo "Stopping test database..."
+	docker-compose -f docker-compose.test.yml down

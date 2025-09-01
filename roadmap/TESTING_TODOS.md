@@ -1,9 +1,9 @@
 ### Phase 1 Testing Todo List
 
 **1. Setup Testing Infrastructure**
-- [ ] Create a `Makefile` with `test` (unit) and `test-integration` targets.
-- [ ] Configure a `docker-compose.test.yml` for a dedicated test database and other services.
-- [ ] Implement a mechanism to run database migrations as part of the test setup.
+- [x] Create a `Makefile` with `test` (unit) and `test-integration` targets.
+- [x] Configure a `docker-compose.test.yml` for a dedicated test database and other services.
+- [x] Implement a mechanism to run database migrations as part of the test setup.
 - [ ] Create seed data fixtures for users, projects, etc., to use in tests.
 - [ ] Prepare "golden files" to represent the minimal placeholder images for byte-level comparisons.
 
