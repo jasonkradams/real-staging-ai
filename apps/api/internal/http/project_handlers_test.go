@@ -147,7 +147,8 @@ func TestCreateProject(t *testing.T) {
 			testutil.TruncateTables(t, db.GetPool())
 			testutil.SeedTables(t, db.GetPool())
 
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Prepare request body
 			var body []byte
@@ -241,7 +242,8 @@ func TestGetProjects(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
@@ -321,7 +323,8 @@ func TestGetProjectByID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -444,7 +447,8 @@ func TestUpdateProject(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Prepare request body
 			body, err := json.Marshal(tc.requestBody)
@@ -538,7 +542,8 @@ func TestDeleteProject(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -579,7 +584,8 @@ func TestProjectCRUDFlow(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 
 	// Step 1: Create a project
 	createBody := map[string]interface{}{

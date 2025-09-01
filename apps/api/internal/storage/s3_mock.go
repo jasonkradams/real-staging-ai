@@ -17,6 +17,9 @@ type MockS3Service struct {
 	bucketName string
 }
 
+// Ensure MockS3Service implements S3Service interface.
+var _ S3Service = (*MockS3Service)(nil)
+
 // NewMockS3Service creates a new MockS3Service instance.
 func NewMockS3Service(bucketName string) *MockS3Service {
 	return &MockS3Service{
@@ -55,7 +58,7 @@ func (s *MockS3Service) DeleteFile(ctx context.Context, fileKey string) error {
 }
 
 // HeadFile simulates checking if a file exists in S3.
-func (s *MockS3Service) HeadFile(ctx context.Context, fileKey string) (map[string]interface{}, error) {
+func (s *MockS3Service) HeadFile(ctx context.Context, fileKey string) (interface{}, error) {
 	// Return mock metadata
 	return map[string]interface{}{
 		"ContentLength": int64(1024000),

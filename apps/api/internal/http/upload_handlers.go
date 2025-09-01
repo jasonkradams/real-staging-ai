@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -45,30 +44,8 @@ func (s *Server) presignUploadHandler(c echo.Context) error {
 	// For now, use hardcoded user ID
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
-	// Get bucket name from environment or use default for development
-	bucketName := getEnvOrDefault("S3_BUCKET_NAME", "virtual-staging-dev")
-
-	// Create S3 service (use mock for testing)
-	var s3Service interface {
-		GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*storage.PresignedUploadResult, error)
-	}
-
-	// Check if we're in test mode
-	if getEnvOrDefault("APP_ENV", "development") == "test" {
-		s3Service = storage.NewMockS3Service(bucketName)
-	} else {
-		realS3Service, err := storage.NewS3Service(c.Request().Context(), bucketName)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Error:   "internal_server_error",
-				Message: "Failed to initialize storage service",
-			})
-		}
-		s3Service = realS3Service
-	}
-
-	// Generate presigned upload URL
-	result, err := s3Service.GeneratePresignedUploadURL(
+	// Generate presigned upload URL using injected S3 service
+	result, err := s.s3Service.GeneratePresignedUploadURL(
 		c.Request().Context(),
 		userID,
 		req.Filename,
@@ -168,15 +145,4 @@ func getContentTypeFromExtension(ext string) string {
 	default:
 		return ""
 	}
-}
-
-func getEnvOrDefault(key, defaultValue string) string {
-	// This is a placeholder - in a real implementation, you'd use os.Getenv
-	// For testing, we'll check if it's a test environment
-	if key == "APP_ENV" {
-		// Simple check to see if we're running tests
-		// In real implementation, this would be from environment
-		return "test"
-	}
-	return defaultValue
 }

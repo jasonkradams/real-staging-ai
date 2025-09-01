@@ -10,14 +10,15 @@ import (
 
 // Server holds the dependencies for the HTTP server.
 type Server struct {
-	db   *storage.DB
-	echo *echo.Echo
+	db        *storage.DB
+	s3Service storage.S3Service
+	echo      *echo.Echo
 }
 
 // NewServer creates and configures a new Echo server.
-func NewServer(db *storage.DB) *Server {
+func NewServer(db *storage.DB, s3Service storage.S3Service) *Server {
 	e := echo.New()
-	s := &Server{db: db, echo: e}
+	s := &Server{db: db, s3Service: s3Service, echo: e}
 
 	// Register routes
 	g := e.Group("/api")

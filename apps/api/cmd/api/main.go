@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/storage"
@@ -17,6 +18,17 @@ func main() {
 	}
 	defer db.Close()
 
-	s := http.NewServer(db)
+	// Create S3 service
+	bucketName := os.Getenv("S3_BUCKET_NAME")
+	if bucketName == "" {
+		bucketName = "virtual-staging-dev"
+	}
+
+	s3Service, err := storage.NewS3Service(ctx, bucketName)
+	if err != nil {
+		log.Fatalf("failed to create S3 service: %v", err)
+	}
+
+	s := http.NewServer(db, s3Service)
 	s.Start(":8080")
 }

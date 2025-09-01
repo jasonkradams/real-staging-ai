@@ -27,7 +27,8 @@ func TestCreateProjectRoute(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 
 	testCases := []struct {
 		name         string
@@ -79,7 +80,8 @@ func TestGetProjectsRoute(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
 
@@ -111,7 +113,8 @@ func TestGetProjectByIDRoute(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 
 	// Test case 1: Get an existing project
 	t.Run("success: happy path", func(t *testing.T) {

@@ -4,12 +4,14 @@ package storage
 
 import (
 	"context"
+	"os"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/virtual-staging-ai/api/internal/project"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 func TestProjectStorageSQLc_CreateProject(t *testing.T) {
@@ -18,8 +20,8 @@ func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
@@ -74,8 +76,8 @@ func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 
@@ -94,8 +96,8 @@ func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
@@ -153,8 +155,8 @@ func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 
@@ -206,8 +208,8 @@ func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 
@@ -261,8 +263,8 @@ func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
@@ -323,6 +325,28 @@ func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 	}
 }
 
+// Local test helpers to avoid import cycle
+func truncateTables(t *testing.T, pool *pgxpool.Pool) {
+	t.Helper()
+
+	query := `
+		TRUNCATE TABLE projects, users, images, jobs, plans RESTART IDENTITY
+	`
+	_, err := pool.Exec(context.Background(), query)
+	require.NoError(t, err)
+}
+
+func seedTables(t *testing.T, pool *pgxpool.Pool) {
+	t.Helper()
+
+	// This path is relative to the package that is being tested.
+	seedSQL, err := os.ReadFile("../../testdata/seed.sql")
+	require.NoError(t, err)
+
+	_, err = pool.Exec(context.Background(), string(seedSQL))
+	require.NoError(t, err)
+}
+
 func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 	ctx := context.Background()
 	db, err := NewDB(ctx)
@@ -354,8 +378,8 @@ func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset database state
-			testutil.TruncateTables(t, db.GetPool())
-			testutil.SeedTables(t, db.GetPool())
+			truncateTables(t, db.GetPool())
+			seedTables(t, db.GetPool())
 
 			storage := NewProjectStorageSQLc(db)
 
@@ -420,8 +444,8 @@ func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset database state
-			testutil.TruncateTables(t, db.GetPool())
-			testutil.SeedTables(t, db.GetPool())
+			truncateTables(t, db.GetPool())
+			seedTables(t, db.GetPool())
 
 			storage := NewProjectStorageSQLc(db)
 
@@ -454,8 +478,8 @@ func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
@@ -506,8 +530,8 @@ func TestProjectStorageSQLc_Integration(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	truncateTables(t, db.GetPool())
+	seedTables(t, db.GetPool())
 
 	storage := NewProjectStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"

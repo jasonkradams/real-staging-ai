@@ -259,7 +259,8 @@ func TestPresignUpload(t *testing.T) {
 			testutil.TruncateTables(t, db.GetPool())
 			testutil.SeedTables(t, db.GetPool())
 
-			server := httpLib.NewServer(db)
+			mockS3Service := testutil.CreateMockS3Service(t)
+			server := httpLib.NewServer(db, mockS3Service)
 
 			// Prepare request body
 			var body []byte
@@ -308,7 +309,8 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 
 	testCases := []struct {
 		name                 string
@@ -409,7 +411,8 @@ func TestPresignUpload_Integration(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	server := httpLib.NewServer(db)
+	mockS3Service := testutil.CreateMockS3Service(t)
+	server := httpLib.NewServer(db, mockS3Service)
 
 	// Test with valid request
 	requestBody := PresignUploadRequest{

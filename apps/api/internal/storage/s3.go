@@ -13,11 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// S3Service handles S3 operations for file storage.
-type S3Service struct {
+// S3ServiceImpl handles S3 operations for file storage.
+type S3ServiceImpl struct {
 	client     *s3.Client
 	bucketName string
 }
+
+// Ensure S3ServiceImpl implements S3Service interface.
+var _ S3Service = (*S3ServiceImpl)(nil)
 
 // PresignedUploadResult contains the result of generating a presigned upload URL.
 type PresignedUploadResult struct {
@@ -26,8 +29,8 @@ type PresignedUploadResult struct {
 	ExpiresIn int64  `json:"expires_in"`
 }
 
-// NewS3Service creates a new S3Service instance.
-func NewS3Service(ctx context.Context, bucketName string) (*S3Service, error) {
+// NewS3Service creates a new S3ServiceImpl instance.
+func NewS3Service(ctx context.Context, bucketName string) (*S3ServiceImpl, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
@@ -35,14 +38,14 @@ func NewS3Service(ctx context.Context, bucketName string) (*S3Service, error) {
 
 	client := s3.NewFromConfig(cfg)
 
-	return &S3Service{
+	return &S3ServiceImpl{
 		client:     client,
 		bucketName: bucketName,
 	}, nil
 }
 
 // GeneratePresignedUploadURL generates a presigned URL for uploading a file to S3.
-func (s *S3Service) GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*PresignedUploadResult, error) {
+func (s *S3ServiceImpl) GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*PresignedUploadResult, error) {
 	// Generate a unique file key
 	fileExt := filepath.Ext(filename)
 	baseName := strings.TrimSuffix(filename, fileExt)
@@ -76,12 +79,12 @@ func (s *S3Service) GeneratePresignedUploadURL(ctx context.Context, userID, file
 }
 
 // GetFileURL returns the public URL for a file in S3.
-func (s *S3Service) GetFileURL(fileKey string) string {
+func (s *S3ServiceImpl) GetFileURL(fileKey string) string {
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.bucketName, fileKey)
 }
 
 // DeleteFile deletes a file from S3.
-func (s *S3Service) DeleteFile(ctx context.Context, fileKey string) error {
+func (s *S3ServiceImpl) DeleteFile(ctx context.Context, fileKey string) error {
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(fileKey),
@@ -94,7 +97,7 @@ func (s *S3Service) DeleteFile(ctx context.Context, fileKey string) error {
 }
 
 // HeadFile checks if a file exists in S3 and returns its metadata.
-func (s *S3Service) HeadFile(ctx context.Context, fileKey string) (*s3.HeadObjectOutput, error) {
+func (s *S3ServiceImpl) HeadFile(ctx context.Context, fileKey string) (interface{}, error) {
 	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(fileKey),

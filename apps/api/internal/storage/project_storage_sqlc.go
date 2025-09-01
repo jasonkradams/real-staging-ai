@@ -16,6 +16,9 @@ type ProjectStorageSQLc struct {
 	queries *queries.Queries
 }
 
+// Ensure ProjectStorageSQLc implements ProjectRepository interface.
+var _ ProjectRepository = (*ProjectStorageSQLc)(nil)
+
 // NewProjectStorageSQLc creates a new ProjectStorageSQLc instance.
 func NewProjectStorageSQLc(db *DB) *ProjectStorageSQLc {
 	return &ProjectStorageSQLc{

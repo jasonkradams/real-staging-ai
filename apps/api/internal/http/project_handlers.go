@@ -56,7 +56,9 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 	}
 
 	projectStorage := storage.NewProjectStorage(s.db)
-	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p)
+	// TODO: Get user ID from JWT token when auth middleware is implemented
+	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
