@@ -11,7 +11,9 @@ func NewServer() *echo.Echo {
 	e := echo.New()
 
 	// Register routes
-	e.POST("/v1/projects", project.CreateProjectHandler)
+	g := e.Group("/api")
+	g.POST("/v1/projects", project.CreateProjectHandler)
+	g.GET("/v1/projects", project.GetProjectsHandler)
 
 	return e
 }

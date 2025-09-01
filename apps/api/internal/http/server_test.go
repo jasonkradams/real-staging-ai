@@ -39,7 +39,7 @@ func TestCreateProjectRoute(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
 			server := httpLib.NewServer()
-			req := httptest.NewRequest(http.MethodPost, "/v1/projects", strings.NewReader(tc.body))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", "application/json")
 			rec := httptest.NewRecorder()
 
@@ -58,4 +58,18 @@ func TestCreateProjectRoute(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetProjectsRoute(t *testing.T) {
+	// Setup
+	server := httpLib.NewServer()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
+	rec := httptest.NewRecorder()
+
+	// Run the request through the server
+	server.ServeHTTP(rec, req)
+
+	// Assertions
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, `[]`, rec.Body.String()) // Expect an empty list of projects for now
 }

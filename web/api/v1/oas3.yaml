@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Virtual Staging AI API
+  description: API for the Virtual Staging AI application.
+  version: 0.1.0
+servers:
+  - url: /api
+paths:
+  /v1/projects:
+    get:
+      summary: Get all projects
+      responses:
+        "200":
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProject"
+      responses:
+        "201":
+          description: The created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    NewProject:
+      type: object
+      properties:
+        name:
+          type: string
