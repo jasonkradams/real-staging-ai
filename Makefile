@@ -55,4 +55,4 @@ test-integration: migrate-test ## Run integration tests
 
 docs: ## Validate the OpenAPI specification
 	@echo "Validating OpenAPI specification..."
-	docker run --rm -v $(CURDIR)/web/api/v1:/spec python:3.9-slim-buster /bin/sh -c "pip install openapi-spec-validator && openapi-spec-validator /spec/oas3.yaml"
+	docker run --rm -v $(CURDIR)/web/api/v1:/spec python:3.13-slim /bin/sh -c "pip install openapi-spec-validator && openapi-spec-validator /spec/oas3.yaml"

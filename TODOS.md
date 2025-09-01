@@ -20,7 +20,6 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Create `web/api/v1/oas3.yaml` with the OpenAPI specification.
 - [x] Update all API endpoints to be prefixed with `/api/v1`.
 - [x] Serve the API documentation at the `/api/v1/docs` endpoint.
-- [ ] Download `redoc.standalone.js` and serve it locally.
 - [x] Create a `make docs` target to validate the OAS3 file.
 - [ ] Configure GitHub Pages to publish the API documentation.
 
@@ -28,7 +27,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ### 3.1. API Server (Go + Echo)
 
-- [ ] Implement basic project CRUD endpoints (`GET /api/v1/projects`, `POST /api/v1/projects`)
+- [x] Implement basic project CRUD endpoints (`GET /api/v1/projects`, `POST /api/v1/projects`, `GET /api/v1/projects/{id}`, `PUT /api/v1/projects/{id}`, `DELETE /api/v1/projects/{id}`)
 - [ ] Implement API for presigned S3 uploads (`POST /api/v1/uploads/presign`)
 - [ ] Implement API for creating image jobs (`POST /api/v1/images`)
 - [ ] Implement API for fetching image status (`GET /api/v1/images/{id}`)

@@ -89,10 +89,51 @@ func TestGetProjectsRoute(t *testing.T) {
 	// Assertions
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var projects []project.Project
-	err = json.Unmarshal(rec.Body.Bytes(), &projects)
+	type ProjectListResponse struct {
+		Projects []project.Project `json:"projects"`
+	}
+
+	var response ProjectListResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Len(t, projects, 1)
-	assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", projects[0].ID)
-	assert.Equal(t, "Test Project 1", projects[0].Name)
+	assert.Len(t, response.Projects, 1)
+	assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", response.Projects[0].ID)
+	assert.Equal(t, "Test Project 1", response.Projects[0].Name)
+}
+
+func TestGetProjectByIDRoute(t *testing.T) {
+	// Setup
+	ctx := context.Background()
+	db, err := storage.NewDB(ctx)
+	assert.NoError(t, err)
+	defer db.Close()
+
+	testutil.TruncateTables(t, db.GetPool())
+	testutil.SeedTables(t, db.GetPool())
+
+	server := httpLib.NewServer(db)
+
+	// Test case 1: Get an existing project
+	t.Run("success: happy path", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/projects/b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", nil)
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var p project.Project
+		err = json.Unmarshal(rec.Body.Bytes(), &p)
+		assert.NoError(t, err)
+		assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", p.ID)
+		assert.Equal(t, "Test Project 1", p.Name)
+	})
+
+	// Test case 2: Get a non-existing project
+	t.Run("fail: not found", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/projects/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a00", nil)
+		rec := httptest.NewRecorder()
+		server.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
 }

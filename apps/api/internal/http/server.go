@@ -23,6 +23,9 @@ func NewServer(db *storage.DB) *Server {
 	g := e.Group("/api")
 	g.POST("/v1/projects", s.createProjectHandler)
 	g.GET("/v1/projects", s.getProjectsHandler)
+	g.GET("/v1/projects/:id", s.getProjectByIDHandler)
+	g.PUT("/v1/projects/:id", s.updateProjectHandler)
+	g.DELETE("/v1/projects/:id", s.deleteProjectHandler)
 
 	// Serve API documentation
 	e.Static("/api/v1/docs", "../../web/api/v1")
