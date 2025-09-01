@@ -1,15 +1,11 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/http"
 )
 
 // main is the entrypoint of the API server.
 func main() {
-	e := echo.New()
-
-	e.POST("/v1/projects", project.CreateProjectHandler)
-
+	e := http.NewServer()
 	e.Logger.Fatal(e.Start(":8080"))
 }

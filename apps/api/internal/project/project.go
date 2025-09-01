@@ -4,11 +4,13 @@ package project
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 // Project represents a user's project.
 type Project struct {
+	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -19,5 +21,6 @@ func CreateProjectHandler(c echo.Context) error {
 	if err := c.Bind(&p); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	p.ID = uuid.NewString() // Generate a new UUID for the project
 	return c.JSON(http.StatusCreated, p)
 }

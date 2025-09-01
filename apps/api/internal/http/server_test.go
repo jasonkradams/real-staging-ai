@@ -1,58 +1,60 @@
-package project_test
+package http_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/project"
 )
 
-func TestCreateProjectHandler(t *testing.T) {
+func TestNewServer(t *testing.T) {
+	s := httpLib.NewServer()
+	assert.NotNil(t, s)
+}
+
+func TestCreateProjectRoute(t *testing.T) {
 	testCases := []struct {
 		name         string
 		body         string
 		expectedCode int
-		expectedBody string
 	}{
 		{
 			name:         "success: happy path",
 			body:         `{"name":"Test Project"}`,
 			expectedCode: http.StatusCreated,
-			expectedBody: `{"id":"some-id","name":"Test Project"}`,
 		},
 		{
 			name:         "fail: bad JSON",
 			body:         `{"name":}`,
 			expectedCode: http.StatusBadRequest,
-			expectedBody: "", // We don't need to check the body for bad requests
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
-			e := echo.New()
+			server := httpLib.NewServer()
 			req := httptest.NewRequest(http.MethodPost, "/v1/projects", strings.NewReader(tc.body))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			req.Header.Set("Content-Type", "application/json")
 			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+
+			// Run the request through the server
+			server.ServeHTTP(rec, req)
 
 			// Assertions
-			err := project.CreateProjectHandler(c)
+			assert.Equal(t, tc.expectedCode, rec.Code)
 
 			if tc.expectedCode == http.StatusCreated {
+				var p project.Project
+				err := json.Unmarshal(rec.Body.Bytes(), &p)
 				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedCode, rec.Code)
-				// We can't easily test the ID here as it's random.
-				// We'll cover this in the server_test.go
-			} else {
-				httpErr, ok := err.(*echo.HTTPError)
-				assert.True(t, ok)
-				assert.Equal(t, tc.expectedCode, httpErr.Code)
+				assert.NotEmpty(t, p.ID)
+				assert.Equal(t, "Test Project", p.Name)
 			}
 		})
 	}
