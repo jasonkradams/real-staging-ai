@@ -1,6 +1,9 @@
+//go:build integration
+
 package http_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,14 +13,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
-func TestNewServer(t *testing.T) {
-	s := httpLib.NewServer()
-	assert.NotNil(t, s)
-}
-
 func TestCreateProjectRoute(t *testing.T) {
+	// Setup
+	ctx := context.Background()
+	db, err := storage.NewDB(ctx)
+	assert.NoError(t, err)
+	defer db.Close()
+
+	testutil.TruncateTables(t, db.GetPool())
+	testutil.SeedTables(t, db.GetPool())
+
+	server := httpLib.NewServer(db)
+
 	testCases := []struct {
 		name         string
 		body         string
@@ -37,8 +48,6 @@ func TestCreateProjectRoute(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup
-			server := httpLib.NewServer()
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", "application/json")
 			rec := httptest.NewRecorder()
@@ -62,7 +71,15 @@ func TestCreateProjectRoute(t *testing.T) {
 
 func TestGetProjectsRoute(t *testing.T) {
 	// Setup
-	server := httpLib.NewServer()
+	ctx := context.Background()
+	db, err := storage.NewDB(ctx)
+	assert.NoError(t, err)
+	defer db.Close()
+
+	testutil.TruncateTables(t, db.GetPool())
+	testutil.SeedTables(t, db.GetPool())
+
+	server := httpLib.NewServer(db)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
 
@@ -71,5 +88,11 @@ func TestGetProjectsRoute(t *testing.T) {
 
 	// Assertions
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.JSONEq(t, `[]`, rec.Body.String()) // Expect an empty list of projects for now
+
+	var projects []project.Project
+	err = json.Unmarshal(rec.Body.Bytes(), &projects)
+	assert.NoError(t, err)
+	assert.Len(t, projects, 1)
+	assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", projects[0].ID)
+	assert.Equal(t, "Test Project 1", projects[0].Name)
 }
