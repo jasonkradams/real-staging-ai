@@ -4,8 +4,8 @@
 - [x] Create a `Makefile` with `test` (unit) and `test-integration` targets.
 - [x] Configure a `docker-compose.test.yml` for a dedicated test database and other services.
 - [x] Implement a mechanism to run database migrations as part of the test setup.
-- [ ] Create seed data fixtures for users, projects, etc., to use in tests.
-- [ ] Prepare "golden files" to represent the minimal placeholder images for byte-level comparisons.
+- [x] Create seed data fixtures for users, projects, etc., to use in tests.
+- [x] Prepare "golden files" to represent the minimal placeholder images for byte-level comparisons.
 
 **2. Authentication Middleware**
 - [ ] **Test:** `fail: no JWT` - Write a test to ensure requests without a JWT are rejected with a `401 Unauthorized`.

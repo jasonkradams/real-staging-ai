@@ -1,4 +1,4 @@
-.PHONY: help test test-integration migrate-test migrate-up-one migrate-down
+.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -41,7 +41,11 @@ else
 	$(MAKE) migrate-down-all
 endif
 
-test-integration: migrate-test ## Run integration tests
+seed-test: ## Seed the test database with sample data
+	@echo "Seeding the test database..."
+	docker-compose -f docker-compose.test.yml run --rm -e PGPASSWORD=testpassword -v ./infra/seed:/seed postgres-client -f /seed/seed.sql
+
+test-integration: migrate-test seed-test ## Run integration tests
 	@echo "Starting test database..."
 	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test
 	@echo "Running integration tests..."

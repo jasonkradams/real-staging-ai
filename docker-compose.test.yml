@@ -21,3 +21,11 @@ services:
     depends_on:
       postgres-test:
         condition: service_healthy
+
+  postgres-client:
+    image: postgres:17.6
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    entrypoint:
+      ["psql", "-h", "postgres-test", "-U", "testuser", "-d", "testdb"]
