@@ -42,7 +42,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 - [x] Create initial database schema with `users`, `projects`, `images`, `jobs`, and `plans` tables
 - [x] Set up `golang-migrate` for managing database migrations
-- [ ] Set up `sqlc` to generate type-safe queries from SQL
+- [x] Set up `sqlc` to generate type-safe queries from SQL
 
 ### 3.4. Background Jobs (Worker + asynq)
 

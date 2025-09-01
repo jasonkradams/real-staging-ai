@@ -1,4 +1,4 @@
-.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs
+.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs sqlc-generate
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -56,3 +56,7 @@ test-integration: migrate-test ## Run integration tests
 docs: ## Validate the OpenAPI specification
 	@echo "Validating OpenAPI specification..."
 	docker run --rm -v $(CURDIR)/web/api/v1:/spec python:3.13-slim /bin/sh -c "pip install openapi-spec-validator && openapi-spec-validator /spec/oas3.yaml"
+
+sqlc-generate: ## Generate Go code from SQL queries using sqlc
+	@echo "Generating sqlc code..."
+	cd apps/api && ~/go/bin/sqlc generate
