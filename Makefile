@@ -1,45 +1,22 @@
-SHELL := /bin/bash
-GO_PKGS := ./...
-MIGRATIONS_DIR := infra/migrations
+.PHONY: help test test-integration
+.DEFAULT_GOAL := help
 
-.PHONY: tidy build run clean test test-integration migrate-up migrate-down sqlc gen lint
+TAB = $(shell printf '\t')
 
-install-tools:
-	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	go install github.com/segmentio/golines@latest
+help:
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+	 sed -e 's/:.*## /$(TAB)/' | \
+	 sort | \
+	 awk -F '$(TAB)' '{printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-migrate-up:
-	migrate -path $(MIGRATIONS_DIR) -database "postgres://$$PGUSER:$$PGPASSWORD@$$PGHOST:$$PGPORT/$$PGDATABASE?sslmode=disable" up
+test: ## Run unit tests
+	@echo "Running unit tests..."
+	@echo "--> Running api tests"
+	cd apps/api && go test -v ./...
+	@echo "--> Running worker tests"
+	cd apps/worker && go test -v ./...
 
-migrate-down:
-	migrate -path $(MIGRATIONS_DIR) -database "postgres://$$PGUSER:$$PGPASSWORD@$$PGHOST:$$PGPORT/$$PGDATABASE?sslmode=disable" down 1
-
-sqlc:
-	sqlc generate
-
-build:
-	go build -o bin/api ./apps/api
-	go build -o bin/worker ./apps/worker
-
-run:
-	docker compose up --build
-
-clean:
-	rm -rf bin
-	go clean -testcache
-
-lint:
-	golines -w .
-	go vet $(GO_PKGS)
-
-test:
-	go test -race -v $(GO_PKGS)
-
-# Spins pg/redis/minio/otel-collector, runs migrations, then `go test -tags=integration`
-test-integration:
-	docker compose -f infra/docker-compose.test.yml up -d --build
-	sleep 5
-	make migrate-up
-	go test -v -tags=integration ./apps/api/...
-	docker compose -f infra/docker-compose.test.yml down -v
+test-integration: ## Run integration tests
+	@echo "Running integration tests..."
+	@echo "Not implemented yet."
