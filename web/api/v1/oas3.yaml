@@ -152,6 +152,35 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /v1/uploads/presign:
+    post:
+      summary: Generate presigned URL for file upload
+      description: Generate a presigned URL that allows direct upload to S3 storage
+      tags:
+        - Uploads
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignUploadRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignUploadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
   securitySchemes:
@@ -215,6 +244,55 @@ components:
           maxLength: 100
           description: Updated name of the project
           example: "Modern Living Room Staging"
+
+    PresignUploadRequest:
+      type: object
+      required:
+        - filename
+        - content_type
+        - file_size
+      properties:
+        filename:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name of the file to upload
+          example: "living-room.jpg"
+        content_type:
+          type: string
+          description: MIME type of the file
+          enum:
+            - "image/jpeg"
+            - "image/png"
+            - "image/webp"
+          example: "image/jpeg"
+        file_size:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+          description: Size of the file in bytes (max 10MB)
+          example: 2048576
+
+    PresignUploadResponse:
+      type: object
+      required:
+        - upload_url
+        - file_key
+        - expires_in
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: Presigned URL for uploading the file
+          example: "https://bucket.s3.amazonaws.com/uploads/uuid/filename.jpg?..."
+        file_key:
+          type: string
+          description: Unique key for the uploaded file
+          example: "uploads/550e8400-e29b-41d4-a716-446655440000/living-room.jpg"
+        expires_in:
+          type: integer
+          description: Number of seconds until the presigned URL expires
+          example: 900
 
     Error:
       type: object

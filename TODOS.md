@@ -28,7 +28,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 ### 3.1. API Server (Go + Echo)
 
 - [x] Implement basic project CRUD endpoints (`GET /api/v1/projects`, `POST /api/v1/projects`, `GET /api/v1/projects/{id}`, `PUT /api/v1/projects/{id}`, `DELETE /api/v1/projects/{id}`)
-- [ ] Implement API for presigned S3 uploads (`POST /api/v1/uploads/presign`)
+- [x] Implement API for presigned S3 uploads (`POST /api/v1/uploads/presign`)
 - [ ] Implement API for creating image jobs (`POST /api/v1/images`)
 - [ ] Implement API for fetching image status (`GET /api/v1/images/{id}`)
 - [ ] Implement Server-Sent Events (SSE) for real-time job updates (`GET /api/v1/events`)

@@ -27,6 +27,9 @@ func NewServer(db *storage.DB) *Server {
 	g.PUT("/v1/projects/:id", s.updateProjectHandler)
 	g.DELETE("/v1/projects/:id", s.deleteProjectHandler)
 
+	// Upload routes
+	g.POST("/v1/uploads/presign", s.presignUploadHandler)
+
 	// Serve API documentation
 	e.Static("/api/v1/docs", "../../web/api/v1")
 
