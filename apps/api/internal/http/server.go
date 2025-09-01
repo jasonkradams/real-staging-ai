@@ -15,5 +15,8 @@ func NewServer() *echo.Echo {
 	g.POST("/v1/projects", project.CreateProjectHandler)
 	g.GET("/v1/projects", project.GetProjectsHandler)
 
+	// Serve API documentation
+	e.Static("/api/v1/docs", "../../web/api/v1")
+
 	return e
 }

@@ -2,8 +2,6 @@
 
 This document outlines the systematic plan and checklist to implement the Virtual Staging AI project.
 
-_**Note**: Milestone 4 (Testing) will be worked as each milestone is being worked on._
-
 ## Milestone 1: Project Setup & Foundation
 
 - [x] Set up monorepo layout (`/apps`, `/infra`, `/docs`)
@@ -19,10 +17,11 @@ _**Note**: Milestone 4 (Testing) will be worked as each milestone is being worke
 
 ## Milestone 2: API Documentation
 
-- [ ] Create `web/api/v1/oas3.yaml` with the OpenAPI specification.
-- [ ] Update all API endpoints to be prefixed with `/api/v1`.
-- [ ] Serve the API documentation at the `/api/v1/docs` endpoint using Swagger UI.
-- [ ] Create a `make docs` target to validate the OAS3 file.
+- [x] Create `web/api/v1/oas3.yaml` with the OpenAPI specification.
+- [x] Update all API endpoints to be prefixed with `/api/v1`.
+- [x] Serve the API documentation at the `/api/v1/docs` endpoint.
+- [ ] Download `redoc.standalone.js` and serve it locally.
+- [x] Create a `make docs` target to validate the OAS3 file.
 - [ ] Configure GitHub Pages to publish the API documentation.
 
 ## Milestone 3: Core Backend Features

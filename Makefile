@@ -1,4 +1,4 @@
-.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test
+.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -52,3 +52,7 @@ test-integration: migrate-test seed-test ## Run integration tests
 	@echo "Not implemented yet."
 	@echo "Stopping test database..."
 	docker-compose -f docker-compose.test.yml down
+
+docs: ## Validate the OpenAPI specification
+	@echo "Validating OpenAPI specification..."
+	@docker run --rm -v $(CURDIR)/web/api/v1:/spec python:3.13-slim /bin/sh -c "pip install openapi-spec-validator 2>\&1 >/dev/null && openapi-spec-validator /spec/oas3.yaml"
