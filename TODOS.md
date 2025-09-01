@@ -11,6 +11,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Define contribution guidelines in `CONTRIBUTING.md`
 - [x] Set up `Makefile` with `test` and `test-integration` targets
 - [x] Set up `docker-compose.test.yml` for integration tests
+- [x] Implement golangci-lint with v2 standards and make target
 - [x] Implement database migrations for the initial schema
 - [x] Create seed data fixtures for the test database
 - [x] Prepare "golden files" for image comparisons
@@ -29,9 +30,9 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 - [x] Implement basic project CRUD endpoints (`GET /api/v1/projects`, `POST /api/v1/projects`, `GET /api/v1/projects/{id}`, `PUT /api/v1/projects/{id}`, `DELETE /api/v1/projects/{id}`)
 - [x] Implement API for presigned S3 uploads (`POST /api/v1/uploads/presign`)
-- [ ] Implement API for creating image jobs (`POST /api/v1/images`)
-- [ ] Implement API for fetching image status (`GET /api/v1/images/{id}`)
-- [ ] Implement Server-Sent Events (SSE) for real-time job updates (`GET /api/v1/events`)
+- [x] Implement API for creating image jobs (`POST /api/v1/images`)
+- [x] Implement API for fetching image status (`GET /api/v1/images/{id}`)
+- [x] Implement Server-Sent Events (SSE) for real-time job updates (`GET /api/v1/events`)
 
 ### 3.2. Authentication (Auth0)
 
@@ -46,15 +47,15 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ### 3.4. Background Jobs (Worker + asynq)
 
-- [ ] Implement the `stage:run` task in the worker
+- [x] Implement the `stage:run` task in the worker
 
 ### 3.5. File Uploads (S3)
 
-- [ ] Implement the logic to generate presigned PUT URLs for direct browser uploads
+- [x] Implement the logic to generate presigned PUT URLs for direct browser uploads
 
 ### 3.6. Billing (Stripe)
 
-- [ ] Implement the Stripe webhook handler (`POST /api/v1/stripe/webhook`)
+- [x] Implement the Stripe webhook handler (`POST /api/v1/stripe/webhook`)
 
 ### 3.7. Observability
 

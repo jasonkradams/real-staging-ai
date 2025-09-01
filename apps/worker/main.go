@@ -9,13 +9,27 @@ import (
 
 	"github.com/virtual-staging-ai/worker/internal/processor"
 	"github.com/virtual-staging-ai/worker/internal/queue"
+	"github.com/virtual-staging-ai/worker/internal/telemetry"
 )
 
 func main() {
+	ctx := context.Background()
+
+	// Initialize OpenTelemetry
+	shutdown, err := telemetry.InitTracing(ctx, "virtual-staging-worker")
+	if err != nil {
+		log.Fatal("Failed to initialize tracing:", err)
+	}
+	defer func() {
+		if err := shutdown(ctx); err != nil {
+			log.Printf("Failed to shutdown tracing: %v", err)
+		}
+	}()
+
 	log.Println("Starting Virtual Staging AI Worker...")
 
 	// Create context that listens for the interrupt signal from the OS
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	// Initialize the job processor
