@@ -1,29 +1,27 @@
-package http
+package image
 
 import (
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/services"
 )
 
-// ImageHandlers contains the HTTP handlers for image operations.
-type ImageHandlers struct {
-	imageService *services.ImageService
+// DefaultHandler contains the HTTP handlers for image operations.
+type DefaultHandler struct {
+	service *DefaultService
 }
 
-// NewImageHandlers creates a new ImageHandlers instance.
-func NewImageHandlers(imageService *services.ImageService) *ImageHandlers {
-	return &ImageHandlers{
-		imageService: imageService,
+// NewHandler creates a new Handler instance.
+func NewHandler(service *DefaultService) *DefaultHandler {
+	return &DefaultHandler{
+		service: service,
 	}
 }
 
-// createImageHandler handles POST /api/v1/images requests.
-func (s *Server) createImageHandler(c echo.Context) error {
-	var req image.CreateImageRequest
+// CreateImage handles POST /api/v1/images requests.
+func (h *DefaultHandler) CreateImage(c echo.Context) error {
+	var req CreateImageRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -32,7 +30,7 @@ func (s *Server) createImageHandler(c echo.Context) error {
 	}
 
 	// Validate request
-	if validationErrs := validateCreateImageRequest(&req); len(validationErrs) > 0 {
+	if validationErrs := h.validateCreateImageRequest(&req); len(validationErrs) > 0 {
 		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
 			Error:            "validation_failed",
 			Message:          "The provided data is invalid",
@@ -41,7 +39,7 @@ func (s *Server) createImageHandler(c echo.Context) error {
 	}
 
 	// Create the image
-	img, err := s.imageService.CreateImage(c.Request().Context(), &req)
+	img, err := h.service.CreateImage(c.Request().Context(), &req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -52,8 +50,8 @@ func (s *Server) createImageHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, img)
 }
 
-// getImageHandler handles GET /api/v1/images/{id} requests.
-func (s *Server) getImageHandler(c echo.Context) error {
+// GetImage handles GET /api/v1/images/{id} requests.
+func (h *DefaultHandler) GetImage(c echo.Context) error {
 	imageID := c.Param("id")
 	if imageID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -70,7 +68,7 @@ func (s *Server) getImageHandler(c echo.Context) error {
 		})
 	}
 
-	img, err := s.imageService.GetImageByID(c.Request().Context(), imageID)
+	img, err := h.service.GetImageByID(c.Request().Context(), imageID)
 	if err != nil {
 		// Check if it's a not found error
 		if err.Error() == "no rows in result set" {
@@ -88,8 +86,8 @@ func (s *Server) getImageHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, img)
 }
 
-// getProjectImagesHandler handles GET /api/v1/projects/{project_id}/images requests.
-func (s *Server) getProjectImagesHandler(c echo.Context) error {
+// GetProjectImages handles GET /api/v1/projects/{project_id}/images requests.
+func (h *DefaultHandler) GetProjectImages(c echo.Context) error {
 	projectID := c.Param("project_id")
 	if projectID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -106,7 +104,7 @@ func (s *Server) getProjectImagesHandler(c echo.Context) error {
 		})
 	}
 
-	images, err := s.imageService.GetImagesByProjectID(c.Request().Context(), projectID)
+	images, err := h.service.GetImagesByProjectID(c.Request().Context(), projectID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -119,8 +117,8 @@ func (s *Server) getProjectImagesHandler(c echo.Context) error {
 	})
 }
 
-// deleteImageHandler handles DELETE /api/v1/images/{id} requests.
-func (s *Server) deleteImageHandler(c echo.Context) error {
+// DeleteImage handles DELETE /api/v1/images/{id} requests.
+func (h *DefaultHandler) DeleteImage(c echo.Context) error {
 	imageID := c.Param("id")
 	if imageID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -137,7 +135,7 @@ func (s *Server) deleteImageHandler(c echo.Context) error {
 		})
 	}
 
-	err := s.imageService.DeleteImage(c.Request().Context(), imageID)
+	err := h.service.DeleteImage(c.Request().Context(), imageID)
 	if err != nil {
 		// Check if it's a not found error
 		if err.Error() == "no rows in result set" {
@@ -156,7 +154,7 @@ func (s *Server) deleteImageHandler(c echo.Context) error {
 }
 
 // validateCreateImageRequest validates the create image request.
-func validateCreateImageRequest(req *image.CreateImageRequest) []ValidationErrorDetail {
+func (h *DefaultHandler) validateCreateImageRequest(req *CreateImageRequest) []ValidationErrorDetail {
 	var errors []ValidationErrorDetail
 
 	// Validate project ID

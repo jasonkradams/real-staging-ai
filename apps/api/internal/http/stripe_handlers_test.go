@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
@@ -16,8 +17,8 @@ func TestStripeWebhookHandler(t *testing.T) {
 	// Setup
 	e := echo.New()
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	testCases := []struct {
 		name         string
@@ -101,8 +102,8 @@ func TestStripeWebhookHandler(t *testing.T) {
 func TestHandleSubscriptionCreated(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -125,8 +126,8 @@ func TestHandleSubscriptionCreated(t *testing.T) {
 func TestHandleSubscriptionUpdated(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -149,8 +150,8 @@ func TestHandleSubscriptionUpdated(t *testing.T) {
 func TestHandleSubscriptionDeleted(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -173,8 +174,8 @@ func TestHandleSubscriptionDeleted(t *testing.T) {
 func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":           "in_test",
@@ -198,8 +199,8 @@ func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 func TestHandleInvoicePaymentFailed(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":           "in_test",
@@ -223,8 +224,8 @@ func TestHandleInvoicePaymentFailed(t *testing.T) {
 func TestHandleCustomerCreated(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":    "cus_test",
@@ -247,8 +248,8 @@ func TestHandleCustomerCreated(t *testing.T) {
 func TestHandleCustomerUpdated(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":    "cus_test",
@@ -271,8 +272,8 @@ func TestHandleCustomerUpdated(t *testing.T) {
 func TestHandleCustomerDeleted(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":      "cus_test",

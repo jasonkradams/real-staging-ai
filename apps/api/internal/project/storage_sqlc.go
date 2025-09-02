@@ -1,4 +1,4 @@
-package storage
+package project
 
 import (
 	"context"
@@ -7,27 +7,27 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
-// ProjectStorageSQLc handles the database operations for projects using sqlc-generated queries.
-type ProjectStorageSQLc struct {
+// StorageSQLc handles the database operations for projects using sqlc-generated queries.
+type StorageSQLc struct {
 	queries *queries.Queries
 }
 
-// Ensure ProjectStorageSQLc implements ProjectRepository interface.
-var _ ProjectRepository = (*ProjectStorageSQLc)(nil)
+// Ensure StorageSQLc implements Repository interface.
+var _ Repository = (*StorageSQLc)(nil)
 
-// NewProjectStorageSQLc creates a new ProjectStorageSQLc instance.
-func NewProjectStorageSQLc(db *DB) *ProjectStorageSQLc {
-	return &ProjectStorageSQLc{
-		queries: queries.New(db.pool),
+// NewStorageSQLc creates a new ProjectStorageSQLc instance.
+func NewStorageSQLc(db *storage.DB) *StorageSQLc {
+	return &StorageSQLc{
+		queries: queries.New(db.Pool),
 	}
 }
 
 // CreateProject creates a new project in the database.
-func (s *ProjectStorageSQLc) CreateProject(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+func (s *StorageSQLc) CreateProject(ctx context.Context, p *Project, userID string) (*Project, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -49,8 +49,8 @@ func (s *ProjectStorageSQLc) CreateProject(ctx context.Context, p *project.Proje
 		return nil, fmt.Errorf("unable to create project: %w", err)
 	}
 
-	// Convert back to project.Project
-	createdProject := &project.Project{
+	// Convert back to Project
+	createdProject := &Project{
 		ID:        uuid.UUID(result.ID.Bytes).String(),
 		Name:      result.Name,
 		UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -62,15 +62,15 @@ func (s *ProjectStorageSQLc) CreateProject(ctx context.Context, p *project.Proje
 
 // GetProjects retrieves all projects from the database.
 // TODO: Filter by user_id when auth middleware is implemented.
-func (s *ProjectStorageSQLc) GetProjects(ctx context.Context) ([]project.Project, error) {
+func (s *StorageSQLc) GetProjects(ctx context.Context) ([]Project, error) {
 	results, err := s.queries.GetAllProjects(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get projects: %w", err)
 	}
 
-	projects := make([]project.Project, 0, len(results))
+	projects := make([]Project, 0, len(results))
 	for _, result := range results {
-		p := project.Project{
+		p := Project{
 			ID:        uuid.UUID(result.ID.Bytes).String(),
 			Name:      result.Name,
 			UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -83,7 +83,7 @@ func (s *ProjectStorageSQLc) GetProjects(ctx context.Context) ([]project.Project
 }
 
 // GetProjectsByUserID retrieves all projects for a specific user.
-func (s *ProjectStorageSQLc) GetProjectsByUserID(ctx context.Context, userID string) ([]project.Project, error) {
+func (s *StorageSQLc) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -100,9 +100,9 @@ func (s *ProjectStorageSQLc) GetProjectsByUserID(ctx context.Context, userID str
 		return nil, fmt.Errorf("unable to get projects for user: %w", err)
 	}
 
-	projects := make([]project.Project, 0, len(results))
+	projects := make([]Project, 0, len(results))
 	for _, result := range results {
-		p := project.Project{
+		p := Project{
 			ID:        uuid.UUID(result.ID.Bytes).String(),
 			Name:      result.Name,
 			UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -116,7 +116,7 @@ func (s *ProjectStorageSQLc) GetProjectsByUserID(ctx context.Context, userID str
 
 // GetProjectByID retrieves a specific project by its ID.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorageSQLc) GetProjectByID(ctx context.Context, projectID string) (*project.Project, error) {
+func (s *StorageSQLc) GetProjectByID(ctx context.Context, projectID string) (*Project, error) {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid project ID format: %w", err)
@@ -136,7 +136,7 @@ func (s *ProjectStorageSQLc) GetProjectByID(ctx context.Context, projectID strin
 		return nil, fmt.Errorf("unable to get project by ID: %w", err)
 	}
 
-	p := &project.Project{
+	p := &Project{
 		ID:        uuid.UUID(result.ID.Bytes).String(),
 		Name:      result.Name,
 		UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -147,24 +147,24 @@ func (s *ProjectStorageSQLc) GetProjectByID(ctx context.Context, projectID strin
 }
 
 // GetProjectByIDAndUserID retrieves a specific project by its ID and user ID.
-func (s *ProjectStorageSQLc) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*project.Project, error) {
-	// For now, we'll get the project and check the user ID manually
+func (s *StorageSQLc) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*Project, error) {
+	// For now, we'll get the p and check the user ID manually
 	// This could be optimized with a dedicated query if needed
-	project, err := s.GetProjectByID(ctx, projectID)
+	p, err := s.GetProjectByID(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	if project.UserID != userID {
+	if p.UserID != userID {
 		return nil, pgx.ErrNoRows // Project not found for this user
 	}
 
-	return project, nil
+	return p, nil
 }
 
 // UpdateProject updates an existing project's name.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorageSQLc) UpdateProject(ctx context.Context, projectID, name string) (*project.Project, error) {
+func (s *StorageSQLc) UpdateProject(ctx context.Context, projectID, name string) (*Project, error) {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid project ID format: %w", err)
@@ -189,7 +189,7 @@ func (s *ProjectStorageSQLc) UpdateProject(ctx context.Context, projectID, name 
 		return nil, fmt.Errorf("unable to update project: %w", err)
 	}
 
-	p := &project.Project{
+	p := &Project{
 		ID:        uuid.UUID(result.ID.Bytes).String(),
 		Name:      result.Name,
 		UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -200,7 +200,7 @@ func (s *ProjectStorageSQLc) UpdateProject(ctx context.Context, projectID, name 
 }
 
 // UpdateProjectByUserID updates an existing project's name with user ownership verification.
-func (s *ProjectStorageSQLc) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*project.Project, error) {
+func (s *StorageSQLc) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid project ID format: %w", err)
@@ -237,7 +237,7 @@ func (s *ProjectStorageSQLc) UpdateProjectByUserID(ctx context.Context, projectI
 		return nil, fmt.Errorf("unable to update project: %w", err)
 	}
 
-	p := &project.Project{
+	p := &Project{
 		ID:        uuid.UUID(result.ID.Bytes).String(),
 		Name:      result.Name,
 		UserID:    uuid.UUID(result.UserID.Bytes).String(),
@@ -249,7 +249,7 @@ func (s *ProjectStorageSQLc) UpdateProjectByUserID(ctx context.Context, projectI
 
 // DeleteProject deletes a project from the database.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorageSQLc) DeleteProject(ctx context.Context, projectID string) error {
+func (s *StorageSQLc) DeleteProject(ctx context.Context, projectID string) error {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return fmt.Errorf("invalid project ID format: %w", err)
@@ -274,7 +274,7 @@ func (s *ProjectStorageSQLc) DeleteProject(ctx context.Context, projectID string
 }
 
 // DeleteProjectByUserID deletes a project from the database with user ownership verification.
-func (s *ProjectStorageSQLc) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
+func (s *StorageSQLc) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return fmt.Errorf("invalid project ID format: %w", err)
@@ -311,7 +311,7 @@ func (s *ProjectStorageSQLc) DeleteProjectByUserID(ctx context.Context, projectI
 }
 
 // CountProjectsByUserID returns the number of projects for a specific user.
-func (s *ProjectStorageSQLc) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
+func (s *StorageSQLc) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return 0, fmt.Errorf("invalid user ID format: %w", err)

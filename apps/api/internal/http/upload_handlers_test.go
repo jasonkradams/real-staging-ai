@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
+	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/testutil"
 )
@@ -260,7 +261,7 @@ func TestPresignUpload(t *testing.T) {
 			testutil.SeedTables(t, db.GetPool())
 
 			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := testutil.CreateMockImageService(t)
+			mockImageService := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 			// Prepare request body
@@ -311,7 +312,7 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	testCases := []struct {
@@ -414,7 +415,7 @@ func TestPresignUpload_Integration(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	// Test with valid request

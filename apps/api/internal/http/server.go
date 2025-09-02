@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 
 	"github.com/virtual-staging-ai/api/internal/auth"
-	"github.com/virtual-staging-ai/api/internal/services"
+	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
@@ -18,12 +18,13 @@ type Server struct {
 	echo         *echo.Echo
 	db           *storage.DB
 	s3Service    storage.S3Service
-	imageService *services.ImageService
+	imageHandler *ImageHandler
+	imageService image.Service
 	authConfig   *auth.Auth0Config
 }
 
 // NewServer creates and configures a new Echo server.
-func NewServer(db *storage.DB, s3Service storage.S3Service, imageService *services.ImageService) *Server {
+func NewServer(db *storage.DB, s3Service storage.S3Service, imageService image.Service) *Server {
 	e := echo.New()
 
 	// Add OpenTelemetry middleware
@@ -37,7 +38,9 @@ func NewServer(db *storage.DB, s3Service storage.S3Service, imageService *servic
 	// Initialize Auth0 config
 	authConfig := auth.NewAuth0Config()
 
-	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig}
+	imageHandler := NewImageHandler(imageService)
+
+	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, imageHandler: imageHandler}
 
 	// Register routes
 	api := e.Group("/api/v1")
@@ -61,10 +64,10 @@ func NewServer(db *storage.DB, s3Service storage.S3Service, imageService *servic
 	protected.POST("/uploads/presign", s.presignUploadHandler)
 
 	// Image routes
-	protected.POST("/images", s.createImageHandler)
-	protected.GET("/images/:id", s.getImageHandler)
-	protected.DELETE("/images/:id", s.deleteImageHandler)
-	protected.GET("/projects/:project_id/images", s.getProjectImagesHandler)
+	protected.POST("/images", s.imageHandler.createImageHandler)
+	protected.GET("/images/:id", s.imageHandler.getImageHandler)
+	protected.DELETE("/images/:id", s.imageHandler.deleteImageHandler)
+	protected.GET("/projects/:project_id/images", s.imageHandler.getProjectImagesHandler)
 
 	// SSE routes
 	protected.GET("/events", s.eventsHandler)
@@ -76,7 +79,7 @@ func NewServer(db *storage.DB, s3Service storage.S3Service, imageService *servic
 }
 
 // NewTestServer creates a new Echo server for testing without Auth0 middleware.
-func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService *services.ImageService) *Server {
+func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService image.Service) *Server {
 	e := echo.New()
 
 	// Add basic middleware (no Auth0 for testing)
@@ -84,7 +87,9 @@ func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService *se
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil}
+	imageHandler := NewImageHandler(imageService)
+
+	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil, imageHandler: imageHandler}
 
 	// Register routes without authentication
 	api := e.Group("/api/v1")
@@ -104,10 +109,10 @@ func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService *se
 	api.POST("/uploads/presign", s.presignUploadHandler)
 
 	// Image routes
-	api.POST("/images", s.createImageHandler)
-	api.GET("/images/:id", s.getImageHandler)
-	api.DELETE("/images/:id", s.deleteImageHandler)
-	api.GET("/projects/:project_id/images", s.getProjectImagesHandler)
+	api.POST("/images", s.imageHandler.createImageHandler)
+	api.GET("/images/:id", s.imageHandler.getImageHandler)
+	api.DELETE("/images/:id", s.imageHandler.deleteImageHandler)
+	api.GET("/projects/:project_id/images", s.imageHandler.getProjectImagesHandler)
 
 	// SSE routes
 	api.GET("/events", s.eventsHandler)

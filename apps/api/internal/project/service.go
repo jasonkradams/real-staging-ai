@@ -1,43 +1,36 @@
-package services
+package project
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
-// ProjectService provides business logic for project operations.
+// Service provides business logic for project operations.
 // It demonstrates proper dependency injection for testability.
-type ProjectService struct {
-	projectRepo storage.ProjectRepository
+type Service struct {
+	projectRepo Repository
 	s3Service   storage.S3Service
 }
 
-// NewProjectService creates a new ProjectService with the provided dependencies.
-func NewProjectService(projectRepo storage.ProjectRepository, s3Service storage.S3Service) *ProjectService {
-	return &ProjectService{
+// NewService creates a new Service with the provided dependencies.
+func NewService(projectRepo Repository, s3Service storage.S3Service) *Service {
+	return &Service{
 		projectRepo: projectRepo,
 		s3Service:   s3Service,
 	}
 }
 
-// CreateProjectRequest represents the input for creating a project.
-type CreateProjectRequest struct {
-	Name   string `json:"name" validate:"required,min=1,max=100"`
-	UserID string `json:"user_id" validate:"required"`
-}
-
-// ProjectWithUploadURL represents a project with an associated upload URL.
-type ProjectWithUploadURL struct {
-	Project   *project.Project `json:"project"`
-	UploadURL string           `json:"upload_url,omitempty"`
-	FileKey   string           `json:"file_key,omitempty"`
+// WithUploadURL represents a project with an associated upload URL.
+type WithUploadURL struct {
+	Project   *Project `json:"project"`
+	UploadURL string   `json:"upload_url,omitempty"`
+	FileKey   string   `json:"file_key,omitempty"`
 }
 
 // CreateProject creates a new project and optionally generates an upload URL.
-func (s *ProjectService) CreateProject(ctx context.Context, req *CreateProjectRequest) (*project.Project, error) {
+func (s *Service) CreateProject(ctx context.Context, req *CreateRequest) (*Project, error) {
 	// Validate input
 	if req.Name == "" {
 		return nil, fmt.Errorf("project name is required")
@@ -47,7 +40,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *CreateProjectRe
 	}
 
 	// Create project entity
-	proj := &project.Project{
+	proj := &Project{
 		Name: req.Name,
 	}
 
@@ -61,7 +54,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *CreateProjectRe
 }
 
 // CreateProjectWithUpload creates a project and generates a presigned upload URL.
-func (s *ProjectService) CreateProjectWithUpload(ctx context.Context, req *CreateProjectRequest, filename, contentType string, fileSize int64) (*ProjectWithUploadURL, error) {
+func (s *Service) CreateProjectWithUpload(ctx context.Context, req *CreateRequest, filename, contentType string, fileSize int64) (*WithUploadURL, error) {
 	// Create the project first
 	createdProject, err := s.CreateProject(ctx, req)
 	if err != nil {
@@ -72,12 +65,12 @@ func (s *ProjectService) CreateProjectWithUpload(ctx context.Context, req *Creat
 	uploadResult, err := s.s3Service.GeneratePresignedUploadURL(ctx, req.UserID, filename, contentType, fileSize)
 	if err != nil {
 		// Project was created but upload URL failed - in a real system you might want to handle this differently
-		return &ProjectWithUploadURL{
+		return &WithUploadURL{
 			Project: createdProject,
 		}, fmt.Errorf("project created but failed to generate upload URL: %w", err)
 	}
 
-	return &ProjectWithUploadURL{
+	return &WithUploadURL{
 		Project:   createdProject,
 		UploadURL: uploadResult.UploadURL,
 		FileKey:   uploadResult.FileKey,
@@ -85,7 +78,7 @@ func (s *ProjectService) CreateProjectWithUpload(ctx context.Context, req *Creat
 }
 
 // GetProjectsByUser retrieves all projects for a specific user.
-func (s *ProjectService) GetProjectsByUser(ctx context.Context, userID string) ([]project.Project, error) {
+func (s *Service) GetProjectsByUser(ctx context.Context, userID string) ([]Project, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
@@ -99,7 +92,7 @@ func (s *ProjectService) GetProjectsByUser(ctx context.Context, userID string) (
 }
 
 // GetProjectByID retrieves a project by its ID, ensuring the user owns it.
-func (s *ProjectService) GetProjectByID(ctx context.Context, projectID, userID string) (*project.Project, error) {
+func (s *Service) GetProjectByID(ctx context.Context, projectID, userID string) (*Project, error) {
 	if projectID == "" {
 		return nil, fmt.Errorf("project ID is required")
 	}
@@ -116,7 +109,7 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, projectID, userID s
 }
 
 // UpdateProject updates a project's name, ensuring the user owns it.
-func (s *ProjectService) UpdateProject(ctx context.Context, projectID, userID, newName string) (*project.Project, error) {
+func (s *Service) UpdateProject(ctx context.Context, projectID, userID, newName string) (*Project, error) {
 	if projectID == "" {
 		return nil, fmt.Errorf("project ID is required")
 	}
@@ -136,7 +129,7 @@ func (s *ProjectService) UpdateProject(ctx context.Context, projectID, userID, n
 }
 
 // DeleteProject deletes a project, ensuring the user owns it.
-func (s *ProjectService) DeleteProject(ctx context.Context, projectID, userID string) error {
+func (s *Service) DeleteProject(ctx context.Context, projectID, userID string) error {
 	if projectID == "" {
 		return fmt.Errorf("project ID is required")
 	}
@@ -153,7 +146,7 @@ func (s *ProjectService) DeleteProject(ctx context.Context, projectID, userID st
 }
 
 // GetProjectStats returns statistics about a user's projects.
-func (s *ProjectService) GetProjectStats(ctx context.Context, userID string) (*ProjectStats, error) {
+func (s *Service) GetProjectStats(ctx context.Context, userID string) (*ProjectStats, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}

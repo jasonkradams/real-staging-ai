@@ -1,28 +1,28 @@
-package storage
+package project
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
-// ProjectStorage handles the database operations for projects.
-type ProjectStorage struct {
-	db *DB
+// Storage handles the database operations for projects.
+type Storage struct {
+	db *storage.DB
 }
 
-// Ensure ProjectStorage implements ProjectRepository interface.
-var _ ProjectRepository = (*ProjectStorage)(nil)
+// Ensure Storage implements Repository interface.
+var _ Repository = (*Storage)(nil)
 
-// NewProjectStorage creates a new ProjectStorage instance.
-func NewProjectStorage(db *DB) *ProjectStorage {
-	return &ProjectStorage{db: db}
+// NewStorage creates a new Storage instance.
+func NewStorage(db *storage.DB) *Storage {
+	return &Storage{db: db}
 }
 
 // CreateProject creates a new project in the database.
-func (s *ProjectStorage) CreateProject(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+func (s *Storage) CreateProject(ctx context.Context, p *Project, userID string) (*Project, error) {
 	query := `
 		INSERT INTO projects (name, user_id)
 		VALUES ($1, $2)
@@ -34,7 +34,7 @@ func (s *ProjectStorage) CreateProject(ctx context.Context, p *project.Project, 
 		userID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
 	}
 
-	err := s.db.pool.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.UserID, &p.CreatedAt)
+	err := s.db.Pool.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create project: %w", err)
 	}
@@ -46,21 +46,21 @@ func (s *ProjectStorage) CreateProject(ctx context.Context, p *project.Project, 
 
 // GetProjects retrieves all projects from the database.
 // TODO: Filter by user_id when auth middleware is implemented.
-func (s *ProjectStorage) GetProjects(ctx context.Context) ([]project.Project, error) {
+func (s *Storage) GetProjects(ctx context.Context) ([]Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
 		ORDER BY created_at DESC
 	`
-	rows, err := s.db.pool.Query(ctx, query)
+	rows, err := s.db.Pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get projects: %w", err)
 	}
 	defer rows.Close()
 
-	var projects []project.Project
+	var projects []Project
 	for rows.Next() {
-		var p project.Project
+		var p Project
 		err := rows.Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan project: %w", err)
@@ -76,22 +76,22 @@ func (s *ProjectStorage) GetProjects(ctx context.Context) ([]project.Project, er
 }
 
 // GetProjectsByUserID retrieves all projects for a specific user.
-func (s *ProjectStorage) GetProjectsByUserID(ctx context.Context, userID string) ([]project.Project, error) {
+func (s *Storage) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
 		WHERE user_id = $1
 		ORDER BY created_at DESC
 	`
-	rows, err := s.db.pool.Query(ctx, query, userID)
+	rows, err := s.db.Pool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get projects for user: %w", err)
 	}
 	defer rows.Close()
 
-	var projects []project.Project
+	var projects []Project
 	for rows.Next() {
-		var p project.Project
+		var p Project
 		err := rows.Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan project: %w", err)
@@ -107,15 +107,15 @@ func (s *ProjectStorage) GetProjectsByUserID(ctx context.Context, userID string)
 }
 
 // GetProjectByIDAndUserID retrieves a specific project by its ID and user ID.
-func (s *ProjectStorage) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*project.Project, error) {
+func (s *Storage) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
 		WHERE id = $1 AND user_id = $2
 	`
 
-	var p project.Project
-	err := s.db.pool.QueryRow(ctx, query, projectID, userID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	var p Project
+	err := s.db.Pool.QueryRow(ctx, query, projectID, userID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -127,13 +127,13 @@ func (s *ProjectStorage) GetProjectByIDAndUserID(ctx context.Context, projectID,
 }
 
 // DeleteProjectByUserID deletes a project from the database with user ownership verification.
-func (s *ProjectStorage) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
+func (s *Storage) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
 	query := `
 		DELETE FROM projects
 		WHERE id = $1 AND user_id = $2
 	`
 
-	result, err := s.db.pool.Exec(ctx, query, projectID, userID)
+	result, err := s.db.Pool.Exec(ctx, query, projectID, userID)
 	if err != nil {
 		return fmt.Errorf("unable to delete project: %w", err)
 	}
@@ -147,7 +147,7 @@ func (s *ProjectStorage) DeleteProjectByUserID(ctx context.Context, projectID, u
 }
 
 // CountProjectsByUserID returns the number of projects for a specific user.
-func (s *ProjectStorage) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
+func (s *Storage) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM projects
@@ -155,7 +155,7 @@ func (s *ProjectStorage) CountProjectsByUserID(ctx context.Context, userID strin
 	`
 
 	var count int64
-	err := s.db.pool.QueryRow(ctx, query, userID).Scan(&count)
+	err := s.db.Pool.QueryRow(ctx, query, userID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("unable to count projects for user: %w", err)
 	}
@@ -165,15 +165,15 @@ func (s *ProjectStorage) CountProjectsByUserID(ctx context.Context, userID strin
 
 // GetProjectByID retrieves a specific project by its ID.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorage) GetProjectByID(ctx context.Context, projectID string) (*project.Project, error) {
+func (s *Storage) GetProjectByID(ctx context.Context, projectID string) (*Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
 		WHERE id = $1
 	`
 
-	var p project.Project
-	err := s.db.pool.QueryRow(ctx, query, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	var p Project
+	err := s.db.Pool.QueryRow(ctx, query, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -185,7 +185,7 @@ func (s *ProjectStorage) GetProjectByID(ctx context.Context, projectID string) (
 }
 
 // UpdateProjectByUserID updates an existing project's name with user ownership verification.
-func (s *ProjectStorage) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*project.Project, error) {
+func (s *Storage) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
 	query := `
 		UPDATE projects
 		SET name = $3
@@ -193,8 +193,8 @@ func (s *ProjectStorage) UpdateProjectByUserID(ctx context.Context, projectID, u
 		RETURNING id, name, user_id, created_at
 	`
 
-	var p project.Project
-	err := s.db.pool.QueryRow(ctx, query, projectID, userID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	var p Project
+	err := s.db.Pool.QueryRow(ctx, query, projectID, userID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -207,7 +207,7 @@ func (s *ProjectStorage) UpdateProjectByUserID(ctx context.Context, projectID, u
 
 // UpdateProject updates an existing project's name.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorage) UpdateProject(ctx context.Context, projectID, name string) (*project.Project, error) {
+func (s *Storage) UpdateProject(ctx context.Context, projectID, name string) (*Project, error) {
 	query := `
 		UPDATE projects
 		SET name = $2
@@ -215,8 +215,8 @@ func (s *ProjectStorage) UpdateProject(ctx context.Context, projectID, name stri
 		RETURNING id, name, user_id, created_at
 	`
 
-	var p project.Project
-	err := s.db.pool.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	var p Project
+	err := s.db.Pool.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -229,13 +229,13 @@ func (s *ProjectStorage) UpdateProject(ctx context.Context, projectID, name stri
 
 // DeleteProject deletes a project from the database.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *ProjectStorage) DeleteProject(ctx context.Context, projectID string) error {
+func (s *Storage) DeleteProject(ctx context.Context, projectID string) error {
 	query := `
 		DELETE FROM projects
 		WHERE id = $1
 	`
 
-	result, err := s.db.pool.Exec(ctx, query, projectID)
+	result, err := s.db.Pool.Exec(ctx, query, projectID)
 	if err != nil {
 		return fmt.Errorf("unable to delete project: %w", err)
 	}

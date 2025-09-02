@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/virtual-staging-ai/api/internal/project"
-	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 type ErrorResponse struct {
@@ -33,7 +32,7 @@ type ProjectListResponse struct {
 }
 
 func (s *Server) createProjectHandler(c echo.Context) error {
-	var req project.CreateProjectRequest
+	var req project.CreateRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -55,7 +54,7 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		Name: req.Name,
 	}
 
-	projectStorage := storage.NewProjectStorage(s.db)
+	projectStorage := project.NewStorage(s.db)
 	// TODO: Get user ID from JWT token when auth middleware is implemented
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, userID)
@@ -70,7 +69,7 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 }
 
 func (s *Server) getProjectsHandler(c echo.Context) error {
-	projectStorage := storage.NewProjectStorage(s.db)
+	projectStorage := project.NewStorage(s.db)
 	projects, err := projectStorage.GetProjects(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -97,7 +96,7 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		})
 	}
 
-	projectStorage := storage.NewProjectStorage(s.db)
+	projectStorage := project.NewStorage(s.db)
 	project, err := projectStorage.GetProjectByID(c.Request().Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -126,7 +125,7 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	var req project.UpdateProjectRequest
+	var req project.UpdateRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -143,7 +142,7 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	projectStorage := storage.NewProjectStorage(s.db)
+	projectStorage := project.NewStorage(s.db)
 	updatedProject, err := projectStorage.UpdateProject(c.Request().Context(), projectID, req.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -172,7 +171,7 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		})
 	}
 
-	projectStorage := storage.NewProjectStorage(s.db)
+	projectStorage := project.NewStorage(s.db)
 	err := projectStorage.DeleteProject(c.Request().Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -191,7 +190,7 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 }
 
 // Validation helpers
-func validateCreateProjectRequest(req *project.CreateProjectRequest) []ValidationErrorDetail {
+func validateCreateProjectRequest(req *project.CreateRequest) []ValidationErrorDetail {
 	var errors []ValidationErrorDetail
 
 	name := strings.TrimSpace(req.Name)
@@ -210,7 +209,7 @@ func validateCreateProjectRequest(req *project.CreateProjectRequest) []Validatio
 	return errors
 }
 
-func validateUpdateProjectRequest(req *project.UpdateProjectRequest) []ValidationErrorDetail {
+func validateUpdateProjectRequest(req *project.UpdateRequest) []ValidationErrorDetail {
 	var errors []ValidationErrorDetail
 
 	name := strings.TrimSpace(req.Name)

@@ -1,6 +1,6 @@
 //go:build integration
 
-package storage_test
+package project_test
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	projectStorage := storage.NewProjectStorage(db)
+	projectStorage := project.NewStorage(db)
 
 	// Create a new project
 	newProject := &project.Project{
@@ -48,7 +48,7 @@ func TestProjectStorage_GetProjects(t *testing.T) {
 	testutil.TruncateTables(t, db.GetPool())
 	testutil.SeedTables(t, db.GetPool())
 
-	projectStorage := storage.NewProjectStorage(db)
+	projectStorage := project.NewStorage(db)
 
 	// We have seeded the database with one project, so we expect to get one project back.
 	projects, err := projectStorage.GetProjects(ctx)

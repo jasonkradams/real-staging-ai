@@ -17,6 +17,13 @@ test: ## Run unit tests
 	@echo "--> Running worker tests"
 	cd apps/worker && go test -v ./...
 
+test-cover: ## Run unit tests with coverage
+	@echo "Running unit tests with coverage..."
+	@echo "--> Running api tests"
+	cd apps/api && go test -cover ./...
+	@echo "--> Running worker tests"
+	cd apps/worker && go test -cover ./...
+
 migrate-test: migrate-down-all ## Run database migrations on the test database
 	@echo "Running database migrations on the test database..."
 	$(MAKE) migrate-up-all

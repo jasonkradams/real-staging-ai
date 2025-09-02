@@ -1,6 +1,6 @@
 //go:build integration
 
-package storage
+package project_test
 
 import (
 	"context"
@@ -12,18 +12,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
 
 	testCases := []struct {
@@ -72,14 +73,14 @@ func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 
 	projects, err := storage.GetProjects(ctx)
 	require.NoError(t, err)
@@ -92,14 +93,14 @@ func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -151,14 +152,14 @@ func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 
 	testCases := []struct {
 		name         string
@@ -204,14 +205,14 @@ func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 
 func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 
 	testCases := []struct {
 		name         string
@@ -259,14 +260,14 @@ func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 
 func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -349,7 +350,7 @@ func seedTables(t *testing.T, pool *pgxpool.Pool) {
 
 func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -381,7 +382,7 @@ func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 			truncateTables(t, db.GetPool())
 			seedTables(t, db.GetPool())
 
-			storage := NewProjectStorageSQLc(db)
+			storage := project.NewStorageSQLc(db)
 
 			err := storage.DeleteProject(ctx, tc.projectID)
 
@@ -403,7 +404,7 @@ func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 
 func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -447,7 +448,7 @@ func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 			truncateTables(t, db.GetPool())
 			seedTables(t, db.GetPool())
 
-			storage := NewProjectStorageSQLc(db)
+			storage := project.NewStorageSQLc(db)
 
 			err := storage.DeleteProjectByUserID(ctx, tc.projectID, tc.userID)
 
@@ -474,14 +475,14 @@ func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -526,14 +527,14 @@ func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_Integration(t *testing.T) {
 	ctx := context.Background()
-	db, err := NewDB(ctx)
+	db, err := storage.NewDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
 	truncateTables(t, db.GetPool())
 	seedTables(t, db.GetPool())
 
-	storage := NewProjectStorageSQLc(db)
+	storage := project.NewStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	// Test complete workflow

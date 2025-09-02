@@ -11,7 +11,7 @@ import (
 
 // DB represents a connection to the database.
 type DB struct {
-	pool *pgxpool.Pool
+	Pool *pgxpool.Pool
 }
 
 // NewDB creates a new DB instance.
@@ -26,15 +26,15 @@ func NewDB(ctx context.Context) (*DB, error) {
 		return nil, fmt.Errorf("unable to create connection pool: %w", err)
 	}
 
-	return &DB{pool: pool}, nil
+	return &DB{Pool: pool}, nil
 }
 
 // Close closes the database connection.
 func (db *DB) Close() {
-	db.pool.Close()
+	db.Pool.Close()
 }
 
 // GetPool returns the underlying pgxpool.Pool.
 func (db *DB) GetPool() *pgxpool.Pool {
-	return db.pool
+	return db.Pool
 }

@@ -1,4 +1,4 @@
-package storage
+package image
 
 import (
 	"context"
@@ -6,25 +6,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
-// ImageRepositoryImpl implements the ImageRepository interface.
-type ImageRepositoryImpl struct {
-	db *DB
+// DefaultRepository implements the Repository interface.
+type DefaultRepository struct {
+	db *storage.DB
 }
 
-// Ensure ImageRepositoryImpl implements ImageRepository interface.
-var _ ImageRepository = (*ImageRepositoryImpl)(nil)
+// Ensure DefaultRepository implements Repository interface.
+var _ Repository = (*DefaultRepository)(nil)
 
-// NewImageRepository creates a new ImageRepositoryImpl instance.
-func NewImageRepository(db *DB) *ImageRepositoryImpl {
-	return &ImageRepositoryImpl{db: db}
+// NewDefaultRepository creates a new DefaultRepository instance.
+func NewDefaultRepository(db *storage.DB) *DefaultRepository {
+	return &DefaultRepository{db: db}
 }
 
 // CreateImage creates a new image in the database.
-func (r *ImageRepositoryImpl) CreateImage(ctx context.Context, projectID string, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) CreateImage(ctx context.Context, projectID string, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
@@ -61,8 +62,8 @@ func (r *ImageRepositoryImpl) CreateImage(ctx context.Context, projectID string,
 }
 
 // GetImageByID retrieves a specific image by its ID.
-func (r *ImageRepositoryImpl) GetImageByID(ctx context.Context, imageID string) (*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) GetImageByID(ctx context.Context, imageID string) (*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -78,8 +79,8 @@ func (r *ImageRepositoryImpl) GetImageByID(ctx context.Context, imageID string) 
 }
 
 // GetImagesByProjectID retrieves all images for a specific project.
-func (r *ImageRepositoryImpl) GetImagesByProjectID(ctx context.Context, projectID string) ([]*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) GetImagesByProjectID(ctx context.Context, projectID string) ([]*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
@@ -95,8 +96,8 @@ func (r *ImageRepositoryImpl) GetImagesByProjectID(ctx context.Context, projectI
 }
 
 // UpdateImageStatus updates an image's processing status.
-func (r *ImageRepositoryImpl) UpdateImageStatus(ctx context.Context, imageID string, status string) (*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) UpdateImageStatus(ctx context.Context, imageID string, status string) (*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -115,8 +116,8 @@ func (r *ImageRepositoryImpl) UpdateImageStatus(ctx context.Context, imageID str
 }
 
 // UpdateImageWithStagedURL updates an image with the staged URL and status.
-func (r *ImageRepositoryImpl) UpdateImageWithStagedURL(ctx context.Context, imageID string, stagedURL string, status string) (*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) UpdateImageWithStagedURL(ctx context.Context, imageID string, stagedURL string, status string) (*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -136,8 +137,8 @@ func (r *ImageRepositoryImpl) UpdateImageWithStagedURL(ctx context.Context, imag
 }
 
 // UpdateImageWithError updates an image with an error status and message.
-func (r *ImageRepositoryImpl) UpdateImageWithError(ctx context.Context, imageID string, errorMsg string) (*queries.Image, error) {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) UpdateImageWithError(ctx context.Context, imageID string, errorMsg string) (*queries.Image, error) {
+	q := queries.New(r.db.GetPool())
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -156,8 +157,8 @@ func (r *ImageRepositoryImpl) UpdateImageWithError(ctx context.Context, imageID 
 }
 
 // DeleteImage deletes an image from the database.
-func (r *ImageRepositoryImpl) DeleteImage(ctx context.Context, imageID string) error {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) DeleteImage(ctx context.Context, imageID string) error {
+	q := queries.New(r.db.GetPool())
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -173,8 +174,8 @@ func (r *ImageRepositoryImpl) DeleteImage(ctx context.Context, imageID string) e
 }
 
 // DeleteImagesByProjectID deletes all images for a specific project.
-func (r *ImageRepositoryImpl) DeleteImagesByProjectID(ctx context.Context, projectID string) error {
-	q := queries.New(r.db.pool)
+func (r *DefaultRepository) DeleteImagesByProjectID(ctx context.Context, projectID string) error {
+	q := queries.New(r.db.GetPool())
 
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {

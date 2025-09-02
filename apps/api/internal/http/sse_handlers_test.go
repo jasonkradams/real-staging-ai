@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
@@ -20,7 +21,7 @@ func TestSendSSEEvent(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
 
 	// Test event with ID and event type
@@ -48,7 +49,7 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
 
 	// Test event without ID and event type
@@ -69,7 +70,7 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 func TestBroadcastJobUpdate(t *testing.T) {
 	// Setup
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
 
 	// Test with all parameters
@@ -91,7 +92,7 @@ func TestEventsHandler_InitialConnection(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
 
 	// Create a channel to signal when we want to stop the handler

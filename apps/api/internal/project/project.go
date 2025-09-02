@@ -13,12 +13,13 @@ type Project struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// CreateProjectRequest represents the request payload for creating a project.
-type CreateProjectRequest struct {
-	Name string `json:"name" validate:"required,min=1,max=100"`
+// CreateRequest represents the input for creating a project.
+type CreateRequest struct {
+	Name   string `json:"name" validate:"required,min=1,max=100"`
+	UserID string `json:"user_id" validate:"required"`
 }
 
-// UpdateProjectRequest represents the request payload for updating a project.
-type UpdateProjectRequest struct {
+// UpdateRequest represents the request payload for updating a project.
+type UpdateRequest struct {
 	Name string `json:"name" validate:"required,min=1,max=100"`
 }

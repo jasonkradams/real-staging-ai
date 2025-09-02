@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/virtual-staging-ai/api/internal/http"
-	"github.com/virtual-staging-ai/api/internal/services"
+	"github.com/virtual-staging-ai/api/internal/image"
+	"github.com/virtual-staging-ai/api/internal/job"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
@@ -31,11 +32,11 @@ func main() {
 	}
 
 	// Create repositories
-	imageRepo := storage.NewImageRepository(db)
-	jobRepo := storage.NewJobRepository(db)
+	imageRepo := image.NewDefaultRepository(db)
+	jobRepo := job.NewRepository(db)
 
 	// Create services
-	imageService := services.NewImageService(imageRepo, jobRepo)
+	imageService := image.NewDefaultService(imageRepo, jobRepo)
 
 	s := http.NewServer(db, s3Service, imageService)
 	if err := s.Start(":8080"); err != nil {

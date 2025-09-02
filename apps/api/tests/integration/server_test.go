@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
+	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/testutil"
@@ -27,7 +28,7 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	testCases := []struct {
@@ -80,7 +81,7 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
@@ -113,7 +114,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	testutil.SeedTables(t, db.GetPool())
 
 	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := testutil.CreateMockImageService(t)
+	mockImageService := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
 
 	// Test case 1: Get an existing project

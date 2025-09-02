@@ -221,7 +221,7 @@ components:
           description: Timestamp when the project was created
           example: "2023-12-07T10:30:00Z"
 
-    CreateProjectRequest:
+    CreateRequest:
       type: object
       required:
         - name
@@ -233,7 +233,7 @@ components:
           description: Name of the project
           example: "Living Room Staging"
 
-    UpdateProjectRequest:
+    UpdateRequest:
       type: object
       required:
         - name
