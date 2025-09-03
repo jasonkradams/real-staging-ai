@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 func TestCreateProjectRoute(t *testing.T) {
@@ -25,12 +25,13 @@ func TestCreateProjectRoute(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	testCases := []struct {
 		name         string
@@ -79,12 +80,13 @@ func TestGetProjectsRoute(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
 
@@ -113,12 +115,13 @@ func TestGetProjectByIDRoute(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	// Test case 1: Get an existing project
 	t.Run("success: happy path", func(t *testing.T) {

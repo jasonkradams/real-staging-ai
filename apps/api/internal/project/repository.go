@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+//go:generate go run github.com/matryer/moq@v0.5.3 -out repository_mock.go . Repository
+
 // Repository defines the interface for project data access operations.
 type Repository interface {
 	// CreateProject creates a new project in the database.

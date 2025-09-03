@@ -16,7 +16,6 @@ import (
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 type PresignUploadRequest struct {
@@ -257,12 +256,13 @@ func TestPresignUpload(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup clean database state
-			testutil.TruncateTables(t, db.GetPool())
-			testutil.SeedTables(t, db.GetPool())
+			storage.TruncateAllTables(context.Background(), db.GetPool())
+			storage.SeedDatabase(context.Background(), db.GetPool())
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Prepare request body
 			var body []byte
@@ -308,12 +308,13 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	testCases := []struct {
 		name                 string
@@ -411,12 +412,13 @@ func TestPresignUpload_Integration(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	// Test with valid request
 	requestBody := PresignUploadRequest{

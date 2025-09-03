@@ -9,16 +9,18 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/testutil"
+	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestStripeWebhookHandler(t *testing.T) {
 	// Setup
 	e := echo.New()
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	testCases := []struct {
 		name         string
@@ -101,9 +103,10 @@ func TestStripeWebhookHandler(t *testing.T) {
 
 func TestHandleSubscriptionCreated(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -119,15 +122,16 @@ func TestHandleSubscriptionCreated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleSubscriptionCreated(context.Background(), event)
+	err = server.handleSubscriptionCreated(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleSubscriptionUpdated(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -143,15 +147,16 @@ func TestHandleSubscriptionUpdated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleSubscriptionUpdated(context.Background(), event)
+	err = server.handleSubscriptionUpdated(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleSubscriptionDeleted(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":       "sub_test",
@@ -167,15 +172,16 @@ func TestHandleSubscriptionDeleted(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleSubscriptionDeleted(context.Background(), event)
+	err = server.handleSubscriptionDeleted(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":           "in_test",
@@ -192,15 +198,16 @@ func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleInvoicePaymentSucceeded(context.Background(), event)
+	err = server.handleInvoicePaymentSucceeded(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleInvoicePaymentFailed(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":           "in_test",
@@ -217,15 +224,16 @@ func TestHandleInvoicePaymentFailed(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleInvoicePaymentFailed(context.Background(), event)
+	err = server.handleInvoicePaymentFailed(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleCustomerCreated(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":    "cus_test",
@@ -241,15 +249,16 @@ func TestHandleCustomerCreated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleCustomerCreated(context.Background(), event)
+	err = server.handleCustomerCreated(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleCustomerUpdated(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":    "cus_test",
@@ -265,15 +274,16 @@ func TestHandleCustomerUpdated(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleCustomerUpdated(context.Background(), event)
+	err = server.handleCustomerUpdated(context.Background(), event)
 	assert.NoError(t, err)
 }
 
 func TestHandleCustomerDeleted(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: imageServiceMock}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	eventData := map[string]interface{}{
 		"id":      "cus_test",
@@ -288,6 +298,6 @@ func TestHandleCustomerDeleted(t *testing.T) {
 			"object": eventData,
 		},
 	}
-	err := server.handleCustomerDeleted(context.Background(), event)
+	err = server.handleCustomerDeleted(context.Background(), event)
 	assert.NoError(t, err)
 }

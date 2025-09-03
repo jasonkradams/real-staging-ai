@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,8 +10,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/testutil"
+	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestSendSSEEvent(t *testing.T) {
@@ -20,9 +22,10 @@ func TestSendSSEEvent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	// Test event with ID and event type
 	event := SSEEvent{
@@ -31,7 +34,7 @@ func TestSendSSEEvent(t *testing.T) {
 		Data:  map[string]string{"message": "test message"},
 	}
 
-	err := server.sendSSEEvent(c, event)
+	err = server.sendSSEEvent(c, event)
 
 	// Assertions
 	assert.NoError(t, err)
@@ -48,16 +51,17 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	// Test event without ID and event type
 	event := SSEEvent{
 		Data: map[string]int{"count": 42},
 	}
 
-	err := server.sendSSEEvent(c, event)
+	err = server.sendSSEEvent(c, event)
 
 	// Assertions
 	assert.NoError(t, err)
@@ -69,9 +73,10 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 
 func TestBroadcastJobUpdate(t *testing.T) {
 	// Setup
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	// Test with all parameters
 	errorMsg := "test error"
@@ -91,9 +96,10 @@ func TestEventsHandler_InitialConnection(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := &Server{s3Service: mockS3Service, imageService: mockImageService}
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
 
 	// Create a channel to signal when we want to stop the handler
 	done := make(chan bool)

@@ -19,7 +19,6 @@ import (
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 type ProjectResponse struct {
@@ -145,12 +144,13 @@ func TestCreateProject_Handlers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup clean database state
-			testutil.TruncateTables(t, db.GetPool())
-			testutil.SeedTables(t, db.GetPool())
+			storage.TruncateAllTables(ctx, db.GetPool())
+			storage.SeedDatabase(ctx, db.GetPool())
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Prepare request body
 			var body []byte
@@ -206,8 +206,8 @@ func TestGetProjects_Handlers(t *testing.T) {
 		{
 			name: "success: get projects with data",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -222,7 +222,7 @@ func TestGetProjects_Handlers(t *testing.T) {
 		{
 			name: "success: empty project list",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
 				// Only seed users, no projects
 				_, err := db.GetPool().Exec(context.Background(),
 					`INSERT INTO users (id, auth0_sub, role) VALUES
@@ -244,9 +244,10 @@ func TestGetProjects_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
@@ -282,8 +283,8 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 	defer db.Close()
 
 	// Setup data for all tests
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
 	testCases := []struct {
 		name           string
@@ -326,9 +327,10 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -380,8 +382,8 @@ func TestUpdateProject_Handlers(t *testing.T) {
 				"name": "Updated Project Name",
 			},
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -399,8 +401,8 @@ func TestUpdateProject_Handlers(t *testing.T) {
 				"name": "Updated Project Name",
 			},
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
@@ -412,8 +414,8 @@ func TestUpdateProject_Handlers(t *testing.T) {
 				"name": "Updated Project Name",
 			},
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
@@ -425,8 +427,8 @@ func TestUpdateProject_Handlers(t *testing.T) {
 				"name": "",
 			},
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
@@ -438,8 +440,8 @@ func TestUpdateProject_Handlers(t *testing.T) {
 				"name": strings.Repeat("A", 101),
 			},
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
@@ -451,9 +453,10 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Prepare request body
 			body, err := json.Marshal(tc.requestBody)
@@ -506,8 +509,8 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			name:      "success: delete existing project",
 			projectID: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusNoContent,
 			validate: func(t *testing.T, db *storage.DB) {
@@ -524,8 +527,8 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			name:      "fail: project not found",
 			projectID: "550e8400-e29b-41d4-a716-446655440000",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
@@ -534,8 +537,8 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			name:      "fail: invalid UUID format",
 			projectID: "invalid-uuid",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(ctx, db.GetPool())
+				storage.SeedDatabase(ctx, db.GetPool())
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
@@ -547,9 +550,10 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			require.NoError(t, err)
+			imageServiceMock := &image.ServiceMock{}
+			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
@@ -587,12 +591,13 @@ func TestProjectCRUDFlow_Handlers(t *testing.T) {
 	defer db.Close()
 
 	// Setup clean state
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	// Step 1: Create a project
 	createBody := map[string]interface{}{

@@ -19,9 +19,9 @@ import (
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
+// Test response types
 type ProjectResponse struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -49,12 +49,93 @@ type ValidationErrorDetail struct {
 	Message string `json:"message"`
 }
 
-func TestCreateProject(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
+// Test helper functions
+type testSetup struct {
+	db     *storage.DB
+	server http.Handler
+}
 
+func setupTest(t *testing.T) *testSetup {
+	t.Helper()
+
+	db, err := storage.NewDB(context.Background())
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	storage.ResetDatabase(context.Background(), db.GetPool())
+	storage.SeedDatabase(context.Background(), db.GetPool())
+
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
+
+	return &testSetup{
+		db:     db,
+		server: server,
+	}
+}
+
+func setupTestWithCleanDB(t *testing.T) *testSetup {
+	t.Helper()
+
+	setup := setupTest(t)
+	storage.TruncateAllTables(context.Background(), setup.db.GetPool())
+	storage.SeedDatabase(context.Background(), setup.db.GetPool())
+
+	return setup
+}
+
+func makeRequest(t *testing.T, server http.Handler, method, url string, body interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	var reqBody []byte
+	var err error
+
+	if body != nil {
+		if str, ok := body.(string); ok {
+			reqBody = []byte(str)
+		} else {
+			reqBody, err = json.Marshal(body)
+			require.NoError(t, err)
+		}
+	}
+
+	req := httptest.NewRequest(method, url, bytes.NewReader(reqBody))
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	// TODO: Add Authorization header when auth middleware is implemented
+
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	return rec
+}
+
+func assertErrorResponse(t *testing.T, rec *httptest.ResponseRecorder, expectedError string) {
+	t.Helper()
+
+	if expectedError == "" {
+		return
+	}
+
+	var errResp ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &errResp)
+	require.NoError(t, err)
+	assert.Equal(t, expectedError, errResp.Error)
+	assert.NotEmpty(t, errResp.Message)
+}
+
+func assertValidUUID(t *testing.T, id string) {
+	t.Helper()
+	_, err := uuid.Parse(id)
+	assert.NoError(t, err)
+}
+
+// Test cases
+func TestCreateProject(t *testing.T) {
 	testCases := []struct {
 		name           string
 		requestBody    interface{}
@@ -76,11 +157,8 @@ func TestCreateProject(t *testing.T) {
 				assert.Equal(t, "Living Room Staging", project.Name)
 				assert.NotEmpty(t, project.UserID)
 				assert.NotZero(t, project.CreatedAt)
-				// Validate UUID format
-				_, err = uuid.Parse(project.ID)
-				assert.NoError(t, err)
-				_, err = uuid.Parse(project.UserID)
-				assert.NoError(t, err)
+				assertValidUUID(t, project.ID)
+				assertValidUUID(t, project.UserID)
 			},
 		},
 		{
@@ -144,45 +222,14 @@ func TestCreateProject(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup clean database state
-			testutil.TruncateTables(t, db.GetPool())
-			testutil.SeedTables(t, db.GetPool())
+			// Use fresh setup for each test case to avoid interference
+			testSetup := setupTestWithCleanDB(t)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			rec := makeRequest(t, testSetup.server, http.MethodPost, "/api/v1/projects", tc.requestBody)
 
-			// Prepare request body
-			var body []byte
-			if str, ok := tc.requestBody.(string); ok {
-				body = []byte(str)
-			} else {
-				body, err = json.Marshal(tc.requestBody)
-				require.NoError(t, err)
-			}
-
-			// Create request
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", bytes.NewReader(body))
-			req.Header.Set("Content-Type", "application/json")
-			// TODO: Add Authorization header when auth middleware is implemented
-			rec := httptest.NewRecorder()
-
-			// Execute request
-			server.ServeHTTP(rec, req)
-
-			// Assert status code
 			assert.Equal(t, tc.expectedStatus, rec.Code)
+			assertErrorResponse(t, rec, tc.expectedError)
 
-			// Assert error response if expected
-			if tc.expectedError != "" {
-				var errResp ErrorResponse
-				err := json.Unmarshal(rec.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedError, errResp.Error)
-				assert.NotEmpty(t, errResp.Message)
-			}
-
-			// Run custom validation if provided
 			if tc.validate != nil {
 				tc.validate(t, rec.Body.Bytes())
 			}
@@ -191,11 +238,6 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestGetProjects(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
-
 	testCases := []struct {
 		name           string
 		setupData      func(t *testing.T, db *storage.DB)
@@ -206,8 +248,8 @@ func TestGetProjects(t *testing.T) {
 		{
 			name: "success: get projects with data",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
+				storage.TruncateAllTables(context.Background(), db.GetPool())
+				storage.SeedDatabase(context.Background(), db.GetPool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -222,7 +264,7 @@ func TestGetProjects(t *testing.T) {
 		{
 			name: "success: empty project list",
 			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
+				storage.TruncateAllTables(context.Background(), db.GetPool())
 				// Only seed users, no projects
 				_, err := db.GetPool().Exec(context.Background(),
 					`INSERT INTO users (id, auth0_sub, role) VALUES
@@ -241,33 +283,14 @@ func TestGetProjects(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup data
-			tc.setupData(t, db)
+			setup := setupTest(t)
+			tc.setupData(t, setup.db)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+			rec := makeRequest(t, setup.server, http.MethodGet, "/api/v1/projects", nil)
 
-			// Create request
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
-			// TODO: Add Authorization header when auth middleware is implemented
-			rec := httptest.NewRecorder()
-
-			// Execute request
-			server.ServeHTTP(rec, req)
-
-			// Assert status code
 			assert.Equal(t, tc.expectedStatus, rec.Code)
+			assertErrorResponse(t, rec, tc.expectedError)
 
-			// Assert error response if expected
-			if tc.expectedError != "" {
-				var errResp ErrorResponse
-				err := json.Unmarshal(rec.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedError, errResp.Error)
-			}
-
-			// Run custom validation
 			if tc.validate != nil {
 				tc.validate(t, rec.Body.Bytes())
 			}
@@ -276,14 +299,7 @@ func TestGetProjects(t *testing.T) {
 }
 
 func TestGetProjectByID(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
-
-	// Setup data for all tests
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	setup := setupTest(t)
 
 	testCases := []struct {
 		name           string
@@ -326,31 +342,12 @@ func TestGetProjectByID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
-
-			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
-			req := httptest.NewRequest(http.MethodGet, url, nil)
-			// TODO: Add Authorization header when auth middleware is implemented
-			rec := httptest.NewRecorder()
+			rec := makeRequest(t, setup.server, http.MethodGet, url, nil)
 
-			// Execute request
-			server.ServeHTTP(rec, req)
-
-			// Assert status code
 			assert.Equal(t, tc.expectedStatus, rec.Code)
+			assertErrorResponse(t, rec, tc.expectedError)
 
-			// Assert error response if expected
-			if tc.expectedError != "" {
-				var errResp ErrorResponse
-				err := json.Unmarshal(rec.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedError, errResp.Error)
-			}
-
-			// Run custom validation
 			if tc.validate != nil {
 				tc.validate(t, rec.Body.Bytes())
 			}
@@ -359,16 +356,10 @@ func TestGetProjectByID(t *testing.T) {
 }
 
 func TestUpdateProject(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
-
 	testCases := []struct {
 		name           string
 		projectID      string
 		requestBody    interface{}
-		setupData      func(t *testing.T, db *storage.DB)
 		expectedStatus int
 		expectedError  string
 		validate       func(t *testing.T, response []byte)
@@ -378,10 +369,6 @@ func TestUpdateProject(t *testing.T) {
 			projectID: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
 			requestBody: map[string]interface{}{
 				"name": "Updated Project Name",
-			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -398,10 +385,6 @@ func TestUpdateProject(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"name": "Updated Project Name",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
 		},
@@ -410,10 +393,6 @@ func TestUpdateProject(t *testing.T) {
 			projectID: "invalid-uuid",
 			requestBody: map[string]interface{}{
 				"name": "Updated Project Name",
-			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
@@ -424,10 +403,6 @@ func TestUpdateProject(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"name": "",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
 		},
@@ -437,10 +412,6 @@ func TestUpdateProject(t *testing.T) {
 			requestBody: map[string]interface{}{
 				"name": strings.Repeat("A", 101),
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
 		},
@@ -448,39 +419,14 @@ func TestUpdateProject(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup data
-			tc.setupData(t, db)
+			setup := setupTestWithCleanDB(t)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
-
-			// Prepare request body
-			body, err := json.Marshal(tc.requestBody)
-			require.NoError(t, err)
-
-			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
-			req := httptest.NewRequest(http.MethodPut, url, bytes.NewReader(body))
-			req.Header.Set("Content-Type", "application/json")
-			// TODO: Add Authorization header when auth middleware is implemented
-			rec := httptest.NewRecorder()
+			rec := makeRequest(t, setup.server, http.MethodPut, url, tc.requestBody)
 
-			// Execute request
-			server.ServeHTTP(rec, req)
-
-			// Assert status code
 			assert.Equal(t, tc.expectedStatus, rec.Code)
+			assertErrorResponse(t, rec, tc.expectedError)
 
-			// Assert error response if expected
-			if tc.expectedError != "" {
-				var errResp ErrorResponse
-				err := json.Unmarshal(rec.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedError, errResp.Error)
-			}
-
-			// Run custom validation
 			if tc.validate != nil {
 				tc.validate(t, rec.Body.Bytes())
 			}
@@ -489,26 +435,16 @@ func TestUpdateProject(t *testing.T) {
 }
 
 func TestDeleteProject(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
-
 	testCases := []struct {
 		name           string
 		projectID      string
-		setupData      func(t *testing.T, db *storage.DB)
 		expectedStatus int
 		expectedError  string
 		validate       func(t *testing.T, db *storage.DB)
 	}{
 		{
-			name:      "success: delete existing project",
-			projectID: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
+			name:           "success: delete existing project",
+			projectID:      "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
 			expectedStatus: http.StatusNoContent,
 			validate: func(t *testing.T, db *storage.DB) {
 				// Verify project is deleted
@@ -521,22 +457,14 @@ func TestDeleteProject(t *testing.T) {
 			},
 		},
 		{
-			name:      "fail: project not found",
-			projectID: "550e8400-e29b-41d4-a716-446655440000",
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
+			name:           "fail: project not found",
+			projectID:      "550e8400-e29b-41d4-a716-446655440000",
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
 		},
 		{
-			name:      "fail: invalid UUID format",
-			projectID: "invalid-uuid",
-			setupData: func(t *testing.T, db *storage.DB) {
-				testutil.TruncateTables(t, db.GetPool())
-				testutil.SeedTables(t, db.GetPool())
-			},
+			name:           "fail: invalid UUID format",
+			projectID:      "invalid-uuid",
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
 		},
@@ -544,36 +472,16 @@ func TestDeleteProject(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup data
-			tc.setupData(t, db)
+			setup := setupTestWithCleanDB(t)
 
-			mockS3Service := testutil.CreateMockS3Service(t)
-			mockImageService := &image.ServiceMock{}
-			server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
-
-			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
-			req := httptest.NewRequest(http.MethodDelete, url, nil)
-			// TODO: Add Authorization header when auth middleware is implemented
-			rec := httptest.NewRecorder()
+			rec := makeRequest(t, setup.server, http.MethodDelete, url, nil)
 
-			// Execute request
-			server.ServeHTTP(rec, req)
-
-			// Assert status code
 			assert.Equal(t, tc.expectedStatus, rec.Code)
+			assertErrorResponse(t, rec, tc.expectedError)
 
-			// Assert error response if expected
-			if tc.expectedError != "" {
-				var errResp ErrorResponse
-				err := json.Unmarshal(rec.Body.Bytes(), &errResp)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedError, errResp.Error)
-			}
-
-			// Run custom validation
 			if tc.validate != nil {
-				tc.validate(t, db)
+				tc.validate(t, setup.db)
 			}
 		})
 	}
@@ -581,43 +489,22 @@ func TestDeleteProject(t *testing.T) {
 
 // TestProjectCRUDFlow tests the complete CRUD workflow
 func TestProjectCRUDFlow(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
-	require.NoError(t, err)
-	defer db.Close()
-
-	// Setup clean state
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
-
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	setup := setupTest(t)
 
 	// Step 1: Create a project
 	createBody := map[string]interface{}{
 		"name": "CRUD Test Project",
 	}
-	body, err := json.Marshal(createBody)
-	require.NoError(t, err)
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec := makeRequest(t, setup.server, http.MethodPost, "/api/v1/projects", createBody)
 	require.Equal(t, http.StatusCreated, rec.Code)
 
 	var createdProject ProjectResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &createdProject)
+	err := json.Unmarshal(rec.Body.Bytes(), &createdProject)
 	require.NoError(t, err)
 	assert.Equal(t, "CRUD Test Project", createdProject.Name)
 
 	// Step 2: Get the project by ID
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/projects/"+createdProject.ID, nil)
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec = makeRequest(t, setup.server, http.MethodGet, "/api/v1/projects/"+createdProject.ID, nil)
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	var retrievedProject ProjectResponse
@@ -630,14 +517,7 @@ func TestProjectCRUDFlow(t *testing.T) {
 	updateBody := map[string]interface{}{
 		"name": "Updated CRUD Test Project",
 	}
-	body, err = json.Marshal(updateBody)
-	require.NoError(t, err)
-
-	req = httptest.NewRequest(http.MethodPut, "/api/v1/projects/"+createdProject.ID, bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec = makeRequest(t, setup.server, http.MethodPut, "/api/v1/projects/"+createdProject.ID, updateBody)
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	var updatedProject ProjectResponse
@@ -647,10 +527,7 @@ func TestProjectCRUDFlow(t *testing.T) {
 	assert.Equal(t, "Updated CRUD Test Project", updatedProject.Name)
 
 	// Step 4: List projects (should include our updated project)
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec = makeRequest(t, setup.server, http.MethodGet, "/api/v1/projects", nil)
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	var projectList ProjectListResponse
@@ -670,16 +547,10 @@ func TestProjectCRUDFlow(t *testing.T) {
 	assert.Equal(t, "Updated CRUD Test Project", foundProject.Name)
 
 	// Step 5: Delete the project
-	req = httptest.NewRequest(http.MethodDelete, "/api/v1/projects/"+createdProject.ID, nil)
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec = makeRequest(t, setup.server, http.MethodDelete, "/api/v1/projects/"+createdProject.ID, nil)
 	require.Equal(t, http.StatusNoContent, rec.Code)
 
 	// Step 6: Verify project is deleted
-	req = httptest.NewRequest(http.MethodGet, "/api/v1/projects/"+createdProject.ID, nil)
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-
+	rec = makeRequest(t, setup.server, http.MethodGet, "/api/v1/projects/"+createdProject.ID, nil)
 	require.Equal(t, http.StatusNotFound, rec.Code)
 }

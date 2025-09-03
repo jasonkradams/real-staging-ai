@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 func TestCreateProjectRoute_HTTP(t *testing.T) {
@@ -24,12 +24,13 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(context.Background(), db.GetPool())
+	storage.SeedDatabase(context.Background(), db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	testCases := []struct {
 		name         string
@@ -77,12 +78,13 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(context.Background(), db.GetPool())
+	storage.SeedDatabase(context.Background(), db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
 	rec := httptest.NewRecorder()
 
@@ -110,12 +112,13 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(context.Background(), db.GetPool())
+	storage.SeedDatabase(context.Background(), db.GetPool())
 
-	mockS3Service := testutil.CreateMockS3Service(t)
-	mockImageService := &image.ServiceMock{}
-	server := httpLib.NewTestServer(db, mockS3Service, mockImageService)
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	require.NoError(t, err)
+	imageServiceMock := &image.ServiceMock{}
+	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
 	// Test case 1: Get an existing project
 	t.Run("success: happy path", func(t *testing.T) {

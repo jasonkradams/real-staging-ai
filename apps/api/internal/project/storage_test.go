@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/testutil"
 )
 
 func TestProjectStorage_CreateProject(t *testing.T) {
@@ -19,8 +18,8 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
 	projectStorage := project.NewStorage(db)
 
@@ -45,8 +44,8 @@ func TestProjectStorage_GetProjects(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	testutil.TruncateTables(t, db.GetPool())
-	testutil.SeedTables(t, db.GetPool())
+	storage.TruncateAllTables(ctx, db.GetPool())
+	storage.SeedDatabase(ctx, db.GetPool())
 
 	projectStorage := project.NewStorage(db)
 
