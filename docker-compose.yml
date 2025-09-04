@@ -21,6 +21,8 @@ services:
     build: ./apps/api
     environment:
       - APP_ENV=dev
+      - AUTH0_DOMAIN=dev-sleeping-pandas.us.auth0.com
+      - AUTH0_AUDIENCE=https://api.virtualstaging.local
       - PGHOST=postgres
       - PGPORT=5432
       - PGUSER=postgres

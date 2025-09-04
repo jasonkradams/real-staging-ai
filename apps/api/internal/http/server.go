@@ -16,7 +16,7 @@ import (
 // Server holds the dependencies for the HTTP server.
 type Server struct {
 	echo         *echo.Echo
-	db           *storage.DB
+	db           storage.Database
 	s3Service    storage.S3Service
 	imageHandler *ImageHandler
 	imageService image.Service
@@ -24,7 +24,7 @@ type Server struct {
 }
 
 // NewServer creates and configures a new Echo server.
-func NewServer(db *storage.DB, s3Service storage.S3Service, imageService image.Service) *Server {
+func NewServer(db storage.Database, s3Service storage.S3Service, imageService image.Service) *Server {
 	e := echo.New()
 
 	// Add OpenTelemetry middleware
@@ -81,7 +81,7 @@ func NewServer(db *storage.DB, s3Service storage.S3Service, imageService image.S
 }
 
 // NewTestServer creates a new Echo server for testing without Auth0 middleware.
-func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService image.Service) *Server {
+func NewTestServer(db storage.Database, s3Service storage.S3Service, imageService image.Service) *Server {
 	e := echo.New()
 
 	// Add basic middleware (no Auth0 for testing)

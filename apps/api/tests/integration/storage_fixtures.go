@@ -5,17 +5,16 @@ package integration
 import (
 	"context"
 	_ "embed"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// This path is relative to the internal/storage directory
-var seedSQL, _ = os.ReadFile("../../testdata/seed.sql")
+//go:embed testdata/seed.sql
+var seedSQL string
 
 // SeedDatabase inserts test data into the database
 func SeedDatabase(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, string(seedSQL))
+	_, err := pool.Exec(ctx, seedSQL)
 	return err
 }
 

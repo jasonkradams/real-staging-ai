@@ -12,20 +12,20 @@ import (
 
 // JobRepositoryImpl implements the JobRepository interface.
 type JobRepositoryImpl struct {
-	db *storage.DB
+	db storage.Database
 }
 
 // Ensure JobRepositoryImpl implements JobRepository interface.
 var _ Repository = (*JobRepositoryImpl)(nil)
 
-// NewRepository creates a new JobRepositoryImpl instance.
-func NewRepository(db *storage.DB) *JobRepositoryImpl {
+// NewDefaultRepository creates a new JobRepositoryImpl instance.
+func NewDefaultRepository(db storage.Database) *JobRepositoryImpl {
 	return &JobRepositoryImpl{db: db}
 }
 
 // CreateJob creates a new job in the database.
 func (r *JobRepositoryImpl) CreateJob(ctx context.Context, imageID string, jobType string, payloadJSON []byte) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -46,7 +46,7 @@ func (r *JobRepositoryImpl) CreateJob(ctx context.Context, imageID string, jobTy
 
 // GetJobByID retrieves a specific job by its ID.
 func (r *JobRepositoryImpl) GetJobByID(ctx context.Context, jobID string) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -63,7 +63,7 @@ func (r *JobRepositoryImpl) GetJobByID(ctx context.Context, jobID string) (*quer
 
 // GetJobsByImageID retrieves all jobs for a specific image.
 func (r *JobRepositoryImpl) GetJobsByImageID(ctx context.Context, imageID string) ([]*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
@@ -80,7 +80,7 @@ func (r *JobRepositoryImpl) GetJobsByImageID(ctx context.Context, imageID string
 
 // UpdateJobStatus updates a job's status.
 func (r *JobRepositoryImpl) UpdateJobStatus(ctx context.Context, jobID string, status string) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *JobRepositoryImpl) UpdateJobStatus(ctx context.Context, jobID string, s
 
 // StartJob marks a job as processing and sets the started timestamp.
 func (r *JobRepositoryImpl) StartJob(ctx context.Context, jobID string) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -117,7 +117,7 @@ func (r *JobRepositoryImpl) StartJob(ctx context.Context, jobID string) (*querie
 
 // CompleteJob marks a job as completed and sets the finished timestamp.
 func (r *JobRepositoryImpl) CompleteJob(ctx context.Context, jobID string) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -134,7 +134,7 @@ func (r *JobRepositoryImpl) CompleteJob(ctx context.Context, jobID string) (*que
 
 // FailJob marks a job as failed with an error message and sets the finished timestamp.
 func (r *JobRepositoryImpl) FailJob(ctx context.Context, jobID string, errorMsg string) (*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -154,7 +154,7 @@ func (r *JobRepositoryImpl) FailJob(ctx context.Context, jobID string, errorMsg 
 
 // GetPendingJobs retrieves a limited number of pending jobs.
 func (r *JobRepositoryImpl) GetPendingJobs(ctx context.Context, limit int) ([]*queries.Job, error) {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobs, err := q.GetPendingJobs(ctx, int32(limit))
 	if err != nil {
@@ -166,7 +166,7 @@ func (r *JobRepositoryImpl) GetPendingJobs(ctx context.Context, limit int) ([]*q
 
 // DeleteJob deletes a job from the database.
 func (r *JobRepositoryImpl) DeleteJob(ctx context.Context, jobID string) error {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *JobRepositoryImpl) DeleteJob(ctx context.Context, jobID string) error {
 
 // DeleteJobsByImageID deletes all jobs for a specific image.
 func (r *JobRepositoryImpl) DeleteJobsByImageID(ctx context.Context, imageID string) error {
-	q := queries.New(r.db.Pool)
+	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {

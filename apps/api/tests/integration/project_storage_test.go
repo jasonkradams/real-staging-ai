@@ -14,12 +14,12 @@ import (
 func TestProjectStorage_CreateProject(t *testing.T) {
 	// Setup
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	assert.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	projectStorage := project.NewStorage(db)
 
@@ -40,12 +40,12 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 func TestProjectStorage_GetProjects(t *testing.T) {
 	// Setup
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	assert.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	projectStorage := project.NewStorage(db)
 

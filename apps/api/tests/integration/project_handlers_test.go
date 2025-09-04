@@ -50,7 +50,7 @@ type ValidationErrorDetail struct {
 
 func TestCreateProject_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -144,8 +144,8 @@ func TestCreateProject_Handlers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup clean database state
-			TruncateAllTables(ctx, db.GetPool())
-			SeedDatabase(ctx, db.GetPool())
+			TruncateAllTables(ctx, db.Pool())
+			SeedDatabase(ctx, db.Pool())
 
 			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
@@ -192,22 +192,22 @@ func TestCreateProject_Handlers(t *testing.T) {
 
 func TestGetProjects_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
 	testCases := []struct {
 		name           string
-		setupData      func(t *testing.T, db *storage.DB)
+		setupData      func(t *testing.T, db storage.Database)
 		expectedStatus int
 		expectedError  string
 		validate       func(t *testing.T, response []byte)
 	}{
 		{
 			name: "success: get projects with data",
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -221,10 +221,10 @@ func TestGetProjects_Handlers(t *testing.T) {
 		},
 		{
 			name: "success: empty project list",
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
 				// Only seed users, no projects
-				_, err := db.GetPool().Exec(context.Background(),
+				_, err := db.Pool().Exec(context.Background(),
 					`INSERT INTO users (id, auth0_sub, role) VALUES
 					('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'auth0|testuser', 'user')`)
 				require.NoError(t, err)
@@ -278,13 +278,13 @@ func TestGetProjects_Handlers(t *testing.T) {
 
 func TestGetProjectByID_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
 	// Setup data for all tests
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	testCases := []struct {
 		name           string
@@ -362,7 +362,7 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 
 func TestUpdateProject_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -370,7 +370,7 @@ func TestUpdateProject_Handlers(t *testing.T) {
 		name           string
 		projectID      string
 		requestBody    any
-		setupData      func(t *testing.T, db *storage.DB)
+		setupData      func(t *testing.T, db storage.Database)
 		expectedStatus int
 		expectedError  string
 		validate       func(t *testing.T, response []byte)
@@ -381,9 +381,9 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			requestBody: map[string]any{
 				"name": "Updated Project Name",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
@@ -400,9 +400,9 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			requestBody: map[string]any{
 				"name": "Updated Project Name",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
@@ -413,9 +413,9 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			requestBody: map[string]any{
 				"name": "Updated Project Name",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
@@ -426,9 +426,9 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			requestBody: map[string]any{
 				"name": "",
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
@@ -439,9 +439,9 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			requestBody: map[string]any{
 				"name": strings.Repeat("A", 101),
 			},
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  "validation_failed",
@@ -493,30 +493,30 @@ func TestUpdateProject_Handlers(t *testing.T) {
 
 func TestDeleteProject_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
 	testCases := []struct {
 		name           string
 		projectID      string
-		setupData      func(t *testing.T, db *storage.DB)
+		setupData      func(t *testing.T, db storage.Database)
 		expectedStatus int
 		expectedError  string
-		validate       func(t *testing.T, db *storage.DB)
+		validate       func(t *testing.T, db storage.Database)
 	}{
 		{
 			name:      "success: delete existing project",
 			projectID: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusNoContent,
-			validate: func(t *testing.T, db *storage.DB) {
+			validate: func(t *testing.T, db storage.Database) {
 				// Verify project is deleted
 				var count int
-				err := db.GetPool().QueryRow(context.Background(),
+				err := db.Pool().QueryRow(context.Background(),
 					"SELECT COUNT(*) FROM projects WHERE id = $1",
 					"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12").Scan(&count)
 				require.NoError(t, err)
@@ -526,9 +526,9 @@ func TestDeleteProject_Handlers(t *testing.T) {
 		{
 			name:      "fail: project not found",
 			projectID: "550e8400-e29b-41d4-a716-446655440000",
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedError:  "not_found",
@@ -536,9 +536,9 @@ func TestDeleteProject_Handlers(t *testing.T) {
 		{
 			name:      "fail: invalid UUID format",
 			projectID: "invalid-uuid",
-			setupData: func(t *testing.T, db *storage.DB) {
-				TruncateAllTables(ctx, db.GetPool())
-				SeedDatabase(ctx, db.GetPool())
+			setupData: func(t *testing.T, db storage.Database) {
+				TruncateAllTables(ctx, db.Pool())
+				SeedDatabase(ctx, db.Pool())
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "bad_request",
@@ -586,13 +586,13 @@ func TestDeleteProject_Handlers(t *testing.T) {
 // TestProjectCRUDFlow tests the complete CRUD workflow
 func TestProjectCRUDFlow_Handlers(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
 	// Setup clean state
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)

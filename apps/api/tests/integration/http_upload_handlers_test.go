@@ -52,8 +52,7 @@ type PresignUploadResponse struct {
 }
 
 func TestPresignUpload(t *testing.T) {
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -281,8 +280,8 @@ func TestPresignUpload(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup clean database state
-			TruncateAllTables(context.Background(), db.GetPool())
-			SeedDatabase(context.Background(), db.GetPool())
+			TruncateAllTables(context.Background(), db.Pool())
+			SeedDatabase(context.Background(), db.Pool())
 
 			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
@@ -329,12 +328,12 @@ func TestPresignUpload(t *testing.T) {
 
 func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
 	require.NoError(t, err)
@@ -433,12 +432,12 @@ func TestPresignUpload_Integration(t *testing.T) {
 	t.Skip("Integration test requires AWS S3 setup")
 
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	require.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(ctx, db.GetPool())
-	SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.Pool())
+	SeedDatabase(ctx, db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)

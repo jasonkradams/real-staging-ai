@@ -20,9 +20,9 @@ type StorageSQLc struct {
 var _ Repository = (*StorageSQLc)(nil)
 
 // NewStorageSQLc creates a new ProjectStorageSQLc instance.
-func NewStorageSQLc(db *storage.DB) *StorageSQLc {
+func NewStorageSQLc(db storage.Database) *StorageSQLc {
 	return &StorageSQLc{
-		queries: queries.New(db.Pool),
+		queries: queries.New(db),
 	}
 }
 

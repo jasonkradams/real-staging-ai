@@ -14,7 +14,7 @@ import (
 // main is the entrypoint of the API server.
 func main() {
 	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDefaultDatabase()
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 
 	// Create repositories
 	imageRepo := image.NewDefaultRepository(db)
-	jobRepo := job.NewRepository(db)
+	jobRepo := job.NewDefaultRepository(db)
 
 	// Create services
 	imageService := image.NewDefaultService(imageRepo, jobRepo)

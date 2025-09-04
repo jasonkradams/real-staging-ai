@@ -50,13 +50,13 @@ endif
 
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
-	docker compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/testdata:/seed postgres-client -f /seed/seed.sql
+	docker compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/tests/integration/testdata:/seed postgres-client -f /seed/seed.sql
 
 test-integration: migrate-test ## Run integration tests
 	@echo "Starting test infrastructure..."
 	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test localstack
 	@echo "Running integration tests..."
-	cd apps/api && go test -tags=integration -p 1 ./...
+	cd apps/api && PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable go test -tags=integration -p 1 ./...
 	cd apps/worker && go test -tags=integration -p 1 ./...
 	@echo "Stopping test infrastructure..."
 	docker compose -f docker-compose.test.yml down
@@ -95,7 +95,7 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 
 up: ## Run the api server
 	@echo Running API server...
-	docker compose -f docker-compose.yml up -d --remove-orphans api
+	docker compose -f docker-compose.yml up --build -d --remove-orphans api
 
 down: ## Stop the api server
 	@echo Stopping API server...

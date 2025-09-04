@@ -10,14 +10,14 @@ import (
 
 // Storage handles the database operations for projects.
 type Storage struct {
-	db *storage.DB
+	db storage.Database
 }
 
 // Ensure Storage implements Repository interface.
 var _ Repository = (*Storage)(nil)
 
 // NewStorage creates a new Storage instance.
-func NewStorage(db *storage.DB) *Storage {
+func NewStorage(db storage.Database) *Storage {
 	return &Storage{db: db}
 }
 
@@ -34,7 +34,7 @@ func (s *Storage) CreateProject(ctx context.Context, p *Project, userID string) 
 		userID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
 	}
 
-	err := s.db.Pool.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.UserID, &p.CreatedAt)
+	err := s.db.QueryRow(ctx, query, p.Name, userID).Scan(&p.ID, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create project: %w", err)
 	}
@@ -52,7 +52,7 @@ func (s *Storage) GetProjects(ctx context.Context) ([]Project, error) {
 		FROM projects
 		ORDER BY created_at DESC
 	`
-	rows, err := s.db.Pool.Query(ctx, query)
+	rows, err := s.db.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get projects: %w", err)
 	}
@@ -83,7 +83,7 @@ func (s *Storage) GetProjectsByUserID(ctx context.Context, userID string) ([]Pro
 		WHERE user_id = $1
 		ORDER BY created_at DESC
 	`
-	rows, err := s.db.Pool.Query(ctx, query, userID)
+	rows, err := s.db.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get projects for user: %w", err)
 	}
@@ -115,7 +115,7 @@ func (s *Storage) GetProjectByIDAndUserID(ctx context.Context, projectID, userID
 	`
 
 	var p Project
-	err := s.db.Pool.QueryRow(ctx, query, projectID, userID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	err := s.db.QueryRow(ctx, query, projectID, userID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -133,7 +133,7 @@ func (s *Storage) DeleteProjectByUserID(ctx context.Context, projectID, userID s
 		WHERE id = $1 AND user_id = $2
 	`
 
-	result, err := s.db.Pool.Exec(ctx, query, projectID, userID)
+	result, err := s.db.Exec(ctx, query, projectID, userID)
 	if err != nil {
 		return fmt.Errorf("unable to delete project: %w", err)
 	}
@@ -155,7 +155,7 @@ func (s *Storage) CountProjectsByUserID(ctx context.Context, userID string) (int
 	`
 
 	var count int64
-	err := s.db.Pool.QueryRow(ctx, query, userID).Scan(&count)
+	err := s.db.QueryRow(ctx, query, userID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("unable to count projects for user: %w", err)
 	}
@@ -173,7 +173,7 @@ func (s *Storage) GetProjectByID(ctx context.Context, projectID string) (*Projec
 	`
 
 	var p Project
-	err := s.db.Pool.QueryRow(ctx, query, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	err := s.db.QueryRow(ctx, query, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -194,7 +194,7 @@ func (s *Storage) UpdateProjectByUserID(ctx context.Context, projectID, userID, 
 	`
 
 	var p Project
-	err := s.db.Pool.QueryRow(ctx, query, projectID, userID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	err := s.db.QueryRow(ctx, query, projectID, userID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -216,7 +216,7 @@ func (s *Storage) UpdateProject(ctx context.Context, projectID, name string) (*P
 	`
 
 	var p Project
-	err := s.db.Pool.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
+	err := s.db.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, pgx.ErrNoRows
@@ -235,7 +235,7 @@ func (s *Storage) DeleteProject(ctx context.Context, projectID string) error {
 		WHERE id = $1
 	`
 
-	result, err := s.db.Pool.Exec(ctx, query, projectID)
+	result, err := s.db.Exec(ctx, query, projectID)
 	if err != nil {
 		return fmt.Errorf("unable to delete project: %w", err)
 	}

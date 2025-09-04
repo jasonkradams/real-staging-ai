@@ -20,9 +20,9 @@ type DefaultRepository struct {
 var _ Repository = (*DefaultRepository)(nil)
 
 // NewUserRepository creates a new DefaultRepository instance.
-func NewUserRepository(db *storage.DB) *DefaultRepository {
+func NewUserRepository(db storage.Database) *DefaultRepository {
 	return &DefaultRepository{
-		queries: queries.New(db.Pool),
+		queries: queries.New(db),
 	}
 }
 

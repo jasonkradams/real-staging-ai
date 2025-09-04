@@ -20,12 +20,12 @@ import (
 
 func TestCreateProjectRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDB(context.Background())
+	db, err := storage.NewDefaultDatabase()
 	assert.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(context.Background(), db.GetPool())
-	SeedDatabase(context.Background(), db.GetPool())
+	TruncateAllTables(context.Background(), db.Pool())
+	SeedDatabase(context.Background(), db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
@@ -74,12 +74,12 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 
 func TestGetProjectsRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDB(context.Background())
+	db, err := storage.NewDefaultDatabase()
 	assert.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(context.Background(), db.GetPool())
-	SeedDatabase(context.Background(), db.GetPool())
+	TruncateAllTables(context.Background(), db.Pool())
+	SeedDatabase(context.Background(), db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
@@ -108,12 +108,12 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 
 func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDB(context.Background())
+	db, err := storage.NewDefaultDatabase()
 	assert.NoError(t, err)
 	defer db.Close()
 
-	TruncateAllTables(context.Background(), db.GetPool())
-	SeedDatabase(context.Background(), db.GetPool())
+	TruncateAllTables(context.Background(), db.Pool())
+	SeedDatabase(context.Background(), db.Pool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)

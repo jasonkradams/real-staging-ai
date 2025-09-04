@@ -158,6 +158,18 @@ func GetUserID(c echo.Context) (string, error) {
 	return sub, nil
 }
 
+// GetUserIDOrDefault extracts user ID from JWT token in context, or returns a default test user ID
+func GetUserIDOrDefault(c echo.Context) (string, error) {
+	// Try to get user ID from JWT token first
+	userID, err := GetUserID(c)
+	if err == nil {
+		return userID, nil
+	}
+
+	// If no JWT token (e.g., in test environment), return default test user
+	return "auth0|testuser", nil
+}
+
 // GetUserEmail extracts user email from JWT token in context
 func GetUserEmail(c echo.Context) (string, error) {
 	token, ok := c.Get("user").(*jwt.Token)

@@ -2,13 +2,16 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/virtual-staging-ai/api/internal/auth"
 	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/user"
 )
 
 type ErrorResponse struct {
@@ -40,7 +43,6 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		})
 	}
 
-	// Validate request
 	if validationErrs := validateCreateProjectRequest(&req); len(validationErrs) > 0 {
 		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
 			Error:            "validation_failed",
@@ -49,18 +51,45 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		})
 	}
 
-	// Create project entity
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				c.Logger().Errorf("Failed to create user: %v", err)
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
 	p := project.Project{
 		Name: req.Name,
 	}
 
 	projectStorage := project.NewStorage(s.db)
-	// TODO: Get user ID from JWT token when auth middleware is implemented
-	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, userID)
+	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, user.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Error:   "internal_server_error",
+			Error:   fmt.Sprintf("internal_server_error > %v", err),
 			Message: "Failed to create project",
 		})
 	}
@@ -69,8 +98,38 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 }
 
 func (s *Server) getProjectsHandler(c echo.Context) error {
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				c.Logger().Errorf("Failed to create user: %v", err)
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
 	projectStorage := project.NewStorage(s.db)
-	projects, err := projectStorage.GetProjects(c.Request().Context())
+	projects, err := projectStorage.GetProjectsByUserID(c.Request().Context(), user.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -88,7 +147,6 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 func (s *Server) getProjectByIDHandler(c echo.Context) error {
 	projectID := c.Param("id")
 
-	// Validate UUID format
 	if _, err := uuid.Parse(projectID); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -96,8 +154,38 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		})
 	}
 
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				c.Logger().Errorf("Failed to create user: %v", err)
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
 	projectStorage := project.NewStorage(s.db)
-	project, err := projectStorage.GetProjectByID(c.Request().Context(), projectID)
+	project, err := projectStorage.GetProjectByIDAndUserID(c.Request().Context(), projectID, user.ID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -117,7 +205,6 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 func (s *Server) updateProjectHandler(c echo.Context) error {
 	projectID := c.Param("id")
 
-	// Validate UUID format
 	if _, err := uuid.Parse(projectID); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -133,7 +220,6 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	// Validate request
 	if validationErrs := validateUpdateProjectRequest(&req); len(validationErrs) > 0 {
 		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
 			Error:            "validation_failed",
@@ -142,8 +228,38 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				c.Logger().Errorf("Failed to create user: %v", err)
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
 	projectStorage := project.NewStorage(s.db)
-	updatedProject, err := projectStorage.UpdateProject(c.Request().Context(), projectID, req.Name)
+	updatedProject, err := projectStorage.UpdateProjectByUserID(c.Request().Context(), projectID, user.ID.String(), req.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -163,7 +279,6 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 func (s *Server) deleteProjectHandler(c echo.Context) error {
 	projectID := c.Param("id")
 
-	// Validate UUID format
 	if _, err := uuid.Parse(projectID); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -171,8 +286,38 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		})
 	}
 
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				c.Logger().Errorf("Failed to create user: %v", err)
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
 	projectStorage := project.NewStorage(s.db)
-	err := projectStorage.DeleteProject(c.Request().Context(), projectID)
+	err = projectStorage.DeleteProjectByUserID(c.Request().Context(), projectID, user.ID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
