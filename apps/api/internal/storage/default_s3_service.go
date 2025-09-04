@@ -2,14 +2,18 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +35,32 @@ var _ S3Service = (*DefaultS3Service)(nil)
 
 // NewS3Service creates a new DefaultS3Service instance.
 func NewS3Service(ctx context.Context, bucketName string) (*DefaultS3Service, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+	var cfg aws.Config
+	var err error
+
+	if os.Getenv("APP_ENV") == "test" {
+		cfg, err = config.LoadDefaultConfig(ctx,
+			config.WithRegion("us-east-1"),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "test")),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load AWS config for test: %w", err)
+		}
+
+		client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String("http://localhost:4566")
+			o.UsePathStyle = true
+		})
+
+		return &DefaultS3Service{
+			client:     client,
+			bucketName: bucketName,
+		}, nil
+
+	}
+
+	// Use default AWS config for production
+	cfg, err = config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -60,10 +89,9 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 
 	// Create the presign request
 	request, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
-		Bucket:        aws.String(s.bucketName),
-		Key:           aws.String(fileKey),
-		ContentType:   aws.String(contentType),
-		ContentLength: aws.Int64(fileSize),
+		Bucket:      aws.String(s.bucketName),
+		Key:         aws.String(fileKey),
+		ContentType: aws.String(contentType),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expirationDuration
 	})
@@ -149,4 +177,20 @@ func ValidateFilename(filename string) bool {
 	}
 
 	return false
+}
+
+// CreateBucket creates the S3 bucket if it doesn't exist.
+func (s *DefaultS3Service) CreateBucket(ctx context.Context) error {
+	_, err := s.client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: &s.bucketName,
+	})
+	if err != nil {
+		// If the bucket already exists, we can ignore the error.
+		var aerr *types.BucketAlreadyOwnedByYou
+		if errors.As(err, &aerr) {
+			return nil
+		}
+		return fmt.Errorf("failed to create bucket: %w", err)
+	}
+	return nil
 }

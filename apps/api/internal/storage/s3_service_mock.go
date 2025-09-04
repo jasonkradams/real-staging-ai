@@ -18,6 +18,9 @@ var _ S3Service = &S3ServiceMock{}
 //
 //		// make and configure a mocked S3Service
 //		mockedS3Service := &S3ServiceMock{
+//			CreateBucketFunc: func(ctx context.Context) error {
+//				panic("mock out the CreateBucket method")
+//			},
 //			DeleteFileFunc: func(ctx context.Context, fileKey string) error {
 //				panic("mock out the DeleteFile method")
 //			},
@@ -37,6 +40,9 @@ var _ S3Service = &S3ServiceMock{}
 //
 //	}
 type S3ServiceMock struct {
+	// CreateBucketFunc mocks the CreateBucket method.
+	CreateBucketFunc func(ctx context.Context) error
+
 	// DeleteFileFunc mocks the DeleteFile method.
 	DeleteFileFunc func(ctx context.Context, fileKey string) error
 
@@ -51,6 +57,11 @@ type S3ServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// CreateBucket holds details about calls to the CreateBucket method.
+		CreateBucket []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// DeleteFile holds details about calls to the DeleteFile method.
 		DeleteFile []struct {
 			// Ctx is the ctx argument value.
@@ -84,10 +95,43 @@ type S3ServiceMock struct {
 			FileKey string
 		}
 	}
+	lockCreateBucket               sync.RWMutex
 	lockDeleteFile                 sync.RWMutex
 	lockGeneratePresignedUploadURL sync.RWMutex
 	lockGetFileURL                 sync.RWMutex
 	lockHeadFile                   sync.RWMutex
+}
+
+// CreateBucket calls CreateBucketFunc.
+func (mock *S3ServiceMock) CreateBucket(ctx context.Context) error {
+	if mock.CreateBucketFunc == nil {
+		panic("S3ServiceMock.CreateBucketFunc: method is nil but S3Service.CreateBucket was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockCreateBucket.Lock()
+	mock.calls.CreateBucket = append(mock.calls.CreateBucket, callInfo)
+	mock.lockCreateBucket.Unlock()
+	return mock.CreateBucketFunc(ctx)
+}
+
+// CreateBucketCalls gets all the calls that were made to CreateBucket.
+// Check the length with:
+//
+//	len(mockedS3Service.CreateBucketCalls())
+func (mock *S3ServiceMock) CreateBucketCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockCreateBucket.RLock()
+	calls = mock.calls.CreateBucket
+	mock.lockCreateBucket.RUnlock()
+	return calls
 }
 
 // DeleteFile calls DeleteFileFunc.

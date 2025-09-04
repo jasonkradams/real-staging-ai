@@ -42,11 +42,13 @@ func NewServer(db *storage.DB, s3Service storage.S3Service, imageService image.S
 
 	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, imageHandler: imageHandler}
 
+	// Health check route
+	e.GET("/health", s.healthCheck)
+
 	// Register routes
 	api := e.Group("/api/v1")
 
 	// Public routes (no authentication required)
-	api.GET("/health", s.healthCheck)
 	api.POST("/stripe/webhook", s.stripeWebhookHandler)
 
 	// Protected routes (require JWT authentication)
@@ -91,11 +93,13 @@ func NewTestServer(db *storage.DB, s3Service storage.S3Service, imageService ima
 
 	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil, imageHandler: imageHandler}
 
+	// Health check route (same as main server)
+	e.GET("/health", s.healthCheck)
+
 	// Register routes without authentication
 	api := e.Group("/api/v1")
 
 	// All routes are public for testing
-	api.GET("/health", s.healthCheck)
 	api.POST("/stripe/webhook", s.stripeWebhookHandler)
 
 	// Project routes (no auth required for testing)

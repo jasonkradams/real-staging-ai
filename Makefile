@@ -20,9 +20,9 @@ test: ## Run unit tests
 test-cover: ## Run unit tests with coverage
 	@echo "Running unit tests with coverage..."
 	@echo "--> Running api tests"
-	cd apps/api && go test -cover ./...
+	cd apps/api && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 	@echo "--> Running worker tests"
-	cd apps/worker && go test -cover ./...
+	cd apps/worker && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 
 migrate-test: migrate-down-all ## Run database migrations on the test database
 	@echo "Running database migrations on the test database..."
@@ -30,36 +30,36 @@ migrate-test: migrate-down-all ## Run database migrations on the test database
 
 migrate-up-all: ## Apply all database migrations on the test database
 	@echo "Applying all database migrations on the test database..."
-	docker-compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up
+	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up
 
 migrate-up: ## Apply one database migration on the test database
 	@echo "Applying one database migration on the test database..."
-	docker-compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up $(N)
+	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up $(N)
 
 migrate-down-all: ## Rollback all database migrations on the test database.
 	@echo "Rolling back all database migrations on the test database..."
-	docker-compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down -all
+	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down -all
 
 migrate-down: ## Rollback database migrations on the test database. Optional N=x to rollback x migrations.
 	@echo "Rolling back database migrations on the test database..."
 ifdef N
-	docker-compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down $(N)
+	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down $(N)
 else
 	$(MAKE) migrate-down-all
 endif
 
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
-	docker-compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/testdata:/seed postgres-client -f /seed/seed.sql
+	docker compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/testdata:/seed postgres-client -f /seed/seed.sql
 
 test-integration: migrate-test ## Run integration tests
-	@echo "Starting test database..."
-	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test
+	@echo "Starting test infrastructure..."
+	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test localstack
 	@echo "Running integration tests..."
-	cd apps/api && go test -v -tags=integration -p 1 ./...
-	cd apps/worker && go test -v -tags=integration -p 1 ./...
-	@echo "Stopping test database..."
-	docker-compose -f docker-compose.test.yml down
+	cd apps/api && go test -tags=integration -p 1 ./...
+	cd apps/worker && go test -tags=integration -p 1 ./...
+	@echo "Stopping test infrastructure..."
+	docker compose -f docker-compose.test.yml down
 
 docs: ## Validate the OpenAPI specification
 	@echo "Validating OpenAPI specification..."
@@ -92,3 +92,11 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
 	@echo "--> Linting and fixing worker module"
 	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
+
+up: ## Run the api server
+	@echo Running API server...
+	docker compose -f docker-compose.yml up -d --remove-orphans api
+
+down: ## Stop the api server
+	@echo Stopping API server...
+	docker compose -f docker-compose.yml down

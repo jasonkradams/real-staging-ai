@@ -14,4 +14,6 @@ type S3Service interface {
 	GetFileURL(fileKey string) string
 	// GeneratePresignedUploadURL generates a presigned URL for uploading a file to S3.
 	GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*PresignedUploadResult, error)
+	// CreateBucket creates the S3 bucket if it doesn't exist.
+	CreateBucket(ctx context.Context) error
 }

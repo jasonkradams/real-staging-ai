@@ -18,8 +18,8 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.GetPool())
+	SeedDatabase(ctx, db.GetPool())
 
 	projectStorage := project.NewStorage(db)
 
@@ -44,8 +44,8 @@ func TestProjectStorage_GetProjects(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.GetPool())
+	SeedDatabase(ctx, db.GetPool())
 
 	projectStorage := project.NewStorage(db)
 

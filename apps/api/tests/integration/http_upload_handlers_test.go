@@ -1,13 +1,16 @@
 //go:build integration
 
-package http_test
+package integration
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -17,6 +20,24 @@ import (
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
+
+func TestMain(m *testing.M) {
+	// Set APP_ENV to test to ensure the correct S3 configuration is used.
+	os.Setenv("APP_ENV", "test")
+	if err := setupS3(); err != nil {
+		log.Fatalf("Failed to set up S3: %v", err)
+	}
+	os.Exit(m.Run())
+}
+
+func setupS3() error {
+	ctx := context.Background()
+	s3Service, err := storage.NewS3Service(ctx, "test-bucket")
+	if err != nil {
+		return fmt.Errorf("failed to create s3 service: %w", err)
+	}
+	return s3Service.CreateBucket(ctx)
+}
 
 type PresignUploadRequest struct {
 	Filename    string `json:"filename"`
@@ -56,7 +77,11 @@ func TestPresignUpload(t *testing.T) {
 				err := json.Unmarshal(response, &resp)
 				require.NoError(t, err)
 				assert.NotEmpty(t, resp.UploadURL)
-				assert.Contains(t, resp.UploadURL, "https://")
+				if os.Getenv("APP_ENV") == "test" {
+					assert.Contains(t, resp.UploadURL, "http://")
+				} else {
+					assert.Contains(t, resp.UploadURL, "https://")
+				}
 				assert.NotEmpty(t, resp.FileKey)
 				assert.Contains(t, resp.FileKey, "uploads/")
 				assert.Contains(t, resp.FileKey, "test-image")
@@ -256,8 +281,8 @@ func TestPresignUpload(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup clean database state
-			storage.TruncateAllTables(context.Background(), db.GetPool())
-			storage.SeedDatabase(context.Background(), db.GetPool())
+			TruncateAllTables(context.Background(), db.GetPool())
+			SeedDatabase(context.Background(), db.GetPool())
 
 			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
@@ -308,8 +333,8 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.GetPool())
+	SeedDatabase(ctx, db.GetPool())
 
 	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
 	require.NoError(t, err)
@@ -412,8 +437,8 @@ func TestPresignUpload_Integration(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(ctx, db.GetPool())
+	SeedDatabase(ctx, db.GetPool())
 
 	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)

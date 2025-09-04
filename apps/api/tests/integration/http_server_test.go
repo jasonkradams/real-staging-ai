@@ -1,6 +1,6 @@
 //go:build integration
 
-package http_test
+package integration
 
 import (
 	"context"
@@ -18,17 +18,16 @@ import (
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
-func TestCreateProjectRoute(t *testing.T) {
+func TestCreateProjectRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(context.Background(), db.GetPool())
+	SeedDatabase(context.Background(), db.GetPool())
 
-	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -73,17 +72,16 @@ func TestCreateProjectRoute(t *testing.T) {
 	}
 }
 
-func TestGetProjectsRoute(t *testing.T) {
+func TestGetProjectsRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(context.Background(), db.GetPool())
+	SeedDatabase(context.Background(), db.GetPool())
 
-	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -108,17 +106,16 @@ func TestGetProjectsRoute(t *testing.T) {
 	assert.Equal(t, "Test Project 1", response.Projects[0].Name)
 }
 
-func TestGetProjectByIDRoute(t *testing.T) {
+func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Setup
-	ctx := context.Background()
-	db, err := storage.NewDB(ctx)
+	db, err := storage.NewDB(context.Background())
 	assert.NoError(t, err)
 	defer db.Close()
 
-	storage.TruncateAllTables(ctx, db.GetPool())
-	storage.SeedDatabase(ctx, db.GetPool())
+	TruncateAllTables(context.Background(), db.GetPool())
+	SeedDatabase(context.Background(), db.GetPool())
 
-	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
