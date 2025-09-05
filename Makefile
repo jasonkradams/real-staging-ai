@@ -48,6 +48,10 @@ else
 	$(MAKE) migrate-down-all
 endif
 
+migrate: ## Run database migrations on the development database
+	@echo "Running database migrations on the development database..."
+	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/virtualstaging?sslmode=disable up
+
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
 	docker compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/tests/integration/testdata:/seed postgres-client -f /seed/seed.sql
@@ -93,7 +97,7 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 	@echo "--> Linting and fixing worker module"
 	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
 
-up: ## Run the api server
+up: migrate ## Run the api server
 	@echo Running API server...
 	docker compose -f docker-compose.yml up --build -d --remove-orphans api
 
