@@ -1,7 +1,0 @@
-- [ ] Write failing unit tests for: auth middleware, presign, create/get image, stripe webhook, worker task
-- [ ] Add minimal implementations to pass tests
-- [ ] Wire OTEL on HTTP server, pgx, redis, http clients
-- [ ] Docker Compose up (pg, redis, minio, otel)
-- [ ] Integration test path green
-- [ ] Connect Next.js upload to presign + create image job
-- [ ] Deploy preview environment

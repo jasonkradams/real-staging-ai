@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Virtual Staging AI API
   description: API for the Virtual Staging AI application.
@@ -9,7 +9,9 @@ paths:
   /v1/projects:
     get:
       summary: Get all projects for the authenticated user
-      description: Retrieve a list of all projects belonging to the authenticated user
+      description:
+        Retrieve a list of all projects belonging to the authenticated
+        user
       tags:
         - Projects
       security:
@@ -61,7 +63,9 @@ paths:
   /v1/projects/{id}:
     get:
       summary: Get a project by ID
-      description: Retrieve a specific project by its ID. The project must belong to the authenticated user.
+      description:
+        Retrieve a specific project by its ID. The project must belong
+        to the authenticated user.
       tags:
         - Projects
       security:
@@ -74,7 +78,7 @@ paths:
           schema:
             type: string
             format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
       responses:
         "200":
           description: The project
@@ -90,7 +94,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     put:
       summary: Update a project
-      description: Update an existing project. The project must belong to the authenticated user.
+      description:
+        Update an existing project. The project must belong to the authenticated
+        user.
       tags:
         - Projects
       security:
@@ -103,7 +109,7 @@ paths:
           schema:
             type: string
             format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
       requestBody:
         required: true
         content:
@@ -129,7 +135,9 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     delete:
       summary: Delete a project
-      description: Delete a project and all associated data. The project must belong to the authenticated user.
+      description:
+        Delete a project and all associated data. The project must belong
+        to the authenticated user.
       tags:
         - Projects
       security:
@@ -142,7 +150,7 @@ paths:
           schema:
             type: string
             format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
       responses:
         "204":
           description: Project successfully deleted
@@ -181,7 +189,182 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
+  /v1/images:
+    post:
+      summary: Add an image to a project
+      description: Add a new image to a project.
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateImageRequest"
+      responses:
+        "201":
+          description: The created image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Image"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/images/{id}:
+    get:
+      summary: Get an image by ID
+      description:
+        Retrieve a specific image by its ID. The image must belong to the
+        authenticated user.
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the image
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+      responses:
+        "200":
+          description: The image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Image"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete an image
+      description: Delete an image. The image must belong to the authenticated user.
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the image
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+      responses:
+        "204":
+          description: Image successfully deleted
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/projects/{project_id}/images:
+    get:
+      summary: Get all images for a project
+      description:
+        Retrieve a list of all images belonging to a specific project.
+        The project must belong to the authenticated user.
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          description: The unique identifier of the project
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "200":
+          description: A list of images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Image"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/events:
+    get:
+      summary: Subscribe to real-time events
+      description:
+        Subscribe to a stream of Server-Sent Events (SSE) for real-time
+        updates on job statuses and other events.
+      tags:
+        - Events
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A stream of events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: 'data: {"event":"job_update","data":{"job_id":"...","status":"processing"}}'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/stripe/webhook:
+    post:
+      summary: Handle Stripe webhooks
+      description: Handle incoming webhooks from Stripe for payment events.
+      tags:
+        - Stripe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The Stripe event object.
+              example:
+                id: evt_1J...
+                object: event
+                api_version: "2020-08-27"
+                created: 1626720000
+                data:
+                  object:
+                    id: sub_1J...
+                    object: subscription
+                    status: active
+                type: customer.subscription.created
+      responses:
+        "200":
+          description: Webhook received successfully
+        "400":
+          description: Bad request - invalid payload
+        "500":
+          description: Internal server error
 components:
   securitySchemes:
     bearerAuth:
@@ -189,7 +372,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT token obtained from Auth0
-
   schemas:
     Project:
       type: object
@@ -203,24 +385,23 @@ components:
           type: string
           format: uuid
           description: Unique identifier for the project
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
           minLength: 1
           maxLength: 100
           description: Name of the project
-          example: "Living Room Staging"
+          example: Living Room Staging
         user_id:
           type: string
           format: uuid
           description: ID of the user who owns this project
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         created_at:
           type: string
           format: date-time
           description: Timestamp when the project was created
           example: "2023-12-07T10:30:00Z"
-
     CreateRequest:
       type: object
       required:
@@ -231,8 +412,7 @@ components:
           minLength: 1
           maxLength: 100
           description: Name of the project
-          example: "Living Room Staging"
-
+          example: Living Room Staging
     UpdateRequest:
       type: object
       required:
@@ -243,8 +423,7 @@ components:
           minLength: 1
           maxLength: 100
           description: Updated name of the project
-          example: "Modern Living Room Staging"
-
+          example: Modern Living Room Staging
     PresignUploadRequest:
       type: object
       required:
@@ -257,22 +436,21 @@ components:
           minLength: 1
           maxLength: 255
           description: Name of the file to upload
-          example: "living-room.jpg"
+          example: living-room.jpg
         content_type:
           type: string
           description: MIME type of the file
           enum:
-            - "image/jpeg"
-            - "image/png"
-            - "image/webp"
-          example: "image/jpeg"
+            - image/jpeg
+            - image/png
+            - image/webp
+          example: image/jpeg
         file_size:
           type: integer
           minimum: 1
           maximum: 10485760
           description: Size of the file in bytes (max 10MB)
           example: 2048576
-
     PresignUploadResponse:
       type: object
       required:
@@ -284,16 +462,15 @@ components:
           type: string
           format: uri
           description: Presigned URL for uploading the file
-          example: "https://bucket.s3.amazonaws.com/uploads/uuid/filename.jpg?..."
+          example: https://bucket.s3.amazonaws.com/uploads/uuid/filename.jpg?...
         file_key:
           type: string
           description: Unique key for the uploaded file
-          example: "uploads/550e8400-e29b-41d4-a716-446655440000/living-room.jpg"
+          example: uploads/550e8400-e29b-41d4-a716-446655440000/living-room.jpg
         expires_in:
           type: integer
           description: Number of seconds until the presigned URL expires
           example: 900
-
     Error:
       type: object
       required:
@@ -303,16 +480,15 @@ components:
         error:
           type: string
           description: Error type identifier
-          example: "validation_failed"
+          example: validation_failed
         message:
           type: string
           description: Human-readable error message
-          example: "The provided data is invalid"
+          example: The provided data is invalid
         details:
           type: object
           description: Additional error details (optional)
           additionalProperties: true
-
     ValidationError:
       type: object
       required:
@@ -322,10 +498,10 @@ components:
       properties:
         error:
           type: string
-          example: "validation_failed"
+          example: validation_failed
         message:
           type: string
-          example: "The provided data is invalid"
+          example: The provided data is invalid
         validation_errors:
           type: array
           items:
@@ -333,11 +509,92 @@ components:
             properties:
               field:
                 type: string
-                example: "name"
+                example: name
               message:
                 type: string
-                example: "name is required"
-
+                example: name is required
+    Image:
+      type: object
+      required:
+        - id
+        - project_id
+        - original_url
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the image
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        project_id:
+          type: string
+          format: uuid
+          description: ID of the project this image belongs to
+          example: 550e8400-e29b-41d4-a716-446655440000
+        original_url:
+          type: string
+          format: uri
+          description: URL of the original uploaded image
+          example: https://bucket.s3.amazonaws.com/uploads/uuid/original.jpg
+        staged_url:
+          type: string
+          format: uri
+          description: URL of the staged (processed) image
+          example: https://bucket.s3.amazonaws.com/uploads/uuid/staged.jpg
+        room_type:
+          type: string
+          description: The type of the room in the image
+          example: living_room
+        style:
+          type: string
+          description: The staging style
+          example: modern
+        seed:
+          type: integer
+          format: int64
+          description: The seed used for the staging process
+          example: 1234567890
+        status:
+          type: string
+          enum:
+            - queued
+            - processing
+            - ready
+            - error
+          description: The status of the image
+          example: ready
+        error:
+          type: string
+          description: Any error message if the processing failed
+          example: Failed to process image
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the image was created
+          example: "2023-12-07T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the image was last updated
+          example: "2023-12-07T10:35:00Z"
+    CreateImageRequest:
+      type: object
+      required:
+        - project_id
+        - original_url
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          description: ID of the project to add the image to
+          example: 550e8400-e29b-41d4-a716-446655440000
+        original_url:
+          type: string
+          format: uri
+          description: URL of the original uploaded image
+          example: https://bucket.s3.amazonaws.com/uploads/uuid/original.jpg
   responses:
     BadRequestError:
       description: Bad request - invalid input data
@@ -346,9 +603,8 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            error: "bad_request"
-            message: "Invalid request format"
-
+            error: bad_request
+            message: Invalid request format
     UnauthorizedError:
       description: Unauthorized - missing or invalid authentication
       content:
@@ -356,9 +612,8 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            error: "unauthorized"
-            message: "Authentication required"
-
+            error: unauthorized
+            message: Authentication required
     NotFoundError:
       description: Resource not found
       content:
@@ -366,9 +621,8 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            error: "not_found"
-            message: "Project not found"
-
+            error: not_found
+            message: Project not found
     ValidationError:
       description: Validation failed
       content:
@@ -376,12 +630,11 @@ components:
           schema:
             $ref: "#/components/schemas/ValidationError"
           example:
-            error: "validation_failed"
-            message: "The provided data is invalid"
+            error: validation_failed
+            message: The provided data is invalid
             validation_errors:
-              - field: "name"
-                message: "name is required"
-
+              - field: name
+                message: name is required
     InternalServerError:
       description: Internal server error
       content:
@@ -389,5 +642,17 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            error: "internal_server_error"
-            message: "An unexpected error occurred"
+            error: internal_server_error
+            message: An unexpected error occurred
+    ProjectResponse:
+      description: A project object
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Project"
+    ImageResponse:
+      description: An image object
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Image"
