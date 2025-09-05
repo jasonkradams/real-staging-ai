@@ -109,3 +109,6 @@ clean: ## Remove unused and unnecessary files
 	find . -type f -name "cover*.out" -exec rm -rf {} + &
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
+
+token: ## Generate a Auth0 Token
+	@go run apps/api/cmd/token/main.go | jq -r .access_token
