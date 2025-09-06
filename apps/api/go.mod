@@ -12,6 +12,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/labstack/echo-jwt/v4 v4.3.1
 	github.com/labstack/echo/v4 v4.13.4
+	github.com/pashagolub/pgxmock/v2 v2.12.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.63.0
 	go.opentelemetry.io/otel v1.38.0
