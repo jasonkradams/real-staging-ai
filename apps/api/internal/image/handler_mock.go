@@ -5,6 +5,7 @@ package image
 
 import (
 	"context"
+	"github.com/labstack/echo/v4"
 	"sync"
 )
 
@@ -30,6 +31,9 @@ var _ Handler = &HandlerMock{}
 //			GetImagesForUserFunc: func(ctx context.Context, userID string) ([]*Image, error) {
 //				panic("mock out the GetImagesForUser method")
 //			},
+//			GetProjectImagesFunc: func(c echo.Context) error {
+//				panic("mock out the GetProjectImages method")
+//			},
 //		}
 //
 //		// use mockedHandler in code that requires Handler
@@ -48,6 +52,9 @@ type HandlerMock struct {
 
 	// GetImagesForUserFunc mocks the GetImagesForUser method.
 	GetImagesForUserFunc func(ctx context.Context, userID string) ([]*Image, error)
+
+	// GetProjectImagesFunc mocks the GetProjectImages method.
+	GetProjectImagesFunc func(c echo.Context) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -79,11 +86,17 @@ type HandlerMock struct {
 			// UserID is the userID argument value.
 			UserID string
 		}
+		// GetProjectImages holds details about calls to the GetProjectImages method.
+		GetProjectImages []struct {
+			// C is the c argument value.
+			C echo.Context
+		}
 	}
 	lockCreateImage      sync.RWMutex
 	lockDeleteImage      sync.RWMutex
 	lockGetImage         sync.RWMutex
 	lockGetImagesForUser sync.RWMutex
+	lockGetProjectImages sync.RWMutex
 }
 
 // CreateImage calls CreateImageFunc.
@@ -227,5 +240,37 @@ func (mock *HandlerMock) GetImagesForUserCalls() []struct {
 	mock.lockGetImagesForUser.RLock()
 	calls = mock.calls.GetImagesForUser
 	mock.lockGetImagesForUser.RUnlock()
+	return calls
+}
+
+// GetProjectImages calls GetProjectImagesFunc.
+func (mock *HandlerMock) GetProjectImages(c echo.Context) error {
+	if mock.GetProjectImagesFunc == nil {
+		panic("HandlerMock.GetProjectImagesFunc: method is nil but Handler.GetProjectImages was just called")
+	}
+	callInfo := struct {
+		C echo.Context
+	}{
+		C: c,
+	}
+	mock.lockGetProjectImages.Lock()
+	mock.calls.GetProjectImages = append(mock.calls.GetProjectImages, callInfo)
+	mock.lockGetProjectImages.Unlock()
+	return mock.GetProjectImagesFunc(c)
+}
+
+// GetProjectImagesCalls gets all the calls that were made to GetProjectImages.
+// Check the length with:
+//
+//	len(mockedHandler.GetProjectImagesCalls())
+func (mock *HandlerMock) GetProjectImagesCalls() []struct {
+	C echo.Context
+} {
+	var calls []struct {
+		C echo.Context
+	}
+	mock.lockGetProjectImages.RLock()
+	calls = mock.calls.GetProjectImages
+	mock.lockGetProjectImages.RUnlock()
 	return calls
 }

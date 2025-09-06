@@ -1,6 +1,10 @@
 package image
 
-import "context"
+import (
+	"context"
+
+	"github.com/labstack/echo/v4"
+)
 
 // ErrorResponse represents an error response.
 type ErrorResponse struct {
@@ -26,6 +30,7 @@ type ValidationErrorResponse struct {
 type Handler interface {
 	CreateImage(ctx context.Context, req *CreateImageRequest) (*Image, error)
 	GetImage(ctx context.Context, imageID string) (*Image, error)
+	GetProjectImages(c echo.Context) error
 	DeleteImage(ctx context.Context, imageID string) error
 	GetImagesForUser(ctx context.Context, userID string) ([]*Image, error)
 }

@@ -13,7 +13,7 @@ help:
 test: ## Run unit tests
 	@echo "Running unit tests..."
 	@echo "--> Running api tests"
-	cd apps/api && go test -v ./...
+	cd apps/api && go test -v -timeout 30s ./...
 	@echo "--> Running worker tests"
 	cd apps/worker && go test -v ./...
 
@@ -73,13 +73,13 @@ sqlc-generate: ## Generate Go code from SQL queries using sqlc
 	@echo "Generating sqlc code..."
 	cd apps/api && ~/go/bin/sqlc generate
 
-generate: ## Generate all code (mocks, sqlc, etc.)
+generate: clean ## Generate all code (mocks, sqlc, etc.)
 	@echo "Generating all code..."
 	$(MAKE) sqlc-generate
 	@echo "Generating mocks..."
 	@if ! command -v mockgen >/dev/null 2>&1; then \
 		echo "Installing mockgen..."; \
-		cd apps/api && go install go.uber.org/mock/mockgen@latest; \
+		cd apps/api && go install github.com/matryer/moq@v0.5.3; \
 	fi
 	cd apps/api && go generate ./...
 
@@ -113,6 +113,7 @@ clean: ## Remove unused and unnecessary files
 	find . -type f -name "cover*.out" -exec rm -rf {} + &
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
+	find . -type f -name "*_mock.go" -exec rm -rf {} + &
 
 token: ## Generate a Auth0 Token
 	@go run apps/api/cmd/token/main.go | jq -r .access_token

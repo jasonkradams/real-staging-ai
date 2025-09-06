@@ -73,6 +73,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ## Milestone 5: Testing
 
+- [ ] **Achieve 100% Coverage on all packages**
 - [ ] **Authentication Middleware**
     - [ ] `fail: no JWT`
     - [ ] `fail: invalid JWT`

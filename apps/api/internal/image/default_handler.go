@@ -2,6 +2,7 @@ package image
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -9,11 +10,11 @@ import (
 
 // DefaultHandler contains the HTTP handlers for image operations.
 type DefaultHandler struct {
-	service *DefaultService
+	service Service
 }
 
-// NewHandler creates a new Handler instance.
-func NewHandler(service *DefaultService) *DefaultHandler {
+// NewDefaultHandler creates a new Handler instance.
+func NewDefaultHandler(service Service) *DefaultHandler {
 	return &DefaultHandler{
 		service: service,
 	}
@@ -176,13 +177,7 @@ func (h *DefaultHandler) validateCreateImageRequest(req *CreateImageRequest) []V
 	// Validate room type if provided
 	if req.RoomType != nil {
 		validRoomTypes := []string{"living_room", "bedroom", "kitchen", "bathroom", "dining_room", "office"}
-		isValid := false
-		for _, valid := range validRoomTypes {
-			if *req.RoomType == valid {
-				isValid = true
-				break
-			}
-		}
+		isValid := slices.Contains(validRoomTypes, *req.RoomType)
 		if !isValid {
 			errors = append(errors, ValidationErrorDetail{
 				Field:   "room_type",
@@ -194,13 +189,7 @@ func (h *DefaultHandler) validateCreateImageRequest(req *CreateImageRequest) []V
 	// Validate style if provided
 	if req.Style != nil {
 		validStyles := []string{"modern", "contemporary", "traditional", "industrial", "scandinavian"}
-		isValid := false
-		for _, valid := range validStyles {
-			if *req.Style == valid {
-				isValid = true
-				break
-			}
-		}
+		isValid := slices.Contains(validStyles, *req.Style)
 		if !isValid {
 			errors = append(errors, ValidationErrorDetail{
 				Field:   "style",
