@@ -9,6 +9,8 @@ import (
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
+var jsonMarshal = json.Marshal
+
 // DefaultService handles business logic for image operations.
 type DefaultService struct {
 	imageRepo Repository
@@ -54,7 +56,7 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		Seed:        domainImage.Seed,
 	}
 
-	payloadJSON, err := json.Marshal(payload)
+	payloadJSON, err := jsonMarshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal job payload: %w", err)
 	}
