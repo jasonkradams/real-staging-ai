@@ -25,12 +25,16 @@ func main() {
 		panic(err)
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	// fmt.Println(res)
 	fmt.Println(string(body))
 }

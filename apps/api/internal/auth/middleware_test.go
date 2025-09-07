@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,12 +12,10 @@ import (
 
 func TestNewAuth0Config(t *testing.T) {
 	// Set environment variables
-	os.Setenv("AUTH0_DOMAIN", "test-domain.auth0.com")
-	os.Setenv("AUTH0_AUDIENCE", "test-audience")
-	defer func() {
-		os.Unsetenv("AUTH0_DOMAIN")
-		os.Unsetenv("AUTH0_AUDIENCE")
-	}()
+	// use testing to set env vars instead of os.Setenv
+
+	t.Setenv("AUTH0_DOMAIN", "test-domain.auth0.com")
+	t.Setenv("AUTH0_AUDIENCE", "test-audience")
 
 	config := NewAuth0Config()
 
