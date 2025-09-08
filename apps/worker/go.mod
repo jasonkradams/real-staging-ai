@@ -1,6 +1,6 @@
 module github.com/virtual-staging-ai/worker
 
-go 1.25
+go 1.25.1
 
 require (
 	github.com/stretchr/testify v1.11.1
