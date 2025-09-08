@@ -484,6 +484,19 @@ func TestProjectService_UpdateProject(t *testing.T) {
 			expectError: true,
 			errorMsg:    "project name is required",
 		},
+		{
+			name:      "failure: repository error on update",
+			projectID: "proj123",
+			userID:    "user123",
+			newName:   "New Name",
+			setupMock: func(mock *project.RepositoryMock) {
+				mock.UpdateProjectByUserIDFunc = func(ctx context.Context, projectID string, userID string, newName string) (*project.Project, error) {
+					return nil, errors.New("database error")
+				}
+			},
+			expectError: true,
+			errorMsg:    "failed to update project",
+		},
 	}
 
 	for _, tc := range testCases {

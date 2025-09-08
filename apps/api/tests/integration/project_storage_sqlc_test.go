@@ -24,7 +24,7 @@ func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // from seed data
 
 	testCases := []struct {
@@ -80,7 +80,7 @@ func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 
 	projects, err := storageInstance.GetProjects(ctx)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -159,7 +159,7 @@ func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 
 	testCases := []struct {
 		name         string
@@ -212,7 +212,7 @@ func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 
 	testCases := []struct {
 		name         string
@@ -267,7 +267,7 @@ func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -360,7 +360,7 @@ func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 			truncateTables(t, db.Pool())
 			seedTables(t, db.Pool())
 
-			storageInstance := project.NewStorageSQLc(db)
+			storageInstance := project.NewDefaultStorageSQLc(db)
 
 			err := storageInstance.DeleteProject(ctx, tc.projectID)
 
@@ -426,7 +426,7 @@ func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 			truncateTables(t, db.Pool())
 			seedTables(t, db.Pool())
 
-			storageInstance := project.NewStorageSQLc(db)
+			storageInstance := project.NewDefaultStorageSQLc(db)
 
 			err := storageInstance.DeleteProjectByUserID(ctx, tc.projectID, tc.userID)
 
@@ -460,7 +460,7 @@ func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	testCases := []struct {
@@ -512,7 +512,7 @@ func TestProjectStorageSQLc_Integration(t *testing.T) {
 	truncateTables(t, db.Pool())
 	seedTables(t, db.Pool())
 
-	storageInstance := project.NewStorageSQLc(db)
+	storageInstance := project.NewDefaultStorageSQLc(db)
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 	// Test complete workflow

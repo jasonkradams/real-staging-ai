@@ -73,7 +73,7 @@ sqlc-generate: ## Generate Go code from SQL queries using sqlc
 	@echo "Generating sqlc code..."
 	cd apps/api && ~/go/bin/sqlc generate
 
-generate: clean ## Generate all code (mocks, sqlc, etc.)
+generate: clean-all ## Generate all code (mocks, sqlc, etc.)
 	@echo "Generating all code..."
 	$(MAKE) sqlc-generate
 	@echo "Generating mocks..."
