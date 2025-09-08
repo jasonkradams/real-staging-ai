@@ -113,6 +113,8 @@ clean: ## Remove unused and unnecessary files
 	find . -type f -name "cover*.out" -exec rm -rf {} + &
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
+
+clean-all: clean ## Remove all mock files as well
 	find . -type f -name "*_mock.go" -exec rm -rf {} + &
 
 token: ## Generate a Auth0 Token
