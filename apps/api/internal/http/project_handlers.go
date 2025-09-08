@@ -85,7 +85,7 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		Name: req.Name,
 	}
 
-	projectStorage := project.NewDefaultStorage(s.db)
+	projectStorage := project.NewDefaultRepository(s.db)
 	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, user.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -128,7 +128,7 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultStorage(s.db)
+	projectStorage := project.NewDefaultRepository(s.db)
 	projects, err := projectStorage.GetProjectsByUserID(c.Request().Context(), user.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -184,7 +184,7 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultStorage(s.db)
+	projectStorage := project.NewDefaultRepository(s.db)
 	project, err := projectStorage.GetProjectByIDAndUserID(c.Request().Context(), projectID, user.ID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -258,7 +258,7 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultStorage(s.db)
+	projectStorage := project.NewDefaultRepository(s.db)
 	updatedProject, err := projectStorage.UpdateProjectByUserID(c.Request().Context(), projectID, user.ID.String(), req.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -316,7 +316,7 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultStorage(s.db)
+	projectStorage := project.NewDefaultRepository(s.db)
 	err = projectStorage.DeleteProjectByUserID(c.Request().Context(), projectID, user.ID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

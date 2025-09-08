@@ -21,7 +21,7 @@ func TestProjectStorage_CreateProject(t *testing.T) {
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	projectStorage := project.NewDefaultStorage(db)
+	projectStorage := project.NewDefaultRepository(db)
 
 	// Create a new project
 	newProject := &project.Project{
@@ -47,7 +47,7 @@ func TestProjectStorage_GetProjects(t *testing.T) {
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	projectStorage := project.NewDefaultStorage(db)
+	projectStorage := project.NewDefaultRepository(db)
 
 	// We have seeded the database with one project, so we expect to get one project back.
 	projects, err := projectStorage.GetProjects(ctx)

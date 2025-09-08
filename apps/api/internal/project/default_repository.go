@@ -8,21 +8,21 @@ import (
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
-// DefaultStorage handles the database operations for projects.
-type DefaultStorage struct {
+// DefaultRepository handles the database operations for projects.
+type DefaultRepository struct {
 	db storage.Database
 }
 
-// Ensure Storage implements Repository interface.
-var _ Repository = (*DefaultStorage)(nil)
+// Ensure DefaultRepository implements Repository interface.
+var _ Repository = (*DefaultRepository)(nil)
 
-// NewDefaultStorage creates a new Storage instance.
-func NewDefaultStorage(db storage.Database) *DefaultStorage {
-	return &DefaultStorage{db: db}
+// NewDefaultRepository creates a new DefaultRepository instance.
+func NewDefaultRepository(db storage.Database) *DefaultRepository {
+	return &DefaultRepository{db: db}
 }
 
 // CreateProject creates a new project in the database.
-func (s *DefaultStorage) CreateProject(ctx context.Context, p *Project, userID string) (*Project, error) {
+func (s *DefaultRepository) CreateProject(ctx context.Context, p *Project, userID string) (*Project, error) {
 	query := `
 		INSERT INTO projects (name, user_id)
 		VALUES ($1, $2)
@@ -46,7 +46,7 @@ func (s *DefaultStorage) CreateProject(ctx context.Context, p *Project, userID s
 
 // GetProjects retrieves all projects from the database.
 // TODO: Filter by user_id when auth middleware is implemented.
-func (s *DefaultStorage) GetProjects(ctx context.Context) ([]Project, error) {
+func (s *DefaultRepository) GetProjects(ctx context.Context) ([]Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
@@ -76,7 +76,7 @@ func (s *DefaultStorage) GetProjects(ctx context.Context) ([]Project, error) {
 }
 
 // GetProjectsByUserID retrieves all projects for a specific user.
-func (s *DefaultStorage) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
+func (s *DefaultRepository) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
@@ -107,7 +107,7 @@ func (s *DefaultStorage) GetProjectsByUserID(ctx context.Context, userID string)
 }
 
 // GetProjectByIDAndUserID retrieves a specific project by its ID and user ID.
-func (s *DefaultStorage) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*Project, error) {
+func (s *DefaultRepository) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
@@ -127,7 +127,7 @@ func (s *DefaultStorage) GetProjectByIDAndUserID(ctx context.Context, projectID,
 }
 
 // DeleteProjectByUserID deletes a project from the database with user ownership verification.
-func (s *DefaultStorage) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
+func (s *DefaultRepository) DeleteProjectByUserID(ctx context.Context, projectID, userID string) error {
 	query := `
 		DELETE FROM projects
 		WHERE id = $1 AND user_id = $2
@@ -147,7 +147,7 @@ func (s *DefaultStorage) DeleteProjectByUserID(ctx context.Context, projectID, u
 }
 
 // CountProjectsByUserID returns the number of projects for a specific user.
-func (s *DefaultStorage) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
+func (s *DefaultRepository) CountProjectsByUserID(ctx context.Context, userID string) (int64, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM projects
@@ -165,7 +165,7 @@ func (s *DefaultStorage) CountProjectsByUserID(ctx context.Context, userID strin
 
 // GetProjectByID retrieves a specific project by its ID.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *DefaultStorage) GetProjectByID(ctx context.Context, projectID string) (*Project, error) {
+func (s *DefaultRepository) GetProjectByID(ctx context.Context, projectID string) (*Project, error) {
 	query := `
 		SELECT id, name, user_id, created_at
 		FROM projects
@@ -185,7 +185,7 @@ func (s *DefaultStorage) GetProjectByID(ctx context.Context, projectID string) (
 }
 
 // UpdateProjectByUserID updates an existing project's name with user ownership verification.
-func (s *DefaultStorage) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
+func (s *DefaultRepository) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
 	query := `
 		UPDATE projects
 		SET name = $3
@@ -207,7 +207,7 @@ func (s *DefaultStorage) UpdateProjectByUserID(ctx context.Context, projectID, u
 
 // UpdateProject updates an existing project's name.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *DefaultStorage) UpdateProject(ctx context.Context, projectID, name string) (*Project, error) {
+func (s *DefaultRepository) UpdateProject(ctx context.Context, projectID, name string) (*Project, error) {
 	query := `
 		UPDATE projects
 		SET name = $2
@@ -229,7 +229,7 @@ func (s *DefaultStorage) UpdateProject(ctx context.Context, projectID, name stri
 
 // DeleteProject deletes a project from the database.
 // TODO: Add user_id filtering when auth middleware is implemented.
-func (s *DefaultStorage) DeleteProject(ctx context.Context, projectID string) error {
+func (s *DefaultRepository) DeleteProject(ctx context.Context, projectID string) error {
 	query := `
 		DELETE FROM projects
 		WHERE id = $1
