@@ -48,7 +48,8 @@ func main() {
 
   url := "https://dev-sleeping-pandas.us.auth0.com/oauth/token"
 
-  payload := strings.NewReader("{\"client_id\":\"REDACTED_AUTH0_CLIENT_ID\",\"client_secret\":\"REDACTED_AUTH0_CLIENT_SECRET\",\"audience\":\"https://api.virtualstaging.local\",\"grant_type\":\"client_credentials\"}")
+	// see secrets.yml for client_id and client_secret
+  payload := strings.NewReader("{\"client_id\":\"REDACTED\",\"client_secret\":\"REDACTED\",\"audience\":\"https://api.virtualstaging.local\",\"grant_type\":\"client_credentials\"}")
 
   req, _ := http.NewRequest("POST", url, payload)
 
@@ -68,7 +69,7 @@ In this example, `client_id` and `client_secret` are the ones from the Virtual S
 
 ```json
 {
-  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Il9VSmJKeW1oQ1JjSjdUVTZYbGRobCJ9.eyJpc3MiOiJodHRwczovL2Rldi1zbGVlcGluZy1wYW5kYXMudXMuYXV0aDAuY29tLyIsInN1YiI6IlAzSmZCU09HYjNZTWVXeTVRdEVVcHR3eHB1amFsYlBWQGNsaWVudHMiLCJhdWQiOiJodHRwczovL2FwaS52aXJ0dWFsc3RhZ2luZy5sb2NhbCIsImlhdCI6MTc1NzAwNzM4MywiZXhwIjoxNzU3MDkzNzgzLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJhenAiOiJQM0pmQlNPR2IzWU1lV3k1UXRFVXB0d3hwdWphbGJQViJ9.tICpq1kD5Es4WWhfXLCzrDHHDgr1q8hn9W3JjO9LufkU0YSqk-vJRbc4LDiPE5smnHdtARl0OuG24sV1cQJ-Ly6cJ3qlmchGwmhgsDAWE3d9jxLiNiqfOUL3KIKaIDeW3-NA9WKzT0frJ81AaU6H5B7ukEQ-mVBhaMUnBGQhY0nzYZwOSVR-WAVwWJ6JSmokA20R_IGx3m9OG1I0ht9lrJcED7D9Y9-eQeaFD1LHkBahZtwfU-4R4YB1HGYpyQULeu6L94OADlcmghleX-ZD40x22HLm7MnwVPiOah8-BMZkgHW8bZcNIz3Xj2_s80dlDYnH-exHUag1cuJTMqQKvQ",
+  "access_token": "REDACTED", // see secrets.yml
   "token_type": "Bearer"
 }
 ```
@@ -92,7 +93,7 @@ func main() {
 
   req, _ := http.NewRequest("GET", url, nil)
 
-  req.Header.Add("authorization", "Bearer REDACTED_AUTH0_ACCESS_TOKEN
+  req.Header.Add("Authorization", "Bearer YOUR_AUTH0_TOKEN")
 
   res, _ := http.DefaultClient.Do(req)
 

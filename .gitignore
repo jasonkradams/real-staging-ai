@@ -3,3 +3,4 @@ coverage.html
 coverage.*.out
 coverage.out
 .localstack/
+.env*
