@@ -96,11 +96,7 @@ func getPublicKey(domain, kid string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer resp.Body.Close()
 
 	var jwks JWKSet
 	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
