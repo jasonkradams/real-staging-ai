@@ -13,7 +13,7 @@ import (
 
 // DefaultRepository handles the database operations for users using sqlc-generated queries.
 type DefaultRepository struct {
-	queries *queries.Queries
+	queries queries.Querier
 }
 
 // Ensure DefaultRepository implements UserRepository interface.
@@ -54,11 +54,7 @@ func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*querie
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	userUUIDType := pgtype.UUID{}
-	err = userUUIDType.Scan(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert user ID to pgtype.UUID: %w", err)
-	}
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
 
 	user, err := r.queries.GetUserByID(ctx, userUUIDType)
 	if err != nil {
@@ -106,11 +102,7 @@ func (r *DefaultRepository) UpdateStripeCustomerID(ctx context.Context, userID, 
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	userUUIDType := pgtype.UUID{}
-	err = userUUIDType.Scan(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert user ID to pgtype.UUID: %w", err)
-	}
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
 
 	stripeCustomerIDType := pgtype.Text{String: stripeCustomerID, Valid: true}
 
@@ -137,11 +129,7 @@ func (r *DefaultRepository) UpdateRole(ctx context.Context, userID, role string)
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	userUUIDType := pgtype.UUID{}
-	err = userUUIDType.Scan(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert user ID to pgtype.UUID: %w", err)
-	}
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
 
 	params := queries.UpdateUserRoleParams{
 		ID:   userUUIDType,
@@ -166,11 +154,7 @@ func (r *DefaultRepository) Delete(ctx context.Context, userID string) error {
 		return fmt.Errorf("invalid user ID format: %w", err)
 	}
 
-	userUUIDType := pgtype.UUID{}
-	err = userUUIDType.Scan(userUUID.String())
-	if err != nil {
-		return fmt.Errorf("failed to convert user ID to pgtype.UUID: %w", err)
-	}
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
 
 	err = r.queries.DeleteUser(ctx, userUUIDType)
 	if err != nil {
