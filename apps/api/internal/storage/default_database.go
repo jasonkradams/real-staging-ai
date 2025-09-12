@@ -15,7 +15,7 @@ import (
 
 // DefaultDatabase wraps the pgx connection pool with tracing
 type DefaultDatabase struct {
-	pool   *pgxpool.Pool
+	pool   PgxPool
 	tracer trace.Tracer
 }
 
@@ -61,7 +61,7 @@ func (db *DefaultDatabase) Close() {
 }
 
 // Pool returns the underlying connection pool for testing
-func (db *DefaultDatabase) Pool() *pgxpool.Pool {
+func (db *DefaultDatabase) Pool() PgxPool {
 	return db.pool
 }
 

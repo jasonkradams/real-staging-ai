@@ -7,11 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-//go:generate go run github.com/matryer/moq@v0.5.3 -out database_mock.go . Database
-
-type Database interface {
+//go:generate go run github.com/matryer/moq@v0.5.3 -out pgxpool_mock.go . PgxPool
+type PgxPool interface {
 	Close()
-	Pool() PgxPool
+	Ping(ctx context.Context) error
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error)

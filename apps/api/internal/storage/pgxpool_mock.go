@@ -10,24 +10,24 @@ import (
 	"sync"
 )
 
-// Ensure, that DatabaseMock does implement Database.
+// Ensure, that PgxPoolMock does implement PgxPool.
 // If this is not the case, regenerate this file with moq.
-var _ Database = &DatabaseMock{}
+var _ PgxPool = &PgxPoolMock{}
 
-// DatabaseMock is a mock implementation of Database.
+// PgxPoolMock is a mock implementation of PgxPool.
 //
-//	func TestSomethingThatUsesDatabase(t *testing.T) {
+//	func TestSomethingThatUsesPgxPool(t *testing.T) {
 //
-//		// make and configure a mocked Database
-//		mockedDatabase := &DatabaseMock{
+//		// make and configure a mocked PgxPool
+//		mockedPgxPool := &PgxPoolMock{
 //			CloseFunc: func()  {
 //				panic("mock out the Close method")
 //			},
 //			ExecFunc: func(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
 //				panic("mock out the Exec method")
 //			},
-//			PoolFunc: func() PgxPool {
-//				panic("mock out the Pool method")
+//			PingFunc: func(ctx context.Context) error {
+//				panic("mock out the Ping method")
 //			},
 //			QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
 //				panic("mock out the Query method")
@@ -37,19 +37,19 @@ var _ Database = &DatabaseMock{}
 //			},
 //		}
 //
-//		// use mockedDatabase in code that requires Database
+//		// use mockedPgxPool in code that requires PgxPool
 //		// and then make assertions.
 //
 //	}
-type DatabaseMock struct {
+type PgxPoolMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func()
 
 	// ExecFunc mocks the Exec method.
 	ExecFunc func(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error)
 
-	// PoolFunc mocks the Pool method.
-	PoolFunc func() PgxPool
+	// PingFunc mocks the Ping method.
+	PingFunc func(ctx context.Context) error
 
 	// QueryFunc mocks the Query method.
 	QueryFunc func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
@@ -71,8 +71,10 @@ type DatabaseMock struct {
 			// Args is the args argument value.
 			Args []interface{}
 		}
-		// Pool holds details about calls to the Pool method.
-		Pool []struct {
+		// Ping holds details about calls to the Ping method.
+		Ping []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// Query holds details about calls to the Query method.
 		Query []struct {
@@ -95,15 +97,15 @@ type DatabaseMock struct {
 	}
 	lockClose    sync.RWMutex
 	lockExec     sync.RWMutex
-	lockPool     sync.RWMutex
+	lockPing     sync.RWMutex
 	lockQuery    sync.RWMutex
 	lockQueryRow sync.RWMutex
 }
 
 // Close calls CloseFunc.
-func (mock *DatabaseMock) Close() {
+func (mock *PgxPoolMock) Close() {
 	if mock.CloseFunc == nil {
-		panic("DatabaseMock.CloseFunc: method is nil but Database.Close was just called")
+		panic("PgxPoolMock.CloseFunc: method is nil but PgxPool.Close was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -116,8 +118,8 @@ func (mock *DatabaseMock) Close() {
 // CloseCalls gets all the calls that were made to Close.
 // Check the length with:
 //
-//	len(mockedDatabase.CloseCalls())
-func (mock *DatabaseMock) CloseCalls() []struct {
+//	len(mockedPgxPool.CloseCalls())
+func (mock *PgxPoolMock) CloseCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -128,9 +130,9 @@ func (mock *DatabaseMock) CloseCalls() []struct {
 }
 
 // Exec calls ExecFunc.
-func (mock *DatabaseMock) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+func (mock *PgxPoolMock) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
 	if mock.ExecFunc == nil {
-		panic("DatabaseMock.ExecFunc: method is nil but Database.Exec was just called")
+		panic("PgxPoolMock.ExecFunc: method is nil but PgxPool.Exec was just called")
 	}
 	callInfo := struct {
 		Ctx  context.Context
@@ -150,8 +152,8 @@ func (mock *DatabaseMock) Exec(ctx context.Context, sql string, args ...interfac
 // ExecCalls gets all the calls that were made to Exec.
 // Check the length with:
 //
-//	len(mockedDatabase.ExecCalls())
-func (mock *DatabaseMock) ExecCalls() []struct {
+//	len(mockedPgxPool.ExecCalls())
+func (mock *PgxPoolMock) ExecCalls() []struct {
 	Ctx  context.Context
 	SQL  string
 	Args []interface{}
@@ -167,37 +169,42 @@ func (mock *DatabaseMock) ExecCalls() []struct {
 	return calls
 }
 
-// Pool calls PoolFunc.
-func (mock *DatabaseMock) Pool() PgxPool {
-	if mock.PoolFunc == nil {
-		panic("DatabaseMock.PoolFunc: method is nil but Database.Pool was just called")
+// Ping calls PingFunc.
+func (mock *PgxPoolMock) Ping(ctx context.Context) error {
+	if mock.PingFunc == nil {
+		panic("PgxPoolMock.PingFunc: method is nil but PgxPool.Ping was just called")
 	}
 	callInfo := struct {
-	}{}
-	mock.lockPool.Lock()
-	mock.calls.Pool = append(mock.calls.Pool, callInfo)
-	mock.lockPool.Unlock()
-	return mock.PoolFunc()
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockPing.Lock()
+	mock.calls.Ping = append(mock.calls.Ping, callInfo)
+	mock.lockPing.Unlock()
+	return mock.PingFunc(ctx)
 }
 
-// PoolCalls gets all the calls that were made to Pool.
+// PingCalls gets all the calls that were made to Ping.
 // Check the length with:
 //
-//	len(mockedDatabase.PoolCalls())
-func (mock *DatabaseMock) PoolCalls() []struct {
+//	len(mockedPgxPool.PingCalls())
+func (mock *PgxPoolMock) PingCalls() []struct {
+	Ctx context.Context
 } {
 	var calls []struct {
+		Ctx context.Context
 	}
-	mock.lockPool.RLock()
-	calls = mock.calls.Pool
-	mock.lockPool.RUnlock()
+	mock.lockPing.RLock()
+	calls = mock.calls.Ping
+	mock.lockPing.RUnlock()
 	return calls
 }
 
 // Query calls QueryFunc.
-func (mock *DatabaseMock) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+func (mock *PgxPoolMock) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
 	if mock.QueryFunc == nil {
-		panic("DatabaseMock.QueryFunc: method is nil but Database.Query was just called")
+		panic("PgxPoolMock.QueryFunc: method is nil but PgxPool.Query was just called")
 	}
 	callInfo := struct {
 		Ctx  context.Context
@@ -217,8 +224,8 @@ func (mock *DatabaseMock) Query(ctx context.Context, sql string, args ...interfa
 // QueryCalls gets all the calls that were made to Query.
 // Check the length with:
 //
-//	len(mockedDatabase.QueryCalls())
-func (mock *DatabaseMock) QueryCalls() []struct {
+//	len(mockedPgxPool.QueryCalls())
+func (mock *PgxPoolMock) QueryCalls() []struct {
 	Ctx  context.Context
 	SQL  string
 	Args []interface{}
@@ -235,9 +242,9 @@ func (mock *DatabaseMock) QueryCalls() []struct {
 }
 
 // QueryRow calls QueryRowFunc.
-func (mock *DatabaseMock) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+func (mock *PgxPoolMock) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	if mock.QueryRowFunc == nil {
-		panic("DatabaseMock.QueryRowFunc: method is nil but Database.QueryRow was just called")
+		panic("PgxPoolMock.QueryRowFunc: method is nil but PgxPool.QueryRow was just called")
 	}
 	callInfo := struct {
 		Ctx  context.Context
@@ -257,8 +264,8 @@ func (mock *DatabaseMock) QueryRow(ctx context.Context, sql string, args ...inte
 // QueryRowCalls gets all the calls that were made to QueryRow.
 // Check the length with:
 //
-//	len(mockedDatabase.QueryRowCalls())
-func (mock *DatabaseMock) QueryRowCalls() []struct {
+//	len(mockedPgxPool.QueryRowCalls())
+func (mock *PgxPoolMock) QueryRowCalls() []struct {
 	Ctx  context.Context
 	SQL  string
 	Args []interface{}

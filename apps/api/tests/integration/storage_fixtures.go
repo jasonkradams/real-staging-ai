@@ -6,20 +6,20 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 //go:embed testdata/seed.sql
 var seedSQL string
 
 // SeedDatabase inserts test data into the database
-func SeedDatabase(ctx context.Context, pool *pgxpool.Pool) error {
+func SeedDatabase(ctx context.Context, pool storage.PgxPool) error {
 	_, err := pool.Exec(ctx, seedSQL)
 	return err
 }
 
 // TruncateAllTables truncates all tables and resets sequences
-func TruncateAllTables(ctx context.Context, pool *pgxpool.Pool) error {
+func TruncateAllTables(ctx context.Context, pool storage.PgxPool) error {
 	query := `
 		TRUNCATE TABLE projects, users, images, jobs, plans RESTART IDENTITY
 	`
@@ -28,7 +28,7 @@ func TruncateAllTables(ctx context.Context, pool *pgxpool.Pool) error {
 }
 
 // ResetDatabase truncates all tables and seeds with test data
-func ResetDatabase(ctx context.Context, pool *pgxpool.Pool) error {
+func ResetDatabase(ctx context.Context, pool storage.PgxPool) error {
 	if err := TruncateAllTables(ctx, pool); err != nil {
 		return err
 	}

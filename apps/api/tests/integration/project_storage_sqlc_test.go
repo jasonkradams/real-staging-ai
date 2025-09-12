@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/virtual-staging-ai/api/internal/project"
@@ -554,7 +552,7 @@ func TestProjectStorageSQLc_Integration(t *testing.T) {
 }
 
 // Local test helpers to avoid import cycle
-func truncateTables(t *testing.T, pool *pgxpool.Pool) {
+func truncateTables(t *testing.T, pool storage.PgxPool) {
 	t.Helper()
 
 	query := `
@@ -564,7 +562,7 @@ func truncateTables(t *testing.T, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-func seedTables(t *testing.T, pool *pgxpool.Pool) {
+func seedTables(t *testing.T, pool storage.PgxPool) {
 	t.Helper()
 
 	// This path is relative to the tests/integration directory
