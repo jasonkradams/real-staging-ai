@@ -88,7 +88,7 @@ func TestProjectService_CreateProject(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)
@@ -306,7 +306,7 @@ func TestProjectService_GetProjectsByUser(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)
@@ -397,7 +397,7 @@ func TestProjectService_GetProjectByID(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)
@@ -504,7 +504,7 @@ func TestProjectService_UpdateProject(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)
@@ -585,7 +585,7 @@ func TestProjectService_DeleteProject(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)
@@ -664,7 +664,7 @@ func TestProjectService_GetProjectStats(t *testing.T) {
 			projectRepositoryMock := &project.RepositoryMock{}
 			tc.setupMock(projectRepositoryMock)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 
 			projectService := project.NewDefaultService(projectRepositoryMock, s3ServiceMock)

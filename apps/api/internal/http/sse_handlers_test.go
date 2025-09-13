@@ -22,7 +22,7 @@ func TestSendSSEEvent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -51,7 +51,7 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -73,7 +73,7 @@ func TestSendSSEEvent_WithoutIDAndEvent(t *testing.T) {
 
 func TestBroadcastJobUpdate(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -96,7 +96,7 @@ func TestEventsHandler_InitialConnection(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}

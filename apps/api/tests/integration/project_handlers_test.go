@@ -147,7 +147,7 @@ func TestCreateProject_Handlers(t *testing.T) {
 			TruncateAllTables(ctx, db.Pool())
 			SeedDatabase(ctx, db.Pool())
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -244,7 +244,7 @@ func TestGetProjects_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -327,7 +327,7 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -453,7 +453,7 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -550,7 +550,7 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			// Setup data
 			tc.setupData(t, db)
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -594,7 +594,7 @@ func TestProjectCRUDFlow_Handlers(t *testing.T) {
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)

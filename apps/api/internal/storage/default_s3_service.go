@@ -33,8 +33,8 @@ type DefaultS3Service struct {
 // Ensure DefaultS3Service implements S3Service interface.
 var _ S3Service = (*DefaultS3Service)(nil)
 
-// NewS3Service creates a new DefaultS3Service instance.
-func NewS3Service(ctx context.Context, bucketName string) (*DefaultS3Service, error) {
+// NewDefaultS3Service creates a new DefaultS3Service instance.
+func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Service, error) {
 	var cfg aws.Config
 	var err error
 

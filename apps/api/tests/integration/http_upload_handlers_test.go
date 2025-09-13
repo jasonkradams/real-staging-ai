@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func setupS3() error {
 	ctx := context.Background()
-	s3Service, err := storage.NewS3Service(ctx, "test-bucket")
+	s3Service, err := storage.NewDefaultS3Service(ctx, "test-bucket")
 	if err != nil {
 		return fmt.Errorf("failed to create s3 service: %w", err)
 	}
@@ -283,7 +283,7 @@ func TestPresignUpload(t *testing.T) {
 			TruncateAllTables(context.Background(), db.Pool())
 			SeedDatabase(context.Background(), db.Pool())
 
-			s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 			require.NoError(t, err)
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -335,7 +335,7 @@ func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(ctx, "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(ctx, "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -439,7 +439,7 @@ func TestPresignUpload_Integration(t *testing.T) {
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)

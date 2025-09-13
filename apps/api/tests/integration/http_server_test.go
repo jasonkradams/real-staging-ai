@@ -27,7 +27,7 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -81,7 +81,7 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -115,7 +115,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)

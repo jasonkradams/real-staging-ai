@@ -17,7 +17,7 @@ import (
 func TestStripeWebhookHandler(t *testing.T) {
 	// Setup
 	e := echo.New()
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -103,7 +103,7 @@ func TestStripeWebhookHandler(t *testing.T) {
 
 func TestHandleSubscriptionCreated(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -128,7 +128,7 @@ func TestHandleSubscriptionCreated(t *testing.T) {
 
 func TestHandleSubscriptionUpdated(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -153,7 +153,7 @@ func TestHandleSubscriptionUpdated(t *testing.T) {
 
 func TestHandleSubscriptionDeleted(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -178,7 +178,7 @@ func TestHandleSubscriptionDeleted(t *testing.T) {
 
 func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -204,7 +204,7 @@ func TestHandleInvoicePaymentSucceeded(t *testing.T) {
 
 func TestHandleInvoicePaymentFailed(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -230,7 +230,7 @@ func TestHandleInvoicePaymentFailed(t *testing.T) {
 
 func TestHandleCustomerCreated(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -255,7 +255,7 @@ func TestHandleCustomerCreated(t *testing.T) {
 
 func TestHandleCustomerUpdated(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}
@@ -280,7 +280,7 @@ func TestHandleCustomerUpdated(t *testing.T) {
 
 func TestHandleCustomerDeleted(t *testing.T) {
 	// Setup
-	s3ServiceMock, err := storage.NewS3Service(context.Background(), "test-bucket")
+	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
 	require.NoError(t, err)
 	imageServiceMock := &image.ServiceMock{}
 	server := &Server{s3Service: s3ServiceMock, imageService: imageServiceMock}

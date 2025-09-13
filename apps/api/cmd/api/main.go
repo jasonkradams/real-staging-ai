@@ -26,7 +26,7 @@ func main() {
 		bucketName = "virtual-staging-dev"
 	}
 
-	s3Service, err := storage.NewS3Service(ctx, bucketName)
+	s3Service, err := storage.NewDefaultS3Service(ctx, bucketName)
 	if err != nil {
 		log.Fatalf("failed to create S3 service: %v", err)
 	}
