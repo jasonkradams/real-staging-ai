@@ -67,7 +67,11 @@ func (db *DefaultDatabase) Pool() PgxPool {
 
 // QueryRow executes a query with tracing
 func (db *DefaultDatabase) QueryRow(ctx context.Context, sql string, arguments ...any) pgx.Row {
-	ctx, span := db.tracer.Start(ctx, "db.query_row")
+	tr := db.tracer
+	if tr == nil {
+		tr = otel.Tracer("virtual-staging-api/database")
+	}
+	ctx, span := tr.Start(ctx, "db.query_row")
 	defer span.End()
 
 	span.SetAttributes(
@@ -80,7 +84,11 @@ func (db *DefaultDatabase) QueryRow(ctx context.Context, sql string, arguments .
 
 // Query executes a query with tracing
 func (db *DefaultDatabase) Query(ctx context.Context, sql string, arguments ...any) (pgx.Rows, error) {
-	ctx, span := db.tracer.Start(ctx, "db.query")
+	tr := db.tracer
+	if tr == nil {
+		tr = otel.Tracer("virtual-staging-api/database")
+	}
+	ctx, span := tr.Start(ctx, "db.query")
 	defer span.End()
 
 	span.SetAttributes(
@@ -98,7 +106,11 @@ func (db *DefaultDatabase) Query(ctx context.Context, sql string, arguments ...a
 
 // Exec executes a command with tracing
 func (db *DefaultDatabase) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
-	ctx, span := db.tracer.Start(ctx, "db.exec")
+	tr := db.tracer
+	if tr == nil {
+		tr = otel.Tracer("virtual-staging-api/database")
+	}
+	ctx, span := tr.Start(ctx, "db.exec")
 	defer span.End()
 
 	span.SetAttributes(
