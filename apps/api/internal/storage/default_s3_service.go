@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -33,13 +34,18 @@ type DefaultS3Service struct {
 // Ensure DefaultS3Service implements S3Service interface.
 var _ S3Service = (*DefaultS3Service)(nil)
 
+// awsConfigLoader allows overriding AWS config loading in tests.
+var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptions) error) (aws.Config, error) {
+	return config.LoadDefaultConfig(ctx, optFns...)
+}
+
 // NewDefaultS3Service creates a new DefaultS3Service instance.
 func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Service, error) {
 	var cfg aws.Config
 	var err error
 
 	if os.Getenv("APP_ENV") == "test" {
-		cfg, err = config.LoadDefaultConfig(ctx,
+		cfg, err = awsConfigLoader(ctx,
 			config.WithRegion("us-east-1"),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "test")),
 		)
@@ -60,7 +66,7 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 	}
 
 	// Use default AWS config for production
-	cfg, err = config.LoadDefaultConfig(ctx)
+	cfg, err = awsConfigLoader(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -145,13 +151,7 @@ func ValidateContentType(contentType string) bool {
 		"image/webp",
 	}
 
-	for _, allowed := range allowedTypes {
-		if contentType == allowed {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(allowedTypes, contentType)
 }
 
 // ValidateFileSize checks if the file size is within allowed limits.
@@ -170,13 +170,7 @@ func ValidateFilename(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
 	allowedExts := []string{".jpg", ".jpeg", ".png", ".webp"}
 
-	for _, allowed := range allowedExts {
-		if ext == allowed {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(allowedExts, ext)
 }
 
 // CreateBucket creates the S3 bucket if it doesn't exist.

@@ -24,8 +24,10 @@ import (
 func TestMain(m *testing.M) {
 	// Set APP_ENV to test to ensure the correct S3 configuration is used.
 	os.Setenv("APP_ENV", "test")
-	if err := setupS3(); err != nil {
-		log.Fatalf("Failed to set up S3: %v", err)
+	if os.Getenv("RUN_S3_INTEGRATION_TESTS") == "1" {
+		if err := setupS3(); err != nil {
+			log.Fatalf("Failed to set up S3: %v", err)
+		}
 	}
 	os.Exit(m.Run())
 }
