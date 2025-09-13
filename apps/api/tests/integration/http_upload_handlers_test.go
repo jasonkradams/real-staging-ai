@@ -302,7 +302,7 @@ func TestPresignUpload(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/uploads/presign", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -473,7 +473,12 @@ func TestPresignUpload_Integration(t *testing.T) {
 	assert.NotEmpty(t, response.FileKey)
 	assert.Greater(t, response.ExpiresIn, int64(0))
 
-	// TODO: Test actual upload to the presigned URL
-	// This would involve making an HTTP PUT request to response.UploadURL
-	// with the file content and verifying it was uploaded successfully
+	// Integration step: to test actual upload, enable RUN_S3_INTEGRATION_TESTS=1 with valid S3/MinIO creds.
+	// Steps:
+	// 1) Build a small payload (e.g., bytes.NewReader([]byte("hello"))).
+	// 2) req, _ := http.NewRequest(http.MethodPut, response.UploadURL, payload)
+	//    req.Header.Set("Content-Type", requestBody.ContentType)
+	// 3) resp, err := http.DefaultClient.Do(req); assert.NoError(t, err); assert.Contains(t, []int{http.StatusOK, http.StatusNoContent}, resp.StatusCode)
+	// 4) Optionally verify object exists via S3 client or a presigned GET (if available) and validate contents.
+	// Note: Keep disabled by default to avoid external dependencies in CI.
 }

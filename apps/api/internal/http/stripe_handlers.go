@@ -58,7 +58,10 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 		//     })
 		// }
 	} else {
-		// TODO: Handle empty webhook secret
+		// STRIPE_WEBHOOK_SECRET is not set; skipping signature verification.
+		// This is acceptable in local/dev environments, but MUST be configured in production.
+		// See docs/configuration.md for environment variable setup.
+		log.Printf("Stripe webhook: STRIPE_WEBHOOK_SECRET not set; skipping signature verification")
 	}
 
 	// Parse the webhook event

@@ -1,13 +1,17 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/virtual-staging-ai/api/internal/auth"
 	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/virtual-staging-ai/api/internal/user"
 )
 
 type PresignUploadRequest struct {
@@ -40,9 +44,37 @@ func (s *Server) presignUploadHandler(c echo.Context) error {
 		})
 	}
 
-	// TODO: Get user ID from JWT token when auth middleware is implemented
-	// For now, use hardcoded user ID
-	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+	// Get user ID from JWT token (or default in tests), ensure user exists
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
+
+	userRepo := user.NewUserRepository(s.db)
+	u, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User not found, create a new one
+			u, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error:   "internal_server_error",
+					Message: "Failed to create user",
+				})
+			}
+		} else {
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to get user",
+			})
+		}
+	}
+
+	// Use authenticated user's ID for S3 key scoping
+	userID := u.ID.String()
 
 	// Generate presigned upload URL using injected S3 service
 	result, err := s.s3Service.GeneratePresignedUploadURL(

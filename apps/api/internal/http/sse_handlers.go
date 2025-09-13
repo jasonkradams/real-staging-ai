@@ -118,9 +118,6 @@ func (s *Server) BroadcastJobUpdate(jobID, imageID, status string, errorMsg *str
 		event.Progress = *progress
 	}
 
-	// TODO: Implement actual broadcasting to connected clients
-	// This would typically involve:
-	// 1. Maintaining a list of active SSE connections
-	// 2. Broadcasting the event to all connections
-	// 3. Handling connection cleanup when clients disconnect
+	// TODO: Integrate Redis Pub/Sub for broadcasting job updates to SSE clients.
+	// Plan: publish JobUpdateEvent to a channel; eventsHandler subscribes and streams to connected clients.
 }

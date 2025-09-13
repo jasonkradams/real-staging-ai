@@ -164,7 +164,7 @@ func TestCreateProject_Handlers(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -251,7 +251,7 @@ func TestGetProjects_Handlers(t *testing.T) {
 
 			// Create request
 			req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -335,7 +335,7 @@ func TestGetProjectByID_Handlers(t *testing.T) {
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -466,7 +466,7 @@ func TestUpdateProject_Handlers(t *testing.T) {
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
 			req := httptest.NewRequest(http.MethodPut, url, bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -558,7 +558,7 @@ func TestDeleteProject_Handlers(t *testing.T) {
 			// Create request
 			url := fmt.Sprintf("/api/v1/projects/%s", tc.projectID)
 			req := httptest.NewRequest(http.MethodDelete, url, nil)
-			// TODO: Add Authorization header when auth middleware is implemented
+			// Note: Test server runs without auth middleware; no Authorization header is required
 			rec := httptest.NewRecorder()
 
 			// Execute request
