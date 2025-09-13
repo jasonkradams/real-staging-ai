@@ -82,6 +82,9 @@ var _ Querier = &QuerierMock{}
 //			GetImagesByProjectIDFunc: func(ctx context.Context, projectID pgtype.UUID) ([]*Image, error) {
 //				panic("mock out the GetImagesByProjectID method")
 //			},
+//			GetInvoiceByStripeIDFunc: func(ctx context.Context, stripeInvoiceID string) (*Invoice, error) {
+//				panic("mock out the GetInvoiceByStripeID method")
+//			},
 //			GetJobByIDFunc: func(ctx context.Context, id pgtype.UUID) (*Job, error) {
 //				panic("mock out the GetJobByID method")
 //			},
@@ -111,6 +114,9 @@ var _ Querier = &QuerierMock{}
 //			},
 //			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
 //				panic("mock out the GetUserByStripeCustomerID method")
+//			},
+//			ListInvoicesByUserIDFunc: func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error) {
+//				panic("mock out the ListInvoicesByUserID method")
 //			},
 //			ListSubscriptionsByUserIDFunc: func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error) {
 //				panic("mock out the ListSubscriptionsByUserID method")
@@ -144,6 +150,9 @@ var _ Querier = &QuerierMock{}
 //			},
 //			UpdateUserStripeCustomerIDFunc: func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error) {
 //				panic("mock out the UpdateUserStripeCustomerID method")
+//			},
+//			UpsertInvoiceByStripeIDFunc: func(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error) {
+//				panic("mock out the UpsertInvoiceByStripeID method")
 //			},
 //			UpsertProcessedEventByStripeIDFunc: func(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error) {
 //				panic("mock out the UpsertProcessedEventByStripeID method")
@@ -221,6 +230,9 @@ type QuerierMock struct {
 	// GetImagesByProjectIDFunc mocks the GetImagesByProjectID method.
 	GetImagesByProjectIDFunc func(ctx context.Context, projectID pgtype.UUID) ([]*Image, error)
 
+	// GetInvoiceByStripeIDFunc mocks the GetInvoiceByStripeID method.
+	GetInvoiceByStripeIDFunc func(ctx context.Context, stripeInvoiceID string) (*Invoice, error)
+
 	// GetJobByIDFunc mocks the GetJobByID method.
 	GetJobByIDFunc func(ctx context.Context, id pgtype.UUID) (*Job, error)
 
@@ -250,6 +262,9 @@ type QuerierMock struct {
 
 	// GetUserByStripeCustomerIDFunc mocks the GetUserByStripeCustomerID method.
 	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+
+	// ListInvoicesByUserIDFunc mocks the ListInvoicesByUserID method.
+	ListInvoicesByUserIDFunc func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
 
 	// ListSubscriptionsByUserIDFunc mocks the ListSubscriptionsByUserID method.
 	ListSubscriptionsByUserIDFunc func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
@@ -283,6 +298,9 @@ type QuerierMock struct {
 
 	// UpdateUserStripeCustomerIDFunc mocks the UpdateUserStripeCustomerID method.
 	UpdateUserStripeCustomerIDFunc func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+
+	// UpsertInvoiceByStripeIDFunc mocks the UpsertInvoiceByStripeID method.
+	UpsertInvoiceByStripeIDFunc func(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error)
 
 	// UpsertProcessedEventByStripeIDFunc mocks the UpsertProcessedEventByStripeID method.
 	UpsertProcessedEventByStripeIDFunc func(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error)
@@ -435,6 +453,13 @@ type QuerierMock struct {
 			// ProjectID is the projectID argument value.
 			ProjectID pgtype.UUID
 		}
+		// GetInvoiceByStripeID holds details about calls to the GetInvoiceByStripeID method.
+		GetInvoiceByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// StripeInvoiceID is the stripeInvoiceID argument value.
+			StripeInvoiceID string
+		}
 		// GetJobByID holds details about calls to the GetJobByID method.
 		GetJobByID []struct {
 			// Ctx is the ctx argument value.
@@ -504,6 +529,13 @@ type QuerierMock struct {
 			Ctx context.Context
 			// StripeCustomerID is the stripeCustomerID argument value.
 			StripeCustomerID pgtype.Text
+		}
+		// ListInvoicesByUserID holds details about calls to the ListInvoicesByUserID method.
+		ListInvoicesByUserID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg ListInvoicesByUserIDParams
 		}
 		// ListSubscriptionsByUserID holds details about calls to the ListSubscriptionsByUserID method.
 		ListSubscriptionsByUserID []struct {
@@ -582,6 +614,13 @@ type QuerierMock struct {
 			// Arg is the arg argument value.
 			Arg UpdateUserStripeCustomerIDParams
 		}
+		// UpsertInvoiceByStripeID holds details about calls to the UpsertInvoiceByStripeID method.
+		UpsertInvoiceByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg UpsertInvoiceByStripeIDParams
+		}
 		// UpsertProcessedEventByStripeID holds details about calls to the UpsertProcessedEventByStripeID method.
 		UpsertProcessedEventByStripeID []struct {
 			// Ctx is the ctx argument value.
@@ -618,6 +657,7 @@ type QuerierMock struct {
 	lockGetAllProjects                 sync.RWMutex
 	lockGetImageByID                   sync.RWMutex
 	lockGetImagesByProjectID           sync.RWMutex
+	lockGetInvoiceByStripeID           sync.RWMutex
 	lockGetJobByID                     sync.RWMutex
 	lockGetJobsByImageID               sync.RWMutex
 	lockGetPendingJobs                 sync.RWMutex
@@ -628,6 +668,7 @@ type QuerierMock struct {
 	lockGetUserByAuth0Sub              sync.RWMutex
 	lockGetUserByID                    sync.RWMutex
 	lockGetUserByStripeCustomerID      sync.RWMutex
+	lockListInvoicesByUserID           sync.RWMutex
 	lockListSubscriptionsByUserID      sync.RWMutex
 	lockListUsers                      sync.RWMutex
 	lockStartJob                       sync.RWMutex
@@ -639,6 +680,7 @@ type QuerierMock struct {
 	lockUpdateProjectByUserID          sync.RWMutex
 	lockUpdateUserRole                 sync.RWMutex
 	lockUpdateUserStripeCustomerID     sync.RWMutex
+	lockUpsertInvoiceByStripeID        sync.RWMutex
 	lockUpsertProcessedEventByStripeID sync.RWMutex
 	lockUpsertSubscriptionByStripeID   sync.RWMutex
 }
@@ -1391,6 +1433,42 @@ func (mock *QuerierMock) GetImagesByProjectIDCalls() []struct {
 	return calls
 }
 
+// GetInvoiceByStripeID calls GetInvoiceByStripeIDFunc.
+func (mock *QuerierMock) GetInvoiceByStripeID(ctx context.Context, stripeInvoiceID string) (*Invoice, error) {
+	if mock.GetInvoiceByStripeIDFunc == nil {
+		panic("QuerierMock.GetInvoiceByStripeIDFunc: method is nil but Querier.GetInvoiceByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		StripeInvoiceID string
+	}{
+		Ctx:             ctx,
+		StripeInvoiceID: stripeInvoiceID,
+	}
+	mock.lockGetInvoiceByStripeID.Lock()
+	mock.calls.GetInvoiceByStripeID = append(mock.calls.GetInvoiceByStripeID, callInfo)
+	mock.lockGetInvoiceByStripeID.Unlock()
+	return mock.GetInvoiceByStripeIDFunc(ctx, stripeInvoiceID)
+}
+
+// GetInvoiceByStripeIDCalls gets all the calls that were made to GetInvoiceByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.GetInvoiceByStripeIDCalls())
+func (mock *QuerierMock) GetInvoiceByStripeIDCalls() []struct {
+	Ctx             context.Context
+	StripeInvoiceID string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		StripeInvoiceID string
+	}
+	mock.lockGetInvoiceByStripeID.RLock()
+	calls = mock.calls.GetInvoiceByStripeID
+	mock.lockGetInvoiceByStripeID.RUnlock()
+	return calls
+}
+
 // GetJobByID calls GetJobByIDFunc.
 func (mock *QuerierMock) GetJobByID(ctx context.Context, id pgtype.UUID) (*Job, error) {
 	if mock.GetJobByIDFunc == nil {
@@ -1748,6 +1826,42 @@ func (mock *QuerierMock) GetUserByStripeCustomerIDCalls() []struct {
 	mock.lockGetUserByStripeCustomerID.RLock()
 	calls = mock.calls.GetUserByStripeCustomerID
 	mock.lockGetUserByStripeCustomerID.RUnlock()
+	return calls
+}
+
+// ListInvoicesByUserID calls ListInvoicesByUserIDFunc.
+func (mock *QuerierMock) ListInvoicesByUserID(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error) {
+	if mock.ListInvoicesByUserIDFunc == nil {
+		panic("QuerierMock.ListInvoicesByUserIDFunc: method is nil but Querier.ListInvoicesByUserID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg ListInvoicesByUserIDParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockListInvoicesByUserID.Lock()
+	mock.calls.ListInvoicesByUserID = append(mock.calls.ListInvoicesByUserID, callInfo)
+	mock.lockListInvoicesByUserID.Unlock()
+	return mock.ListInvoicesByUserIDFunc(ctx, arg)
+}
+
+// ListInvoicesByUserIDCalls gets all the calls that were made to ListInvoicesByUserID.
+// Check the length with:
+//
+//	len(mockedQuerier.ListInvoicesByUserIDCalls())
+func (mock *QuerierMock) ListInvoicesByUserIDCalls() []struct {
+	Ctx context.Context
+	Arg ListInvoicesByUserIDParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg ListInvoicesByUserIDParams
+	}
+	mock.lockListInvoicesByUserID.RLock()
+	calls = mock.calls.ListInvoicesByUserID
+	mock.lockListInvoicesByUserID.RUnlock()
 	return calls
 }
 
@@ -2144,6 +2258,42 @@ func (mock *QuerierMock) UpdateUserStripeCustomerIDCalls() []struct {
 	mock.lockUpdateUserStripeCustomerID.RLock()
 	calls = mock.calls.UpdateUserStripeCustomerID
 	mock.lockUpdateUserStripeCustomerID.RUnlock()
+	return calls
+}
+
+// UpsertInvoiceByStripeID calls UpsertInvoiceByStripeIDFunc.
+func (mock *QuerierMock) UpsertInvoiceByStripeID(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error) {
+	if mock.UpsertInvoiceByStripeIDFunc == nil {
+		panic("QuerierMock.UpsertInvoiceByStripeIDFunc: method is nil but Querier.UpsertInvoiceByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg UpsertInvoiceByStripeIDParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockUpsertInvoiceByStripeID.Lock()
+	mock.calls.UpsertInvoiceByStripeID = append(mock.calls.UpsertInvoiceByStripeID, callInfo)
+	mock.lockUpsertInvoiceByStripeID.Unlock()
+	return mock.UpsertInvoiceByStripeIDFunc(ctx, arg)
+}
+
+// UpsertInvoiceByStripeIDCalls gets all the calls that were made to UpsertInvoiceByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.UpsertInvoiceByStripeIDCalls())
+func (mock *QuerierMock) UpsertInvoiceByStripeIDCalls() []struct {
+	Ctx context.Context
+	Arg UpsertInvoiceByStripeIDParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg UpsertInvoiceByStripeIDParams
+	}
+	mock.lockUpsertInvoiceByStripeID.RLock()
+	calls = mock.calls.UpsertInvoiceByStripeID
+	mock.lockUpsertInvoiceByStripeID.RUnlock()
 	return calls
 }
 

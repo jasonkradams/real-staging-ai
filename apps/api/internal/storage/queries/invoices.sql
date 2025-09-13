@@ -1,0 +1,69 @@
+-- Invoices persistence queries for sqlc generation
+
+-- Upsert by unique stripe_invoice_id. We do not modify user_id on conflict.
+-- name: UpsertInvoiceByStripeID :one
+INSERT INTO invoices (
+  user_id,
+  stripe_invoice_id,
+  stripe_subscription_id,
+  status,
+  amount_due,
+  amount_paid,
+  currency,
+  invoice_number
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (stripe_invoice_id) DO UPDATE SET
+  stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+  status                 = EXCLUDED.status,
+  amount_due             = EXCLUDED.amount_due,
+  amount_paid            = EXCLUDED.amount_paid,
+  currency               = EXCLUDED.currency,
+  invoice_number         = EXCLUDED.invoice_number,
+  updated_at             = now()
+RETURNING
+  id,
+  user_id,
+  stripe_invoice_id,
+  stripe_subscription_id,
+  status,
+  amount_due,
+  amount_paid,
+  currency,
+  invoice_number,
+  created_at,
+  updated_at;
+
+-- name: GetInvoiceByStripeID :one
+SELECT
+  id,
+  user_id,
+  stripe_invoice_id,
+  stripe_subscription_id,
+  status,
+  amount_due,
+  amount_paid,
+  currency,
+  invoice_number,
+  created_at,
+  updated_at
+FROM invoices
+WHERE stripe_invoice_id = $1;
+
+-- name: ListInvoicesByUserID :many
+SELECT
+  id,
+  user_id,
+  stripe_invoice_id,
+  stripe_subscription_id,
+  status,
+  amount_due,
+  amount_paid,
+  currency,
+  invoice_number,
+  created_at,
+  updated_at
+FROM invoices
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;

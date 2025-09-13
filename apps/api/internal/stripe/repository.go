@@ -53,6 +53,29 @@ type SubscriptionsRepository interface {
 	DeleteByStripeID(ctx context.Context, stripeSubscriptionID string) error
 }
 
+// InvoicesRepository manages Stripe invoice persistence.
+type InvoicesRepository interface {
+	// Upsert creates or updates an invoice by its Stripe invoice ID.
+	// stripeSubscriptionID, currency, and invoiceNumber are optional.
+	Upsert(
+		ctx context.Context,
+		userID string,
+		stripeInvoiceID string,
+		stripeSubscriptionID *string,
+		status string,
+		amountDue int32,
+		amountPaid int32,
+		currency *string,
+		invoiceNumber *string,
+	) (*queries.Invoice, error)
+
+	// GetByStripeID returns an invoice by Stripe invoice ID.
+	GetByStripeID(ctx context.Context, stripeInvoiceID string) (*queries.Invoice, error)
+
+	// ListByUserID lists invoices for a user with pagination.
+	ListByUserID(ctx context.Context, userID string, limit, offset int32) ([]*queries.Invoice, error)
+}
+
 /* ---------------------------- Implementations ---------------------------- */
 
 type processedEventsRepo struct {
@@ -60,6 +83,10 @@ type processedEventsRepo struct {
 }
 
 type subscriptionsRepo struct {
+	q *queries.Queries
+}
+
+type invoicesRepo struct {
 	q *queries.Queries
 }
 
@@ -71,6 +98,11 @@ func NewProcessedEventsRepository(db storage.Database) ProcessedEventsRepository
 // NewSubscriptionsRepository returns a sqlc-backed SubscriptionsRepository.
 func NewSubscriptionsRepository(db storage.Database) SubscriptionsRepository {
 	return &subscriptionsRepo{q: queries.New(db)}
+}
+
+// NewInvoicesRepository returns a sqlc-backed InvoicesRepository.
+func NewInvoicesRepository(db storage.Database) InvoicesRepository {
+	return &invoicesRepo{q: queries.New(db)}
 }
 
 /* ----------------------- ProcessedEventsRepository ----------------------- */
@@ -225,4 +257,79 @@ func (r *subscriptionsRepo) DeleteByStripeID(ctx context.Context, stripeSubscrip
 		return fmt.Errorf("failed to delete subscription by stripe id: %w", err)
 	}
 	return nil
+}
+
+/* ----------------------------- InvoicesRepository ----------------------------- */
+
+func (r *invoicesRepo) Upsert(
+	ctx context.Context,
+	userID string,
+	stripeInvoiceID string,
+	stripeSubscriptionID *string,
+	status string,
+	amountDue int32,
+	amountPaid int32,
+	currency *string,
+	invoiceNumber *string,
+) (*queries.Invoice, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+	userUUID := pgtype.UUID{Bytes: uid, Valid: true}
+
+	var subID, curr, invNum pgtype.Text
+	if stripeSubscriptionID != nil {
+		subID = pgtype.Text{String: *stripeSubscriptionID, Valid: true}
+	}
+	if currency != nil {
+		curr = pgtype.Text{String: *currency, Valid: true}
+	}
+	if invoiceNumber != nil {
+		invNum = pgtype.Text{String: *invoiceNumber, Valid: true}
+	}
+
+	inv, err := r.q.UpsertInvoiceByStripeID(ctx, queries.UpsertInvoiceByStripeIDParams{
+		UserID:               userUUID,
+		StripeInvoiceID:      stripeInvoiceID,
+		StripeSubscriptionID: subID,
+		Status:               status,
+		AmountDue:            amountDue,
+		AmountPaid:           amountPaid,
+		Currency:             curr,
+		InvoiceNumber:        invNum,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to upsert invoice: %w", err)
+	}
+	return inv, nil
+}
+
+func (r *invoicesRepo) GetByStripeID(ctx context.Context, stripeInvoiceID string) (*queries.Invoice, error) {
+	inv, err := r.q.GetInvoiceByStripeID(ctx, stripeInvoiceID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, pgx.ErrNoRows
+		}
+		return nil, fmt.Errorf("failed to get invoice by stripe id: %w", err)
+	}
+	return inv, nil
+}
+
+func (r *invoicesRepo) ListByUserID(ctx context.Context, userID string, limit, offset int32) ([]*queries.Invoice, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+	userUUID := pgtype.UUID{Bytes: uid, Valid: true}
+
+	results, err := r.q.ListInvoicesByUserID(ctx, queries.ListInvoicesByUserIDParams{
+		UserID: userUUID,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list invoices by user: %w", err)
+	}
+	return results, nil
 }

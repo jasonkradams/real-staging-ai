@@ -103,11 +103,11 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api.POST("/stripe/webhook", s.stripeWebhookHandler)
 
 	// Project routes (no auth required for testing)
-	api.POST("/projects", s.createProjectHandler)
-	api.GET("/projects", s.getProjectsHandler)
-	api.GET("/projects/:id", s.getProjectByIDHandler)
-	api.PUT("/projects/:id", s.updateProjectHandler)
-	api.DELETE("/projects/:id", s.deleteProjectHandler)
+	api.POST("/projects", withTestUser(s.createProjectHandler))
+	api.GET("/projects", withTestUser(s.getProjectsHandler))
+	api.GET("/projects/:id", withTestUser(s.getProjectByIDHandler))
+	api.PUT("/projects/:id", withTestUser(s.updateProjectHandler))
+	api.DELETE("/projects/:id", withTestUser(s.deleteProjectHandler))
 
 	// Upload routes
 	api.POST("/uploads/presign", s.presignUploadHandler)
@@ -143,4 +143,15 @@ func (s *Server) healthCheck(c echo.Context) error {
 		"status":  "ok",
 		"service": "virtual-staging-api",
 	})
+}
+
+// withTestUser ensures an X-Test-User header is present for test-only servers.
+// It defaults to the seeded test user to keep integration tests deterministic.
+func withTestUser(h echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if c.Request().Header.Get("X-Test-User") == "" {
+			c.Request().Header.Set("X-Test-User", "auth0|testuser")
+		}
+		return h(c)
+	}
 }

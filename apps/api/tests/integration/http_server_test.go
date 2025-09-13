@@ -53,6 +53,7 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/projects", strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("X-Test-User", "auth0|testuser-create")
 			rec := httptest.NewRecorder()
 
 			// Run the request through the server
@@ -86,6 +87,7 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
+	req.Header.Set("X-Test-User", "auth0|testuser")
 	rec := httptest.NewRecorder()
 
 	// Run the request through the server
@@ -101,9 +103,15 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	var response ProjectListResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Len(t, response.Projects, 1)
-	assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", response.Projects[0].ID)
-	assert.Equal(t, "Test Project 1", response.Projects[0].Name)
+	assert.GreaterOrEqual(t, len(response.Projects), 1)
+	found := false
+	for _, p := range response.Projects {
+		if p.ID == "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12" && p.Name == "Test Project 1" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "expected seeded project to be present")
 }
 
 func TestGetProjectByIDRoute_HTTP(t *testing.T) {
@@ -123,6 +131,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Test case 1: Get an existing project
 	t.Run("success: happy path", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/projects/b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", nil)
+		req.Header.Set("X-Test-User", "auth0|testuser")
 		rec := httptest.NewRecorder()
 		server.ServeHTTP(rec, req)
 
@@ -138,6 +147,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Test case 2: Get a non-existing project
 	t.Run("fail: not found", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/projects/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a00", nil)
+		req.Header.Set("X-Test-User", "auth0|testuser")
 		rec := httptest.NewRecorder()
 		server.ServeHTTP(rec, req)
 

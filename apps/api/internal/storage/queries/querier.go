@@ -33,6 +33,7 @@ type Querier interface {
 	GetAllProjects(ctx context.Context) ([]*GetAllProjectsRow, error)
 	GetImageByID(ctx context.Context, id pgtype.UUID) (*Image, error)
 	GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*Image, error)
+	GetInvoiceByStripeID(ctx context.Context, stripeInvoiceID string) (*Invoice, error)
 	GetJobByID(ctx context.Context, id pgtype.UUID) (*Job, error)
 	GetJobsByImageID(ctx context.Context, imageID pgtype.UUID) ([]*Job, error)
 	GetPendingJobs(ctx context.Context, limit int32) ([]*Job, error)
@@ -45,6 +46,7 @@ type Querier interface {
 	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error)
 	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+	ListInvoicesByUserID(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
 	ListSubscriptionsByUserID(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	StartJob(ctx context.Context, id pgtype.UUID) (*Job, error)
@@ -56,6 +58,9 @@ type Querier interface {
 	UpdateProjectByUserID(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error)
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error)
 	UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+	// Invoices persistence queries for sqlc generation
+	// Upsert by unique stripe_invoice_id. We do not modify user_id on conflict.
+	UpsertInvoiceByStripeID(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error)
 	// Optional: single-statement upsert that returns the existing/new row.
 	// Preserves existing values (no-op update) to obtain RETURNING without DO NOTHING.
 	UpsertProcessedEventByStripeID(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error)

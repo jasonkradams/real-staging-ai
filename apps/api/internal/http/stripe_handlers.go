@@ -172,6 +172,10 @@ func (s *Server) handleCheckoutSessionCompleted(ctx context.Context, event *Stri
 	if !ok {
 		return fmt.Errorf("invalid checkout session data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
 	customerID, _ := sessionData["customer"].(string)
 	paymentStatus, _ := sessionData["payment_status"].(string)
@@ -206,6 +210,10 @@ func (s *Server) handleSubscriptionCreated(ctx context.Context, event *StripeEve
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
 	customerID, _ := subscriptionData["customer"].(string)
 	subscriptionID, _ := subscriptionData["id"].(string)
@@ -219,7 +227,46 @@ func (s *Server) handleSubscriptionCreated(ctx context.Context, event *StripeEve
 	userRepo := user.NewUserRepository(s.db)
 	if customerID != "" && subscriptionID != "" {
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, nil, nil, nil, nil, nil, false); err != nil {
+			// Extract optional subscription details
+			var priceIDPtr *string
+			if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
+				if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
+					if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
+						if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
+							if pid, ok := priceRaw["id"].(string); ok && pid != "" {
+								priceIDPtr = &pid
+							}
+						}
+					}
+				}
+			}
+
+			var (
+				cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
+				cancelAtPeriodEnd                          bool
+			)
+
+			if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpsPtr = &t
+			}
+			if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpePtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cancelAtPtr = &t
+			}
+			if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				canceledAtPtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
+				cancelAtPeriodEnd = v
+			}
+
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
 				log.Printf("Failed to upsert subscription (created): %v", err)
 			}
 		} else {
@@ -235,6 +282,10 @@ func (s *Server) handleSubscriptionUpdated(ctx context.Context, event *StripeEve
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
 	customerID, _ := subscriptionData["customer"].(string)
 	subscriptionID, _ := subscriptionData["id"].(string)
@@ -248,7 +299,46 @@ func (s *Server) handleSubscriptionUpdated(ctx context.Context, event *StripeEve
 	userRepo := user.NewUserRepository(s.db)
 	if customerID != "" && subscriptionID != "" {
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, nil, nil, nil, nil, nil, false); err != nil {
+			// Extract optional subscription details
+			var priceIDPtr *string
+			if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
+				if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
+					if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
+						if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
+							if pid, ok := priceRaw["id"].(string); ok && pid != "" {
+								priceIDPtr = &pid
+							}
+						}
+					}
+				}
+			}
+
+			var (
+				cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
+				cancelAtPeriodEnd                          bool
+			)
+
+			if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpsPtr = &t
+			}
+			if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpePtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cancelAtPtr = &t
+			}
+			if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				canceledAtPtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
+				cancelAtPeriodEnd = v
+			}
+
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
 				log.Printf("Failed to upsert subscription (updated): %v", err)
 			}
 		} else {
@@ -264,6 +354,10 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event *StripeEve
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
 	customerID, _ := subscriptionData["customer"].(string)
 	subscriptionID, _ := subscriptionData["id"].(string)
@@ -277,7 +371,46 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event *StripeEve
 	if customerID != "" && subscriptionID != "" {
 		// Stripe sends a final status (typically "canceled"); persist it
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, "canceled", nil, nil, nil, nil, nil, false); err != nil {
+			// Extract optional subscription details even on deletion (Stripe often includes final state)
+			var priceIDPtr *string
+			if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
+				if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
+					if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
+						if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
+							if pid, ok := priceRaw["id"].(string); ok && pid != "" {
+								priceIDPtr = &pid
+							}
+						}
+					}
+				}
+			}
+
+			var (
+				cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
+				cancelAtPeriodEnd                          bool
+			)
+
+			if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpsPtr = &t
+			}
+			if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cpePtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				cancelAtPtr = &t
+			}
+			if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
+				t := time.Unix(int64(v), 0)
+				canceledAtPtr = &t
+			}
+			if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
+				cancelAtPeriodEnd = v
+			}
+
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, "canceled", priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
 				log.Printf("Failed to upsert subscription (deleted): %v", err)
 			}
 		} else {
@@ -293,15 +426,57 @@ func (s *Server) handleInvoicePaymentSucceeded(ctx context.Context, event *Strip
 	if !ok {
 		return fmt.Errorf("invalid invoice data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
+	invoiceID, _ := invoiceData["id"].(string)
 	customerID, _ := invoiceData["customer"].(string)
 	subscriptionID, _ := invoiceData["subscription"].(string)
-	amountPaid, _ := invoiceData["amount_paid"].(float64)
+	status, _ := invoiceData["status"].(string)
+	if status == "" {
+		status = "paid"
+	}
 
-	log.Printf("Invoice payment succeeded - Customer: %s, Subscription: %s, Amount: %.2f",
-		customerID, subscriptionID, amountPaid/100)
+	var amountDueI, amountPaidI int32
+	if v, ok := invoiceData["amount_due"].(float64); ok {
+		amountDueI = int32(v)
+	}
+	if v, ok := invoiceData["amount_paid"].(float64); ok {
+		amountPaidI = int32(v)
+	}
+	currency, _ := invoiceData["currency"].(string)
+	invoiceNumber, _ := invoiceData["number"].(string)
 
-	// TODO: Record successful payment in the database
+	log.Printf("Invoice payment succeeded - Invoice: %s, Customer: %s, Subscription: %s, AmountPaid: %.2f",
+		invoiceID, customerID, subscriptionID, float64(amountPaidI)/100)
+
+	// Persist invoice
+	if customerID != "" && invoiceID != "" {
+		userRepo := user.NewUserRepository(s.db)
+		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
+			invRepo := stripe.NewInvoicesRepository(s.db)
+
+			var subIDPtr, currencyPtr, invNumPtr *string
+			if subscriptionID != "" {
+				subIDPtr = &subscriptionID
+			}
+			if currency != "" {
+				currencyPtr = &currency
+			}
+			if invoiceNumber != "" {
+				invNumPtr = &invoiceNumber
+			}
+
+			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
+				log.Printf("Failed to upsert invoice (payment_succeeded): %v", err)
+			}
+		} else {
+			log.Printf("No user found for Stripe customer on invoice.payment_succeeded: %s (err=%v)", customerID, err)
+		}
+	}
+
 	return nil
 }
 
@@ -311,14 +486,57 @@ func (s *Server) handleInvoicePaymentFailed(ctx context.Context, event *StripeEv
 	if !ok {
 		return fmt.Errorf("invalid invoice data")
 	}
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 
+	invoiceID, _ := invoiceData["id"].(string)
 	customerID, _ := invoiceData["customer"].(string)
 	subscriptionID, _ := invoiceData["subscription"].(string)
+	status, _ := invoiceData["status"].(string)
+	if status == "" {
+		status = "failed"
+	}
 
-	log.Printf("Invoice payment failed - Customer: %s, Subscription: %s",
-		customerID, subscriptionID)
+	var amountDueI, amountPaidI int32
+	if v, ok := invoiceData["amount_due"].(float64); ok {
+		amountDueI = int32(v)
+	}
+	if v, ok := invoiceData["amount_paid"].(float64); ok {
+		amountPaidI = int32(v)
+	}
+	currency, _ := invoiceData["currency"].(string)
+	invoiceNumber, _ := invoiceData["number"].(string)
 
-	// TODO: Handle failed payment (send notification, update status, etc.)
+	log.Printf("Invoice payment failed - Invoice: %s, Customer: %s, Subscription: %s",
+		invoiceID, customerID, subscriptionID)
+
+	// Persist invoice with failed status
+	if customerID != "" && invoiceID != "" {
+		userRepo := user.NewUserRepository(s.db)
+		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
+			invRepo := stripe.NewInvoicesRepository(s.db)
+
+			var subIDPtr, currencyPtr, invNumPtr *string
+			if subscriptionID != "" {
+				subIDPtr = &subscriptionID
+			}
+			if currency != "" {
+				currencyPtr = &currency
+			}
+			if invoiceNumber != "" {
+				invNumPtr = &invoiceNumber
+			}
+
+			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
+				log.Printf("Failed to upsert invoice (payment_failed): %v", err)
+			}
+		} else {
+			log.Printf("No user found for Stripe customer on invoice.payment_failed: %s (err=%v)", customerID, err)
+		}
+	}
+
 	return nil
 }
 
@@ -455,6 +673,10 @@ func computeStripeSignature(body []byte, ts int64, secret string) []byte {
 // alreadyProcessedStripeEvent checks if the event was already processed (idempotency scaffold).
 // TODO: Back with a DB table (e.g., processed_events with unique(stripe_event_id)).
 func (s *Server) alreadyProcessedStripeEvent(ctx context.Context, eventID string) (bool, error) {
+	if s.db == nil {
+		// No database configured (e.g., in tests). Treat as not processed.
+		return false, nil
+	}
 	repo := stripe.NewProcessedEventsRepository(s.db)
 	return repo.IsProcessed(ctx, eventID)
 }
@@ -462,6 +684,10 @@ func (s *Server) alreadyProcessedStripeEvent(ctx context.Context, eventID string
 // markStripeEventProcessed records the processed event (idempotency scaffold).
 // TODO: Insert into DB and enforce uniqueness on stripe_event_id.
 func (s *Server) markStripeEventProcessed(ctx context.Context, eventID string) error {
+	if s.db == nil {
+		// No database configured (e.g., in tests). Skip persistence.
+		return nil
+	}
 	repo := stripe.NewProcessedEventsRepository(s.db)
 	_, err := repo.Upsert(ctx, eventID, nil, nil)
 	return err

@@ -164,6 +164,11 @@ func GetUserID(c echo.Context) (string, error) {
 
 // GetUserIDOrDefault extracts user ID from JWT token in context, or returns a default test user ID
 func GetUserIDOrDefault(c echo.Context) (string, error) {
+	// Allow test isolation via header override
+	if hv := c.Request().Header.Get("X-Test-User"); hv != "" {
+		return hv, nil
+	}
+
 	// Try to get user ID from JWT token first
 	userID, err := GetUserID(c)
 	if err == nil {

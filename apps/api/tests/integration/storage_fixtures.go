@@ -21,7 +21,7 @@ func SeedDatabase(ctx context.Context, pool storage.PgxPool) error {
 // TruncateAllTables truncates all tables and resets sequences
 func TruncateAllTables(ctx context.Context, pool storage.PgxPool) error {
 	query := `
-		TRUNCATE TABLE projects, users, images, jobs, plans RESTART IDENTITY
+		TRUNCATE TABLE processed_events, invoices, subscriptions, images, jobs, projects, users, plans RESTART IDENTITY CASCADE
 	`
 	_, err := pool.Exec(ctx, query)
 	return err

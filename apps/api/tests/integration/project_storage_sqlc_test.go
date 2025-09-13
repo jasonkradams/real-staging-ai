@@ -556,7 +556,7 @@ func truncateTables(t *testing.T, pool storage.PgxPool) {
 	t.Helper()
 
 	query := `
-		TRUNCATE TABLE projects, users, images, jobs, plans RESTART IDENTITY
+		TRUNCATE TABLE processed_events, invoices, subscriptions, images, jobs, projects, users, plans RESTART IDENTITY CASCADE
 	`
 	_, err := pool.Exec(context.Background(), query)
 	require.NoError(t, err)

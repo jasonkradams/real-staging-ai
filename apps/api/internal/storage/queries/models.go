@@ -69,6 +69,20 @@ type Image struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Invoice struct {
+	ID                   pgtype.UUID        `json:"id"`
+	UserID               pgtype.UUID        `json:"user_id"`
+	StripeInvoiceID      string             `json:"stripe_invoice_id"`
+	StripeSubscriptionID pgtype.Text        `json:"stripe_subscription_id"`
+	Status               string             `json:"status"`
+	AmountDue            int32              `json:"amount_due"`
+	AmountPaid           int32              `json:"amount_paid"`
+	Currency             pgtype.Text        `json:"currency"`
+	InvoiceNumber        pgtype.Text        `json:"invoice_number"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Job struct {
 	ID          pgtype.UUID        `json:"id"`
 	ImageID     pgtype.UUID        `json:"image_id"`
