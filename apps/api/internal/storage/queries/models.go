@@ -88,11 +88,34 @@ type Plan struct {
 	MonthlyLimit int32       `json:"monthly_limit"`
 }
 
+type ProcessedEvent struct {
+	ID            pgtype.UUID        `json:"id"`
+	StripeEventID string             `json:"stripe_event_id"`
+	Type          pgtype.Text        `json:"type"`
+	Payload       []byte             `json:"payload"`
+	ReceivedAt    pgtype.Timestamptz `json:"received_at"`
+}
+
 type Project struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
 	Name      string             `json:"name"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Subscription struct {
+	ID                   pgtype.UUID        `json:"id"`
+	UserID               pgtype.UUID        `json:"user_id"`
+	StripeSubscriptionID string             `json:"stripe_subscription_id"`
+	Status               string             `json:"status"`
+	PriceID              pgtype.Text        `json:"price_id"`
+	CurrentPeriodStart   pgtype.Timestamptz `json:"current_period_start"`
+	CurrentPeriodEnd     pgtype.Timestamptz `json:"current_period_end"`
+	CancelAt             pgtype.Timestamptz `json:"cancel_at"`
+	CanceledAt           pgtype.Timestamptz `json:"canceled_at"`
+	CancelAtPeriodEnd    bool               `json:"cancel_at_period_end"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {

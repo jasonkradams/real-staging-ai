@@ -34,6 +34,9 @@ var _ Querier = &QuerierMock{}
 //			CreateJobFunc: func(ctx context.Context, arg CreateJobParams) (*Job, error) {
 //				panic("mock out the CreateJob method")
 //			},
+//			CreateProcessedEventFunc: func(ctx context.Context, arg CreateProcessedEventParams) (*ProcessedEvent, error) {
+//				panic("mock out the CreateProcessedEvent method")
+//			},
 //			CreateProjectFunc: func(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error) {
 //				panic("mock out the CreateProject method")
 //			},
@@ -52,11 +55,17 @@ var _ Querier = &QuerierMock{}
 //			DeleteJobsByImageIDFunc: func(ctx context.Context, imageID pgtype.UUID) error {
 //				panic("mock out the DeleteJobsByImageID method")
 //			},
+//			DeleteOldProcessedEventsFunc: func(ctx context.Context, receivedAt pgtype.Timestamptz) error {
+//				panic("mock out the DeleteOldProcessedEvents method")
+//			},
 //			DeleteProjectFunc: func(ctx context.Context, id pgtype.UUID) error {
 //				panic("mock out the DeleteProject method")
 //			},
 //			DeleteProjectByUserIDFunc: func(ctx context.Context, arg DeleteProjectByUserIDParams) error {
 //				panic("mock out the DeleteProjectByUserID method")
+//			},
+//			DeleteSubscriptionByStripeIDFunc: func(ctx context.Context, stripeSubscriptionID string) error {
+//				panic("mock out the DeleteSubscriptionByStripeID method")
 //			},
 //			DeleteUserFunc: func(ctx context.Context, id pgtype.UUID) error {
 //				panic("mock out the DeleteUser method")
@@ -82,11 +91,17 @@ var _ Querier = &QuerierMock{}
 //			GetPendingJobsFunc: func(ctx context.Context, limit int32) ([]*Job, error) {
 //				panic("mock out the GetPendingJobs method")
 //			},
+//			GetProcessedEventByStripeIDFunc: func(ctx context.Context, stripeEventID string) (*ProcessedEvent, error) {
+//				panic("mock out the GetProcessedEventByStripeID method")
+//			},
 //			GetProjectByIDFunc: func(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error) {
 //				panic("mock out the GetProjectByID method")
 //			},
 //			GetProjectsByUserIDFunc: func(ctx context.Context, userID pgtype.UUID) ([]*GetProjectsByUserIDRow, error) {
 //				panic("mock out the GetProjectsByUserID method")
+//			},
+//			GetSubscriptionByStripeIDFunc: func(ctx context.Context, stripeSubscriptionID string) (*Subscription, error) {
+//				panic("mock out the GetSubscriptionByStripeID method")
 //			},
 //			GetUserByAuth0SubFunc: func(ctx context.Context, auth0Sub string) (*User, error) {
 //				panic("mock out the GetUserByAuth0Sub method")
@@ -96,6 +111,9 @@ var _ Querier = &QuerierMock{}
 //			},
 //			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
 //				panic("mock out the GetUserByStripeCustomerID method")
+//			},
+//			ListSubscriptionsByUserIDFunc: func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error) {
+//				panic("mock out the ListSubscriptionsByUserID method")
 //			},
 //			ListUsersFunc: func(ctx context.Context, arg ListUsersParams) ([]*User, error) {
 //				panic("mock out the ListUsers method")
@@ -127,6 +145,12 @@ var _ Querier = &QuerierMock{}
 //			UpdateUserStripeCustomerIDFunc: func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error) {
 //				panic("mock out the UpdateUserStripeCustomerID method")
 //			},
+//			UpsertProcessedEventByStripeIDFunc: func(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error) {
+//				panic("mock out the UpsertProcessedEventByStripeID method")
+//			},
+//			UpsertSubscriptionByStripeIDFunc: func(ctx context.Context, arg UpsertSubscriptionByStripeIDParams) (*Subscription, error) {
+//				panic("mock out the UpsertSubscriptionByStripeID method")
+//			},
 //		}
 //
 //		// use mockedQuerier in code that requires Querier
@@ -149,6 +173,9 @@ type QuerierMock struct {
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, arg CreateJobParams) (*Job, error)
 
+	// CreateProcessedEventFunc mocks the CreateProcessedEvent method.
+	CreateProcessedEventFunc func(ctx context.Context, arg CreateProcessedEventParams) (*ProcessedEvent, error)
+
 	// CreateProjectFunc mocks the CreateProject method.
 	CreateProjectFunc func(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error)
 
@@ -167,11 +194,17 @@ type QuerierMock struct {
 	// DeleteJobsByImageIDFunc mocks the DeleteJobsByImageID method.
 	DeleteJobsByImageIDFunc func(ctx context.Context, imageID pgtype.UUID) error
 
+	// DeleteOldProcessedEventsFunc mocks the DeleteOldProcessedEvents method.
+	DeleteOldProcessedEventsFunc func(ctx context.Context, receivedAt pgtype.Timestamptz) error
+
 	// DeleteProjectFunc mocks the DeleteProject method.
 	DeleteProjectFunc func(ctx context.Context, id pgtype.UUID) error
 
 	// DeleteProjectByUserIDFunc mocks the DeleteProjectByUserID method.
 	DeleteProjectByUserIDFunc func(ctx context.Context, arg DeleteProjectByUserIDParams) error
+
+	// DeleteSubscriptionByStripeIDFunc mocks the DeleteSubscriptionByStripeID method.
+	DeleteSubscriptionByStripeIDFunc func(ctx context.Context, stripeSubscriptionID string) error
 
 	// DeleteUserFunc mocks the DeleteUser method.
 	DeleteUserFunc func(ctx context.Context, id pgtype.UUID) error
@@ -197,11 +230,17 @@ type QuerierMock struct {
 	// GetPendingJobsFunc mocks the GetPendingJobs method.
 	GetPendingJobsFunc func(ctx context.Context, limit int32) ([]*Job, error)
 
+	// GetProcessedEventByStripeIDFunc mocks the GetProcessedEventByStripeID method.
+	GetProcessedEventByStripeIDFunc func(ctx context.Context, stripeEventID string) (*ProcessedEvent, error)
+
 	// GetProjectByIDFunc mocks the GetProjectByID method.
 	GetProjectByIDFunc func(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error)
 
 	// GetProjectsByUserIDFunc mocks the GetProjectsByUserID method.
 	GetProjectsByUserIDFunc func(ctx context.Context, userID pgtype.UUID) ([]*GetProjectsByUserIDRow, error)
+
+	// GetSubscriptionByStripeIDFunc mocks the GetSubscriptionByStripeID method.
+	GetSubscriptionByStripeIDFunc func(ctx context.Context, stripeSubscriptionID string) (*Subscription, error)
 
 	// GetUserByAuth0SubFunc mocks the GetUserByAuth0Sub method.
 	GetUserByAuth0SubFunc func(ctx context.Context, auth0Sub string) (*User, error)
@@ -211,6 +250,9 @@ type QuerierMock struct {
 
 	// GetUserByStripeCustomerIDFunc mocks the GetUserByStripeCustomerID method.
 	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+
+	// ListSubscriptionsByUserIDFunc mocks the ListSubscriptionsByUserID method.
+	ListSubscriptionsByUserIDFunc func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
 
 	// ListUsersFunc mocks the ListUsers method.
 	ListUsersFunc func(ctx context.Context, arg ListUsersParams) ([]*User, error)
@@ -241,6 +283,12 @@ type QuerierMock struct {
 
 	// UpdateUserStripeCustomerIDFunc mocks the UpdateUserStripeCustomerID method.
 	UpdateUserStripeCustomerIDFunc func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+
+	// UpsertProcessedEventByStripeIDFunc mocks the UpsertProcessedEventByStripeID method.
+	UpsertProcessedEventByStripeIDFunc func(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error)
+
+	// UpsertSubscriptionByStripeIDFunc mocks the UpsertSubscriptionByStripeID method.
+	UpsertSubscriptionByStripeIDFunc func(ctx context.Context, arg UpsertSubscriptionByStripeIDParams) (*Subscription, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -276,6 +324,13 @@ type QuerierMock struct {
 			Ctx context.Context
 			// Arg is the arg argument value.
 			Arg CreateJobParams
+		}
+		// CreateProcessedEvent holds details about calls to the CreateProcessedEvent method.
+		CreateProcessedEvent []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg CreateProcessedEventParams
 		}
 		// CreateProject holds details about calls to the CreateProject method.
 		CreateProject []struct {
@@ -319,6 +374,13 @@ type QuerierMock struct {
 			// ImageID is the imageID argument value.
 			ImageID pgtype.UUID
 		}
+		// DeleteOldProcessedEvents holds details about calls to the DeleteOldProcessedEvents method.
+		DeleteOldProcessedEvents []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ReceivedAt is the receivedAt argument value.
+			ReceivedAt pgtype.Timestamptz
+		}
 		// DeleteProject holds details about calls to the DeleteProject method.
 		DeleteProject []struct {
 			// Ctx is the ctx argument value.
@@ -332,6 +394,13 @@ type QuerierMock struct {
 			Ctx context.Context
 			// Arg is the arg argument value.
 			Arg DeleteProjectByUserIDParams
+		}
+		// DeleteSubscriptionByStripeID holds details about calls to the DeleteSubscriptionByStripeID method.
+		DeleteSubscriptionByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// StripeSubscriptionID is the stripeSubscriptionID argument value.
+			StripeSubscriptionID string
 		}
 		// DeleteUser holds details about calls to the DeleteUser method.
 		DeleteUser []struct {
@@ -387,6 +456,13 @@ type QuerierMock struct {
 			// Limit is the limit argument value.
 			Limit int32
 		}
+		// GetProcessedEventByStripeID holds details about calls to the GetProcessedEventByStripeID method.
+		GetProcessedEventByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// StripeEventID is the stripeEventID argument value.
+			StripeEventID string
+		}
 		// GetProjectByID holds details about calls to the GetProjectByID method.
 		GetProjectByID []struct {
 			// Ctx is the ctx argument value.
@@ -400,6 +476,13 @@ type QuerierMock struct {
 			Ctx context.Context
 			// UserID is the userID argument value.
 			UserID pgtype.UUID
+		}
+		// GetSubscriptionByStripeID holds details about calls to the GetSubscriptionByStripeID method.
+		GetSubscriptionByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// StripeSubscriptionID is the stripeSubscriptionID argument value.
+			StripeSubscriptionID string
 		}
 		// GetUserByAuth0Sub holds details about calls to the GetUserByAuth0Sub method.
 		GetUserByAuth0Sub []struct {
@@ -421,6 +504,13 @@ type QuerierMock struct {
 			Ctx context.Context
 			// StripeCustomerID is the stripeCustomerID argument value.
 			StripeCustomerID pgtype.Text
+		}
+		// ListSubscriptionsByUserID holds details about calls to the ListSubscriptionsByUserID method.
+		ListSubscriptionsByUserID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg ListSubscriptionsByUserIDParams
 		}
 		// ListUsers holds details about calls to the ListUsers method.
 		ListUsers []struct {
@@ -492,43 +582,65 @@ type QuerierMock struct {
 			// Arg is the arg argument value.
 			Arg UpdateUserStripeCustomerIDParams
 		}
+		// UpsertProcessedEventByStripeID holds details about calls to the UpsertProcessedEventByStripeID method.
+		UpsertProcessedEventByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg UpsertProcessedEventByStripeIDParams
+		}
+		// UpsertSubscriptionByStripeID holds details about calls to the UpsertSubscriptionByStripeID method.
+		UpsertSubscriptionByStripeID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg UpsertSubscriptionByStripeIDParams
+		}
 	}
-	lockCompleteJob                sync.RWMutex
-	lockCountProjectsByUserID      sync.RWMutex
-	lockCountUsers                 sync.RWMutex
-	lockCreateImage                sync.RWMutex
-	lockCreateJob                  sync.RWMutex
-	lockCreateProject              sync.RWMutex
-	lockCreateUser                 sync.RWMutex
-	lockDeleteImage                sync.RWMutex
-	lockDeleteImagesByProjectID    sync.RWMutex
-	lockDeleteJob                  sync.RWMutex
-	lockDeleteJobsByImageID        sync.RWMutex
-	lockDeleteProject              sync.RWMutex
-	lockDeleteProjectByUserID      sync.RWMutex
-	lockDeleteUser                 sync.RWMutex
-	lockFailJob                    sync.RWMutex
-	lockGetAllProjects             sync.RWMutex
-	lockGetImageByID               sync.RWMutex
-	lockGetImagesByProjectID       sync.RWMutex
-	lockGetJobByID                 sync.RWMutex
-	lockGetJobsByImageID           sync.RWMutex
-	lockGetPendingJobs             sync.RWMutex
-	lockGetProjectByID             sync.RWMutex
-	lockGetProjectsByUserID        sync.RWMutex
-	lockGetUserByAuth0Sub          sync.RWMutex
-	lockGetUserByID                sync.RWMutex
-	lockGetUserByStripeCustomerID  sync.RWMutex
-	lockListUsers                  sync.RWMutex
-	lockStartJob                   sync.RWMutex
-	lockUpdateImageStatus          sync.RWMutex
-	lockUpdateImageWithError       sync.RWMutex
-	lockUpdateImageWithStagedURL   sync.RWMutex
-	lockUpdateJobStatus            sync.RWMutex
-	lockUpdateProject              sync.RWMutex
-	lockUpdateProjectByUserID      sync.RWMutex
-	lockUpdateUserRole             sync.RWMutex
-	lockUpdateUserStripeCustomerID sync.RWMutex
+	lockCompleteJob                    sync.RWMutex
+	lockCountProjectsByUserID          sync.RWMutex
+	lockCountUsers                     sync.RWMutex
+	lockCreateImage                    sync.RWMutex
+	lockCreateJob                      sync.RWMutex
+	lockCreateProcessedEvent           sync.RWMutex
+	lockCreateProject                  sync.RWMutex
+	lockCreateUser                     sync.RWMutex
+	lockDeleteImage                    sync.RWMutex
+	lockDeleteImagesByProjectID        sync.RWMutex
+	lockDeleteJob                      sync.RWMutex
+	lockDeleteJobsByImageID            sync.RWMutex
+	lockDeleteOldProcessedEvents       sync.RWMutex
+	lockDeleteProject                  sync.RWMutex
+	lockDeleteProjectByUserID          sync.RWMutex
+	lockDeleteSubscriptionByStripeID   sync.RWMutex
+	lockDeleteUser                     sync.RWMutex
+	lockFailJob                        sync.RWMutex
+	lockGetAllProjects                 sync.RWMutex
+	lockGetImageByID                   sync.RWMutex
+	lockGetImagesByProjectID           sync.RWMutex
+	lockGetJobByID                     sync.RWMutex
+	lockGetJobsByImageID               sync.RWMutex
+	lockGetPendingJobs                 sync.RWMutex
+	lockGetProcessedEventByStripeID    sync.RWMutex
+	lockGetProjectByID                 sync.RWMutex
+	lockGetProjectsByUserID            sync.RWMutex
+	lockGetSubscriptionByStripeID      sync.RWMutex
+	lockGetUserByAuth0Sub              sync.RWMutex
+	lockGetUserByID                    sync.RWMutex
+	lockGetUserByStripeCustomerID      sync.RWMutex
+	lockListSubscriptionsByUserID      sync.RWMutex
+	lockListUsers                      sync.RWMutex
+	lockStartJob                       sync.RWMutex
+	lockUpdateImageStatus              sync.RWMutex
+	lockUpdateImageWithError           sync.RWMutex
+	lockUpdateImageWithStagedURL       sync.RWMutex
+	lockUpdateJobStatus                sync.RWMutex
+	lockUpdateProject                  sync.RWMutex
+	lockUpdateProjectByUserID          sync.RWMutex
+	lockUpdateUserRole                 sync.RWMutex
+	lockUpdateUserStripeCustomerID     sync.RWMutex
+	lockUpsertProcessedEventByStripeID sync.RWMutex
+	lockUpsertSubscriptionByStripeID   sync.RWMutex
 }
 
 // CompleteJob calls CompleteJobFunc.
@@ -704,6 +816,42 @@ func (mock *QuerierMock) CreateJobCalls() []struct {
 	mock.lockCreateJob.RLock()
 	calls = mock.calls.CreateJob
 	mock.lockCreateJob.RUnlock()
+	return calls
+}
+
+// CreateProcessedEvent calls CreateProcessedEventFunc.
+func (mock *QuerierMock) CreateProcessedEvent(ctx context.Context, arg CreateProcessedEventParams) (*ProcessedEvent, error) {
+	if mock.CreateProcessedEventFunc == nil {
+		panic("QuerierMock.CreateProcessedEventFunc: method is nil but Querier.CreateProcessedEvent was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg CreateProcessedEventParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockCreateProcessedEvent.Lock()
+	mock.calls.CreateProcessedEvent = append(mock.calls.CreateProcessedEvent, callInfo)
+	mock.lockCreateProcessedEvent.Unlock()
+	return mock.CreateProcessedEventFunc(ctx, arg)
+}
+
+// CreateProcessedEventCalls gets all the calls that were made to CreateProcessedEvent.
+// Check the length with:
+//
+//	len(mockedQuerier.CreateProcessedEventCalls())
+func (mock *QuerierMock) CreateProcessedEventCalls() []struct {
+	Ctx context.Context
+	Arg CreateProcessedEventParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg CreateProcessedEventParams
+	}
+	mock.lockCreateProcessedEvent.RLock()
+	calls = mock.calls.CreateProcessedEvent
+	mock.lockCreateProcessedEvent.RUnlock()
 	return calls
 }
 
@@ -923,6 +1071,42 @@ func (mock *QuerierMock) DeleteJobsByImageIDCalls() []struct {
 	return calls
 }
 
+// DeleteOldProcessedEvents calls DeleteOldProcessedEventsFunc.
+func (mock *QuerierMock) DeleteOldProcessedEvents(ctx context.Context, receivedAt pgtype.Timestamptz) error {
+	if mock.DeleteOldProcessedEventsFunc == nil {
+		panic("QuerierMock.DeleteOldProcessedEventsFunc: method is nil but Querier.DeleteOldProcessedEvents was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		ReceivedAt pgtype.Timestamptz
+	}{
+		Ctx:        ctx,
+		ReceivedAt: receivedAt,
+	}
+	mock.lockDeleteOldProcessedEvents.Lock()
+	mock.calls.DeleteOldProcessedEvents = append(mock.calls.DeleteOldProcessedEvents, callInfo)
+	mock.lockDeleteOldProcessedEvents.Unlock()
+	return mock.DeleteOldProcessedEventsFunc(ctx, receivedAt)
+}
+
+// DeleteOldProcessedEventsCalls gets all the calls that were made to DeleteOldProcessedEvents.
+// Check the length with:
+//
+//	len(mockedQuerier.DeleteOldProcessedEventsCalls())
+func (mock *QuerierMock) DeleteOldProcessedEventsCalls() []struct {
+	Ctx        context.Context
+	ReceivedAt pgtype.Timestamptz
+} {
+	var calls []struct {
+		Ctx        context.Context
+		ReceivedAt pgtype.Timestamptz
+	}
+	mock.lockDeleteOldProcessedEvents.RLock()
+	calls = mock.calls.DeleteOldProcessedEvents
+	mock.lockDeleteOldProcessedEvents.RUnlock()
+	return calls
+}
+
 // DeleteProject calls DeleteProjectFunc.
 func (mock *QuerierMock) DeleteProject(ctx context.Context, id pgtype.UUID) error {
 	if mock.DeleteProjectFunc == nil {
@@ -992,6 +1176,42 @@ func (mock *QuerierMock) DeleteProjectByUserIDCalls() []struct {
 	mock.lockDeleteProjectByUserID.RLock()
 	calls = mock.calls.DeleteProjectByUserID
 	mock.lockDeleteProjectByUserID.RUnlock()
+	return calls
+}
+
+// DeleteSubscriptionByStripeID calls DeleteSubscriptionByStripeIDFunc.
+func (mock *QuerierMock) DeleteSubscriptionByStripeID(ctx context.Context, stripeSubscriptionID string) error {
+	if mock.DeleteSubscriptionByStripeIDFunc == nil {
+		panic("QuerierMock.DeleteSubscriptionByStripeIDFunc: method is nil but Querier.DeleteSubscriptionByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx                  context.Context
+		StripeSubscriptionID string
+	}{
+		Ctx:                  ctx,
+		StripeSubscriptionID: stripeSubscriptionID,
+	}
+	mock.lockDeleteSubscriptionByStripeID.Lock()
+	mock.calls.DeleteSubscriptionByStripeID = append(mock.calls.DeleteSubscriptionByStripeID, callInfo)
+	mock.lockDeleteSubscriptionByStripeID.Unlock()
+	return mock.DeleteSubscriptionByStripeIDFunc(ctx, stripeSubscriptionID)
+}
+
+// DeleteSubscriptionByStripeIDCalls gets all the calls that were made to DeleteSubscriptionByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.DeleteSubscriptionByStripeIDCalls())
+func (mock *QuerierMock) DeleteSubscriptionByStripeIDCalls() []struct {
+	Ctx                  context.Context
+	StripeSubscriptionID string
+} {
+	var calls []struct {
+		Ctx                  context.Context
+		StripeSubscriptionID string
+	}
+	mock.lockDeleteSubscriptionByStripeID.RLock()
+	calls = mock.calls.DeleteSubscriptionByStripeID
+	mock.lockDeleteSubscriptionByStripeID.RUnlock()
 	return calls
 }
 
@@ -1279,6 +1499,42 @@ func (mock *QuerierMock) GetPendingJobsCalls() []struct {
 	return calls
 }
 
+// GetProcessedEventByStripeID calls GetProcessedEventByStripeIDFunc.
+func (mock *QuerierMock) GetProcessedEventByStripeID(ctx context.Context, stripeEventID string) (*ProcessedEvent, error) {
+	if mock.GetProcessedEventByStripeIDFunc == nil {
+		panic("QuerierMock.GetProcessedEventByStripeIDFunc: method is nil but Querier.GetProcessedEventByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		StripeEventID string
+	}{
+		Ctx:           ctx,
+		StripeEventID: stripeEventID,
+	}
+	mock.lockGetProcessedEventByStripeID.Lock()
+	mock.calls.GetProcessedEventByStripeID = append(mock.calls.GetProcessedEventByStripeID, callInfo)
+	mock.lockGetProcessedEventByStripeID.Unlock()
+	return mock.GetProcessedEventByStripeIDFunc(ctx, stripeEventID)
+}
+
+// GetProcessedEventByStripeIDCalls gets all the calls that were made to GetProcessedEventByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.GetProcessedEventByStripeIDCalls())
+func (mock *QuerierMock) GetProcessedEventByStripeIDCalls() []struct {
+	Ctx           context.Context
+	StripeEventID string
+} {
+	var calls []struct {
+		Ctx           context.Context
+		StripeEventID string
+	}
+	mock.lockGetProcessedEventByStripeID.RLock()
+	calls = mock.calls.GetProcessedEventByStripeID
+	mock.lockGetProcessedEventByStripeID.RUnlock()
+	return calls
+}
+
 // GetProjectByID calls GetProjectByIDFunc.
 func (mock *QuerierMock) GetProjectByID(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error) {
 	if mock.GetProjectByIDFunc == nil {
@@ -1348,6 +1604,42 @@ func (mock *QuerierMock) GetProjectsByUserIDCalls() []struct {
 	mock.lockGetProjectsByUserID.RLock()
 	calls = mock.calls.GetProjectsByUserID
 	mock.lockGetProjectsByUserID.RUnlock()
+	return calls
+}
+
+// GetSubscriptionByStripeID calls GetSubscriptionByStripeIDFunc.
+func (mock *QuerierMock) GetSubscriptionByStripeID(ctx context.Context, stripeSubscriptionID string) (*Subscription, error) {
+	if mock.GetSubscriptionByStripeIDFunc == nil {
+		panic("QuerierMock.GetSubscriptionByStripeIDFunc: method is nil but Querier.GetSubscriptionByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx                  context.Context
+		StripeSubscriptionID string
+	}{
+		Ctx:                  ctx,
+		StripeSubscriptionID: stripeSubscriptionID,
+	}
+	mock.lockGetSubscriptionByStripeID.Lock()
+	mock.calls.GetSubscriptionByStripeID = append(mock.calls.GetSubscriptionByStripeID, callInfo)
+	mock.lockGetSubscriptionByStripeID.Unlock()
+	return mock.GetSubscriptionByStripeIDFunc(ctx, stripeSubscriptionID)
+}
+
+// GetSubscriptionByStripeIDCalls gets all the calls that were made to GetSubscriptionByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.GetSubscriptionByStripeIDCalls())
+func (mock *QuerierMock) GetSubscriptionByStripeIDCalls() []struct {
+	Ctx                  context.Context
+	StripeSubscriptionID string
+} {
+	var calls []struct {
+		Ctx                  context.Context
+		StripeSubscriptionID string
+	}
+	mock.lockGetSubscriptionByStripeID.RLock()
+	calls = mock.calls.GetSubscriptionByStripeID
+	mock.lockGetSubscriptionByStripeID.RUnlock()
 	return calls
 }
 
@@ -1456,6 +1748,42 @@ func (mock *QuerierMock) GetUserByStripeCustomerIDCalls() []struct {
 	mock.lockGetUserByStripeCustomerID.RLock()
 	calls = mock.calls.GetUserByStripeCustomerID
 	mock.lockGetUserByStripeCustomerID.RUnlock()
+	return calls
+}
+
+// ListSubscriptionsByUserID calls ListSubscriptionsByUserIDFunc.
+func (mock *QuerierMock) ListSubscriptionsByUserID(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error) {
+	if mock.ListSubscriptionsByUserIDFunc == nil {
+		panic("QuerierMock.ListSubscriptionsByUserIDFunc: method is nil but Querier.ListSubscriptionsByUserID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg ListSubscriptionsByUserIDParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockListSubscriptionsByUserID.Lock()
+	mock.calls.ListSubscriptionsByUserID = append(mock.calls.ListSubscriptionsByUserID, callInfo)
+	mock.lockListSubscriptionsByUserID.Unlock()
+	return mock.ListSubscriptionsByUserIDFunc(ctx, arg)
+}
+
+// ListSubscriptionsByUserIDCalls gets all the calls that were made to ListSubscriptionsByUserID.
+// Check the length with:
+//
+//	len(mockedQuerier.ListSubscriptionsByUserIDCalls())
+func (mock *QuerierMock) ListSubscriptionsByUserIDCalls() []struct {
+	Ctx context.Context
+	Arg ListSubscriptionsByUserIDParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg ListSubscriptionsByUserIDParams
+	}
+	mock.lockListSubscriptionsByUserID.RLock()
+	calls = mock.calls.ListSubscriptionsByUserID
+	mock.lockListSubscriptionsByUserID.RUnlock()
 	return calls
 }
 
@@ -1816,5 +2144,77 @@ func (mock *QuerierMock) UpdateUserStripeCustomerIDCalls() []struct {
 	mock.lockUpdateUserStripeCustomerID.RLock()
 	calls = mock.calls.UpdateUserStripeCustomerID
 	mock.lockUpdateUserStripeCustomerID.RUnlock()
+	return calls
+}
+
+// UpsertProcessedEventByStripeID calls UpsertProcessedEventByStripeIDFunc.
+func (mock *QuerierMock) UpsertProcessedEventByStripeID(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error) {
+	if mock.UpsertProcessedEventByStripeIDFunc == nil {
+		panic("QuerierMock.UpsertProcessedEventByStripeIDFunc: method is nil but Querier.UpsertProcessedEventByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg UpsertProcessedEventByStripeIDParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockUpsertProcessedEventByStripeID.Lock()
+	mock.calls.UpsertProcessedEventByStripeID = append(mock.calls.UpsertProcessedEventByStripeID, callInfo)
+	mock.lockUpsertProcessedEventByStripeID.Unlock()
+	return mock.UpsertProcessedEventByStripeIDFunc(ctx, arg)
+}
+
+// UpsertProcessedEventByStripeIDCalls gets all the calls that were made to UpsertProcessedEventByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.UpsertProcessedEventByStripeIDCalls())
+func (mock *QuerierMock) UpsertProcessedEventByStripeIDCalls() []struct {
+	Ctx context.Context
+	Arg UpsertProcessedEventByStripeIDParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg UpsertProcessedEventByStripeIDParams
+	}
+	mock.lockUpsertProcessedEventByStripeID.RLock()
+	calls = mock.calls.UpsertProcessedEventByStripeID
+	mock.lockUpsertProcessedEventByStripeID.RUnlock()
+	return calls
+}
+
+// UpsertSubscriptionByStripeID calls UpsertSubscriptionByStripeIDFunc.
+func (mock *QuerierMock) UpsertSubscriptionByStripeID(ctx context.Context, arg UpsertSubscriptionByStripeIDParams) (*Subscription, error) {
+	if mock.UpsertSubscriptionByStripeIDFunc == nil {
+		panic("QuerierMock.UpsertSubscriptionByStripeIDFunc: method is nil but Querier.UpsertSubscriptionByStripeID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg UpsertSubscriptionByStripeIDParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockUpsertSubscriptionByStripeID.Lock()
+	mock.calls.UpsertSubscriptionByStripeID = append(mock.calls.UpsertSubscriptionByStripeID, callInfo)
+	mock.lockUpsertSubscriptionByStripeID.Unlock()
+	return mock.UpsertSubscriptionByStripeIDFunc(ctx, arg)
+}
+
+// UpsertSubscriptionByStripeIDCalls gets all the calls that were made to UpsertSubscriptionByStripeID.
+// Check the length with:
+//
+//	len(mockedQuerier.UpsertSubscriptionByStripeIDCalls())
+func (mock *QuerierMock) UpsertSubscriptionByStripeIDCalls() []struct {
+	Ctx context.Context
+	Arg UpsertSubscriptionByStripeIDParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg UpsertSubscriptionByStripeIDParams
+	}
+	mock.lockUpsertSubscriptionByStripeID.RLock()
+	calls = mock.calls.UpsertSubscriptionByStripeID
+	mock.lockUpsertSubscriptionByStripeID.RUnlock()
 	return calls
 }

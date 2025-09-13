@@ -16,14 +16,18 @@ type Querier interface {
 	CountUsers(ctx context.Context) (int64, error)
 	CreateImage(ctx context.Context, arg CreateImageParams) (*Image, error)
 	CreateJob(ctx context.Context, arg CreateJobParams) (*Job, error)
+	CreateProcessedEvent(ctx context.Context, arg CreateProcessedEventParams) (*ProcessedEvent, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteImage(ctx context.Context, id pgtype.UUID) error
 	DeleteImagesByProjectID(ctx context.Context, projectID pgtype.UUID) error
 	DeleteJob(ctx context.Context, id pgtype.UUID) error
 	DeleteJobsByImageID(ctx context.Context, imageID pgtype.UUID) error
+	// Optional maintenance: delete older processed events by timestamp (retention)
+	DeleteOldProcessedEvents(ctx context.Context, receivedAt pgtype.Timestamptz) error
 	DeleteProject(ctx context.Context, id pgtype.UUID) error
 	DeleteProjectByUserID(ctx context.Context, arg DeleteProjectByUserIDParams) error
+	DeleteSubscriptionByStripeID(ctx context.Context, stripeSubscriptionID string) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	FailJob(ctx context.Context, arg FailJobParams) (*Job, error)
 	GetAllProjects(ctx context.Context) ([]*GetAllProjectsRow, error)
@@ -32,11 +36,16 @@ type Querier interface {
 	GetJobByID(ctx context.Context, id pgtype.UUID) (*Job, error)
 	GetJobsByImageID(ctx context.Context, imageID pgtype.UUID) ([]*Job, error)
 	GetPendingJobs(ctx context.Context, limit int32) ([]*Job, error)
+	// Processed Events (Stripe Idempotency)
+	// sqlc queries for processed_events and subscriptions
+	GetProcessedEventByStripeID(ctx context.Context, stripeEventID string) (*ProcessedEvent, error)
 	GetProjectByID(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error)
 	GetProjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]*GetProjectsByUserIDRow, error)
+	GetSubscriptionByStripeID(ctx context.Context, stripeSubscriptionID string) (*Subscription, error)
 	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error)
 	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+	ListSubscriptionsByUserID(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	StartJob(ctx context.Context, id pgtype.UUID) (*Job, error)
 	UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*Image, error)
@@ -47,6 +56,12 @@ type Querier interface {
 	UpdateProjectByUserID(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error)
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error)
 	UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+	// Optional: single-statement upsert that returns the existing/new row.
+	// Preserves existing values (no-op update) to obtain RETURNING without DO NOTHING.
+	UpsertProcessedEventByStripeID(ctx context.Context, arg UpsertProcessedEventByStripeIDParams) (*ProcessedEvent, error)
+	// Subscriptions (Stripe subscription state)
+	// Upsert by unique stripe_subscription_id. We do not modify user_id on conflict.
+	UpsertSubscriptionByStripeID(ctx context.Context, arg UpsertSubscriptionByStripeIDParams) (*Subscription, error)
 }
 
 var _ Querier = (*Queries)(nil)

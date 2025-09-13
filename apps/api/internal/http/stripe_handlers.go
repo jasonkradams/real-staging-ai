@@ -2,14 +2,22 @@ package http
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/virtual-staging-ai/api/internal/stripe"
+	"github.com/virtual-staging-ai/api/internal/user"
 )
 
 // StripeEvent represents a Stripe webhook event.
@@ -49,14 +57,14 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
 	//nolint:staticcheck
 	if webhookSecret != "" {
-		// TODO: Implement signature verification
-		// stripeSignature := c.Request().Header.Get("Stripe-Signature")
-		// if !verifyStripeSignature(body, stripeSignature, webhookSecret) {
-		//     return c.JSON(http.StatusUnauthorized, ErrorResponse{
-		//         Error:   "unauthorized",
-		//         Message: "Invalid webhook signature",
-		//     })
-		// }
+		stripeSignature := c.Request().Header.Get("Stripe-Signature")
+		if err := verifyStripeSignature(body, stripeSignature, webhookSecret, 5*time.Minute, time.Now); err != nil {
+			log.Printf("Stripe signature verification failed: %v", err)
+			return c.JSON(http.StatusUnauthorized, ErrorResponse{
+				Error:   "unauthorized",
+				Message: "Invalid webhook signature",
+			})
+		}
 	} else {
 		// STRIPE_WEBHOOK_SECRET is not set; skipping signature verification.
 		// This is acceptable in local/dev environments, but MUST be configured in production.
@@ -72,6 +80,19 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 	}
 
 	log.Printf("Received Stripe webhook event: %s (ID: %s)", event.Type, event.ID)
+
+	// Idempotency check: ensure the event hasn't already been processed
+	processed, err := s.alreadyProcessedStripeEvent(c.Request().Context(), event.ID)
+	if err != nil {
+		log.Printf("Error checking Stripe event idempotency: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to process webhook")
+	}
+	if processed {
+		// Already processed; acknowledge to prevent retries
+		return c.JSON(http.StatusOK, map[string]string{
+			"status": "duplicate",
+		})
+	}
 
 	// Handle different event types
 	switch event.Type {
@@ -133,6 +154,11 @@ func (s *Server) stripeWebhookHandler(c echo.Context) error {
 		log.Printf("Unhandled webhook event type: %s", event.Type)
 	}
 
+	// Mark event as processed (idempotency scaffold). If this fails, log and still acknowledge.
+	if err := s.markStripeEventProcessed(c.Request().Context(), event.ID); err != nil {
+		log.Printf("Failed to mark Stripe event processed: %v", err)
+	}
+
 	// Return 200 to acknowledge receipt of the webhook
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "received",
@@ -154,12 +180,22 @@ func (s *Server) handleCheckoutSessionCompleted(ctx context.Context, event *Stri
 	log.Printf("Checkout completed - Customer: %s, Payment Status: %s, Reference: %s",
 		customerID, paymentStatus, clientReferenceID)
 
-	// TODO: Update user's subscription status in the database
-	// This would typically involve:
-	// 1. Finding the user by client_reference_id (user ID)
-	// 2. Updating their Stripe customer ID
-	// 3. Activating their subscription
-	// 4. Sending a welcome email
+	// Link Stripe customer to a user by client_reference_id (Auth0 sub or internal user ref)
+	if clientReferenceID != "" && customerID != "" {
+		userRepo := user.NewUserRepository(s.db)
+		u, err := userRepo.GetByAuth0Sub(ctx, clientReferenceID)
+		if err == nil {
+			// Only set stripe_customer_id if it's not already set
+			if !u.StripeCustomerID.Valid || u.StripeCustomerID.String == "" {
+				if _, err := userRepo.UpdateStripeCustomerID(ctx, u.ID.String(), customerID); err != nil {
+					log.Printf("Failed to update user's Stripe customer ID: %v", err)
+				}
+			}
+		} else {
+			// Not fatal for webhook handling; just log
+			log.Printf("Could not find user by client_reference_id=%s to link Stripe customer=%s: %v", clientReferenceID, customerID, err)
+		}
+	}
 
 	return nil
 }
@@ -178,7 +214,18 @@ func (s *Server) handleSubscriptionCreated(ctx context.Context, event *StripeEve
 	log.Printf("Subscription created - Customer: %s, Subscription: %s, Status: %s",
 		customerID, subscriptionID, status)
 
-	// TODO: Update user's subscription in the database
+	// Persist subscription state
+	subRepo := stripe.NewSubscriptionsRepository(s.db)
+	userRepo := user.NewUserRepository(s.db)
+	if customerID != "" && subscriptionID != "" {
+		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, nil, nil, nil, nil, nil, false); err != nil {
+				log.Printf("Failed to upsert subscription (created): %v", err)
+			}
+		} else {
+			log.Printf("No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err)
+		}
+	}
 	return nil
 }
 
@@ -196,7 +243,18 @@ func (s *Server) handleSubscriptionUpdated(ctx context.Context, event *StripeEve
 	log.Printf("Subscription updated - Customer: %s, Subscription: %s, Status: %s",
 		customerID, subscriptionID, status)
 
-	// TODO: Update user's subscription status in the database
+	// Persist subscription state
+	subRepo := stripe.NewSubscriptionsRepository(s.db)
+	userRepo := user.NewUserRepository(s.db)
+	if customerID != "" && subscriptionID != "" {
+		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, nil, nil, nil, nil, nil, false); err != nil {
+				log.Printf("Failed to upsert subscription (updated): %v", err)
+			}
+		} else {
+			log.Printf("No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err)
+		}
+	}
 	return nil
 }
 
@@ -213,7 +271,19 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event *StripeEve
 	log.Printf("Subscription deleted - Customer: %s, Subscription: %s",
 		customerID, subscriptionID)
 
-	// TODO: Deactivate user's subscription in the database
+	// Mark subscription as canceled/deactivated
+	subRepo := stripe.NewSubscriptionsRepository(s.db)
+	userRepo := user.NewUserRepository(s.db)
+	if customerID != "" && subscriptionID != "" {
+		// Stripe sends a final status (typically "canceled"); persist it
+		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
+			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, "canceled", nil, nil, nil, nil, nil, false); err != nil {
+				log.Printf("Failed to upsert subscription (deleted): %v", err)
+			}
+		} else {
+			log.Printf("No user found for Stripe customer on subscription.deleted: %s (err=%v)", customerID, err)
+		}
+	}
 	return nil
 }
 
@@ -302,4 +372,97 @@ func (s *Server) handleCustomerDeleted(ctx context.Context, event *StripeEvent) 
 	// - Potentially disable user account
 
 	return nil
+}
+
+// verifyStripeSignature verifies the Stripe webhook signature.
+// See: https://docs.stripe.com/webhooks/signatures
+func verifyStripeSignature(body []byte, sigHeader, secret string, tolerance time.Duration, now func() time.Time) error {
+	if sigHeader == "" {
+		return fmt.Errorf("missing Stripe-Signature header")
+	}
+
+	ts, v1s, err := parseStripeSignatureHeader(sigHeader)
+	if err != nil {
+		return fmt.Errorf("invalid signature header: %w", err)
+	}
+	if len(v1s) == 0 {
+		return fmt.Errorf("no v1 signatures found")
+	}
+
+	// Enforce timestamp tolerance window
+	t := time.Unix(ts, 0)
+	diff := now().Sub(t)
+	if diff < 0 {
+		diff = -diff
+	}
+	if diff > tolerance {
+		return fmt.Errorf("timestamp outside tolerance window")
+	}
+
+	expected := computeStripeSignature(body, ts, secret)
+
+	// Compare expected signature with any provided v1 (constant-time)
+	for _, sig := range v1s {
+		if hmac.Equal(sig, expected) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no matching signature")
+}
+
+// parseStripeSignatureHeader parses "t=timestamp,v1=hex,v1=hex2,..."
+func parseStripeSignatureHeader(header string) (int64, [][]byte, error) {
+	var ts int64
+	var haveTS bool
+	var v1s [][]byte
+
+	for _, part := range strings.Split(header, ",") {
+		part = strings.TrimSpace(part)
+		if strings.HasPrefix(part, "t=") {
+			tStr := strings.TrimPrefix(part, "t=")
+			val, err := strconv.ParseInt(tStr, 10, 64)
+			if err != nil {
+				return 0, nil, fmt.Errorf("invalid timestamp: %w", err)
+			}
+			ts = val
+			haveTS = true
+		} else if strings.HasPrefix(part, "v1=") {
+			v := strings.TrimPrefix(part, "v1=")
+			b, err := hex.DecodeString(v)
+			if err != nil {
+				return 0, nil, fmt.Errorf("invalid v1 signature: %w", err)
+			}
+			v1s = append(v1s, b)
+		}
+	}
+
+	if !haveTS {
+		return 0, nil, fmt.Errorf("missing timestamp")
+	}
+
+	return ts, v1s, nil
+}
+
+// computeStripeSignature computes HMAC-SHA256 over "timestamp.payload"
+func computeStripeSignature(body []byte, ts int64, secret string) []byte {
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = fmt.Fprintf(mac, "%d.", ts)
+	_, _ = mac.Write(body)
+	return mac.Sum(nil)
+}
+
+// alreadyProcessedStripeEvent checks if the event was already processed (idempotency scaffold).
+// TODO: Back with a DB table (e.g., processed_events with unique(stripe_event_id)).
+func (s *Server) alreadyProcessedStripeEvent(ctx context.Context, eventID string) (bool, error) {
+	repo := stripe.NewProcessedEventsRepository(s.db)
+	return repo.IsProcessed(ctx, eventID)
+}
+
+// markStripeEventProcessed records the processed event (idempotency scaffold).
+// TODO: Insert into DB and enforce uniqueness on stripe_event_id.
+func (s *Server) markStripeEventProcessed(ctx context.Context, eventID string) error {
+	repo := stripe.NewProcessedEventsRepository(s.db)
+	_, err := repo.Upsert(ctx, eventID, nil, nil)
+	return err
 }
