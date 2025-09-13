@@ -13,155 +13,8 @@ import (
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
-// mockQuerier is a mock of the queries.Querier interface
-type mockQuerier struct {
-	createUserFunc                 func(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error)
-	getUserByIDFunc                func(ctx context.Context, id pgtype.UUID) (*queries.User, error)
-	getUserByAuth0SubFunc          func(ctx context.Context, auth0Sub string) (*queries.User, error)
-	getUserByStripeCustomerIDFunc  func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error)
-	updateUserStripeCustomerIDFunc func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error)
-	updateUserRoleFunc             func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error)
-	deleteUserFunc                 func(ctx context.Context, id pgtype.UUID) error
-	listUsersFunc                  func(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error)
-	countUsersFunc                 func(ctx context.Context) (int64, error)
-	// Other methods to satisfy the Querier interface
-	completeJobFunc              func(ctx context.Context, id pgtype.UUID) (*queries.Job, error)
-	countProjectsByUserIDFunc    func(ctx context.Context, userID pgtype.UUID) (int64, error)
-	createImageFunc              func(ctx context.Context, arg queries.CreateImageParams) (*queries.Image, error)
-	createJobFunc                func(ctx context.Context, arg queries.CreateJobParams) (*queries.Job, error)
-	createProjectFunc            func(ctx context.Context, arg queries.CreateProjectParams) (*queries.CreateProjectRow, error)
-	deleteImageFunc              func(ctx context.Context, id pgtype.UUID) error
-	deleteImagesByProjectIDFunc  func(ctx context.Context, projectID pgtype.UUID) error
-	deleteJobFunc                func(ctx context.Context, id pgtype.UUID) error
-	deleteJobsByImageIDFunc      func(ctx context.Context, imageID pgtype.UUID) error
-	deleteProjectFunc            func(ctx context.Context, id pgtype.UUID) error
-	deleteProjectByUserIDFunc    func(ctx context.Context, arg queries.DeleteProjectByUserIDParams) error
-	failJobFunc                  func(ctx context.Context, arg queries.FailJobParams) (*queries.Job, error)
-	getAllProjectsFunc           func(ctx context.Context) ([]*queries.GetAllProjectsRow, error)
-	getImageByIDFunc             func(ctx context.Context, id pgtype.UUID) (*queries.Image, error)
-	getImagesByProjectIDFunc     func(ctx context.Context, projectID pgtype.UUID) ([]*queries.Image, error)
-	getJobByIDFunc               func(ctx context.Context, id pgtype.UUID) (*queries.Job, error)
-	getJobsByImageIDFunc         func(ctx context.Context, imageID pgtype.UUID) ([]*queries.Job, error)
-	getPendingJobsFunc           func(ctx context.Context, limit int32) ([]*queries.Job, error)
-	getProjectByIDFunc           func(ctx context.Context, id pgtype.UUID) (*queries.GetProjectByIDRow, error)
-	getProjectsByUserIDFunc      func(ctx context.Context, userID pgtype.UUID) ([]*queries.GetProjectsByUserIDRow, error)
-	startJobFunc                 func(ctx context.Context, id pgtype.UUID) (*queries.Job, error)
-	updateImageStatusFunc        func(ctx context.Context, arg queries.UpdateImageStatusParams) (*queries.Image, error)
-	updateImageWithErrorFunc     func(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.Image, error)
-	updateImageWithStagedURLFunc func(ctx context.Context, arg queries.UpdateImageWithStagedURLParams) (*queries.Image, error)
-	updateJobStatusFunc          func(ctx context.Context, arg queries.UpdateJobStatusParams) (*queries.Job, error)
-	updateProjectFunc            func(ctx context.Context, arg queries.UpdateProjectParams) (*queries.UpdateProjectRow, error)
-	updateProjectByUserIDFunc    func(ctx context.Context, arg queries.UpdateProjectByUserIDParams) (*queries.UpdateProjectByUserIDRow, error)
-}
-
-func (m *mockQuerier) CreateUser(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error) {
-	return m.createUserFunc(ctx, arg)
-}
-func (m *mockQuerier) GetUserByID(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
-	return m.getUserByIDFunc(ctx, id)
-}
-func (m *mockQuerier) GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*queries.User, error) {
-	return m.getUserByAuth0SubFunc(ctx, auth0Sub)
-}
-func (m *mockQuerier) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
-	return m.getUserByStripeCustomerIDFunc(ctx, stripeCustomerID)
-}
-func (m *mockQuerier) UpdateUserStripeCustomerID(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
-	return m.updateUserStripeCustomerIDFunc(ctx, arg)
-}
-func (m *mockQuerier) UpdateUserRole(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
-	return m.updateUserRoleFunc(ctx, arg)
-}
-func (m *mockQuerier) DeleteUser(ctx context.Context, id pgtype.UUID) error {
-	return m.deleteUserFunc(ctx, id)
-}
-func (m *mockQuerier) ListUsers(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error) {
-	return m.listUsersFunc(ctx, arg)
-}
-func (m *mockQuerier) CountUsers(ctx context.Context) (int64, error) {
-	return m.countUsersFunc(ctx)
-}
-func (m *mockQuerier) CompleteJob(ctx context.Context, id pgtype.UUID) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) CountProjectsByUserID(ctx context.Context, userID pgtype.UUID) (int64, error) {
-	return 0, nil
-}
-func (m *mockQuerier) CreateImage(ctx context.Context, arg queries.CreateImageParams) (*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) CreateJob(ctx context.Context, arg queries.CreateJobParams) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) CreateProject(ctx context.Context, arg queries.CreateProjectParams) (*queries.CreateProjectRow, error) {
-	return nil, nil
-}
-func (m *mockQuerier) DeleteImage(ctx context.Context, id pgtype.UUID) error {
-	return nil
-}
-func (m *mockQuerier) DeleteImagesByProjectID(ctx context.Context, projectID pgtype.UUID) error {
-	return nil
-}
-func (m *mockQuerier) DeleteJob(ctx context.Context, id pgtype.UUID) error {
-	return nil
-}
-func (m *mockQuerier) DeleteJobsByImageID(ctx context.Context, imageID pgtype.UUID) error {
-	return nil
-}
-func (m *mockQuerier) DeleteProject(ctx context.Context, id pgtype.UUID) error {
-	return nil
-}
-func (m *mockQuerier) DeleteProjectByUserID(ctx context.Context, arg queries.DeleteProjectByUserIDParams) error {
-	return nil
-}
-func (m *mockQuerier) FailJob(ctx context.Context, arg queries.FailJobParams) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetAllProjects(ctx context.Context) ([]*queries.GetAllProjectsRow, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetImageByID(ctx context.Context, id pgtype.UUID) (*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetJobByID(ctx context.Context, id pgtype.UUID) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetJobsByImageID(ctx context.Context, imageID pgtype.UUID) ([]*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetPendingJobs(ctx context.Context, limit int32) ([]*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetProjectByID(ctx context.Context, id pgtype.UUID) (*queries.GetProjectByIDRow, error) {
-	return nil, nil
-}
-func (m *mockQuerier) GetProjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]*queries.GetProjectsByUserIDRow, error) {
-	return nil, nil
-}
-func (m *mockQuerier) StartJob(ctx context.Context, id pgtype.UUID) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateImageStatus(ctx context.Context, arg queries.UpdateImageStatusParams) (*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateImageWithError(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateImageWithStagedURL(ctx context.Context, arg queries.UpdateImageWithStagedURLParams) (*queries.Image, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateJobStatus(ctx context.Context, arg queries.UpdateJobStatusParams) (*queries.Job, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateProject(ctx context.Context, arg queries.UpdateProjectParams) (*queries.UpdateProjectRow, error) {
-	return nil, nil
-}
-func (m *mockQuerier) UpdateProjectByUserID(ctx context.Context, arg queries.UpdateProjectByUserIDParams) (*queries.UpdateProjectByUserIDRow, error) {
-	return nil, nil
-}
+// Use moq-generated QuerierMock from queries package for tests
+type mockQuerier = queries.QuerierMock
 
 func TestNewUserRepository(t *testing.T) {
 	repo := NewUserRepository(nil)
@@ -190,7 +43,7 @@ func TestDefaultRepository_Create(t *testing.T) {
 			stripeID: "cus_123",
 			role:     "user",
 			setupMock: func(mock *mockQuerier) {
-				mock.createUserFunc = func(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error) {
+				mock.CreateUserFunc = func(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error) {
 					return &queries.User{
 						ID:               pgtype.UUID{Bytes: userID, Valid: true},
 						Auth0Sub:         "auth0|123",
@@ -207,7 +60,7 @@ func TestDefaultRepository_Create(t *testing.T) {
 			stripeID: "cus_123",
 			role:     "user",
 			setupMock: func(mock *mockQuerier) {
-				mock.createUserFunc = func(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error) {
+				mock.CreateUserFunc = func(ctx context.Context, arg queries.CreateUserParams) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -251,7 +104,7 @@ func TestDefaultRepository_GetByID(t *testing.T) {
 			name:   "success: get user by id",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
+				mock.GetUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
 					return &queries.User{ID: id}, nil
 				}
 			},
@@ -267,7 +120,7 @@ func TestDefaultRepository_GetByID(t *testing.T) {
 			name:   "fail: not found",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
+				mock.GetUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -278,7 +131,7 @@ func TestDefaultRepository_GetByID(t *testing.T) {
 			name:   "fail: db error",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
+				mock.GetUserByIDFunc = func(ctx context.Context, id pgtype.UUID) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -320,7 +173,7 @@ func TestDefaultRepository_GetByAuth0Sub(t *testing.T) {
 			name:     "success: get user by auth0 sub",
 			auth0Sub: "auth0|123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
+				mock.GetUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
 					return &queries.User{Auth0Sub: auth0Sub}, nil
 				}
 			},
@@ -329,7 +182,7 @@ func TestDefaultRepository_GetByAuth0Sub(t *testing.T) {
 			name:     "fail: not found",
 			auth0Sub: "auth0|123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
+				mock.GetUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -340,7 +193,7 @@ func TestDefaultRepository_GetByAuth0Sub(t *testing.T) {
 			name:     "fail: db error",
 			auth0Sub: "auth0|123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
+				mock.GetUserByAuth0SubFunc = func(ctx context.Context, auth0Sub string) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -382,7 +235,7 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "success: get user by stripe customer id",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
 					return &queries.User{StripeCustomerID: stripeCustomerID}, nil
 				}
 			},
@@ -391,7 +244,7 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "fail: not found",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -402,7 +255,7 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "fail: db error",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.getUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -447,7 +300,7 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			userID:           userID.String(),
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
 					return &queries.User{}, nil
 				}
 			},
@@ -463,7 +316,7 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			name:   "fail: not found",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -474,7 +327,7 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			name:   "fail: db error",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -519,7 +372,7 @@ func TestDefaultRepository_UpdateRole(t *testing.T) {
 			userID: userID.String(),
 			role:   "admin",
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
+				mock.UpdateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
 					return &queries.User{}, nil
 				}
 			},
@@ -537,7 +390,7 @@ func TestDefaultRepository_UpdateRole(t *testing.T) {
 			userID: userID.String(),
 			role:   "admin",
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
+				mock.UpdateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -549,7 +402,7 @@ func TestDefaultRepository_UpdateRole(t *testing.T) {
 			userID: userID.String(),
 			role:   "admin",
 			setupMock: func(mock *mockQuerier) {
-				mock.updateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
+				mock.UpdateUserRoleFunc = func(ctx context.Context, arg queries.UpdateUserRoleParams) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -592,7 +445,7 @@ func TestDefaultRepository_Delete(t *testing.T) {
 			name:   "success: delete user",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.deleteUserFunc = func(ctx context.Context, id pgtype.UUID) error {
+				mock.DeleteUserFunc = func(ctx context.Context, id pgtype.UUID) error {
 					return nil
 				}
 			},
@@ -608,7 +461,7 @@ func TestDefaultRepository_Delete(t *testing.T) {
 			name:   "fail: db error",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.deleteUserFunc = func(ctx context.Context, id pgtype.UUID) error {
+				mock.DeleteUserFunc = func(ctx context.Context, id pgtype.UUID) error {
 					return fmt.Errorf("db error")
 				}
 			},
@@ -651,7 +504,7 @@ func TestDefaultRepository_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			setupMock: func(mock *mockQuerier) {
-				mock.listUsersFunc = func(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error) {
+				mock.ListUsersFunc = func(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error) {
 					return []*queries.User{}, nil
 				}
 			},
@@ -661,7 +514,7 @@ func TestDefaultRepository_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			setupMock: func(mock *mockQuerier) {
-				mock.listUsersFunc = func(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error) {
+				mock.ListUsersFunc = func(ctx context.Context, arg queries.ListUsersParams) ([]*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -698,7 +551,7 @@ func TestDefaultRepository_Count(t *testing.T) {
 		{
 			name: "success: count users",
 			setupMock: func(mock *mockQuerier) {
-				mock.countUsersFunc = func(ctx context.Context) (int64, error) {
+				mock.CountUsersFunc = func(ctx context.Context) (int64, error) {
 					return 5, nil
 				}
 			},
@@ -706,7 +559,7 @@ func TestDefaultRepository_Count(t *testing.T) {
 		{
 			name: "fail: db error",
 			setupMock: func(mock *mockQuerier) {
-				mock.countUsersFunc = func(ctx context.Context) (int64, error) {
+				mock.CountUsersFunc = func(ctx context.Context) (int64, error) {
 					return 0, fmt.Errorf("db error")
 				}
 			},

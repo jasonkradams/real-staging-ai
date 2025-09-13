@@ -39,7 +39,7 @@ func TestJWTMiddleware(t *testing.T) {
 		Kty: "RSA",
 		Kid: "test-kid",
 		Use: "sig",
-		N:   base64.RawURLEncoding.EncodeToString(privateKey.PublicKey.N.Bytes()),
+		N:   base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()),
 		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.PublicKey.E)).Bytes()),
 	}
 
@@ -136,7 +136,7 @@ func TestJWTMiddleware(t *testing.T) {
 		},
 		{
 			name: "fail: malformed exponent in jwk",
-			jwk:  JWK{Kty: "RSA", Kid: "test-kid", N: base64.RawURLEncoding.EncodeToString(privateKey.PublicKey.N.Bytes()), E: "-!-"},
+			jwk:  JWK{Kty: "RSA", Kid: "test-kid", N: base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()), E: "-!-"},
 			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
@@ -228,7 +228,7 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 		Kty: "RSA",
 		Kid: "test-kid",
 		Use: "sig",
-		N:   base64.RawURLEncoding.EncodeToString(privateKey.PublicKey.N.Bytes()),
+		N:   base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()),
 		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.PublicKey.E)).Bytes()),
 	}
 	jwks, err := json.Marshal(JWKSet{Keys: []JWK{goodJWK}})

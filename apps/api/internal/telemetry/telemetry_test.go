@@ -19,7 +19,10 @@ func TestInitTracing(t *testing.T) {
 		{
 			name: "success: with default endpoint",
 			setup: func() {
-				os.Unsetenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+				err := os.Unsetenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+				if err != nil {
+					panic(err)
+				}
 			},
 			getCtx: func() (context.Context, context.CancelFunc) {
 				return context.Background(), func() {}

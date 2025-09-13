@@ -424,8 +424,7 @@ func BenchmarkDefaultDatabase_QueryRow(b *testing.B) {
 	sql := "SELECT * FROM users WHERE id = $1"
 	args := []interface{}{123}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		db.QueryRow(ctx, sql, args...)
 	}
 }
@@ -444,9 +443,11 @@ func BenchmarkDefaultDatabase_Query(b *testing.B) {
 	sql := "SELECT * FROM users WHERE active = $1"
 	args := []interface{}{true}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		db.Query(ctx, sql, args...)
+	for b.Loop() {
+		_, err := db.Query(ctx, sql, args...)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -464,8 +465,10 @@ func BenchmarkDefaultDatabase_Exec(b *testing.B) {
 	sql := "UPDATE users SET last_login = NOW() WHERE id = $1"
 	args := []interface{}{123}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		db.Exec(ctx, sql, args...)
+	for b.Loop() {
+		_, err := db.Exec(ctx, sql, args...)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
