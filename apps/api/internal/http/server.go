@@ -2,15 +2,16 @@
 package http
 
 import (
-	"net/http"
+    "net/http"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+    "github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4/middleware"
+    "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 
-	"github.com/virtual-staging-ai/api/internal/auth"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/storage"
+    "github.com/virtual-staging-ai/api/internal/auth"
+    "github.com/virtual-staging-ai/api/internal/image"
+    "github.com/virtual-staging-ai/api/internal/storage"
+    webdocs "github.com/virtual-staging-ai/api/web"
 )
 
 // Server holds the dependencies for the HTTP server.
@@ -25,7 +26,7 @@ type Server struct {
 
 // NewServer creates and configures a new Echo server.
 func NewServer(db storage.Database, s3Service storage.S3Service, imageService image.Service) *Server {
-	e := echo.New()
+    e := echo.New()
 
 	// Add OpenTelemetry middleware
 	e.Use(otelecho.Middleware("virtual-staging-api"))
@@ -74,8 +75,12 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	// SSE routes
 	protected.GET("/events", s.eventsHandler)
 
-	// Serve API documentation
-	e.Static("/api/v1/docs", "../../web/api/v1")
+	// Billing routes
+	protected.GET("/billing/subscriptions", s.getMySubscriptionsHandler)
+	protected.GET("/billing/invoices", s.getMyInvoicesHandler)
+
+    // Serve API documentation (embedded)
+    webdocs.RegisterRoutes(e)
 
 	return s
 }
@@ -121,8 +126,12 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	// SSE routes
 	api.GET("/events", s.eventsHandler)
 
-	// Serve API documentation
-	e.Static("/api/v1/docs", "../../web/api/v1")
+	// Billing routes (public in test server)
+	api.GET("/billing/subscriptions", withTestUser(s.getMySubscriptionsHandler))
+	api.GET("/billing/invoices", withTestUser(s.getMyInvoicesHandler))
+
+    // Serve API documentation (embedded)
+    webdocs.RegisterRoutes(e)
 
 	return s
 }
@@ -131,6 +140,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 func (s *Server) Start(addr string) error {
 	return s.echo.Start(addr)
 }
+
 
 // ServeHTTP implements the http.Handler interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

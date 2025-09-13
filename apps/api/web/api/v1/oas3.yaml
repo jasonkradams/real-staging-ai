@@ -278,9 +278,7 @@ paths:
   /v1/projects/{project_id}/images:
     get:
       summary: Get all images for a project
-      description:
-        Retrieve a list of all images belonging to a specific project.
-        The project must belong to the authenticated user.
+      description: Retrieve a list of images associated with a specific project.
       tags:
         - Images
       security:
@@ -314,271 +312,264 @@ paths:
           $ref: "#/components/responses/InternalServerError"
   /v1/events:
     get:
-      summary: Subscribe to real-time events
-      description:
-        Subscribe to a stream of Server-Sent Events (SSE) for real-time
-        updates on job statuses and other events.
+      summary: Server-Sent Events for real-time updates
+      description: Stream job and image status updates for the authenticated user.
       tags:
         - Events
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: A stream of events
+          description: Event stream established
           content:
             text/event-stream:
               schema:
                 type: string
-                example: 'data: {"event":"job_update","data":{"job_id":"...","status":"processing"}}'
+                example: |
+                  event: message
+                  data: {"type":"job_update","status":"processing","image_id":"a1b2c3"}
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/stripe/webhook:
+  /v1/uploads:
     post:
-      summary: Handle Stripe webhooks
-      description: Handle incoming webhooks from Stripe for payment events.
+      summary: Upload a file to S3 via presigned request
+      description: Securely upload files directly to S3 using a presigned URL.
       tags:
-        - Stripe
+        - Uploads
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              description: The Stripe event object.
-              example:
-                id: evt_1J...
-                object: event
-                api_version: "2020-08-27"
-                created: 1626720000
-                data:
-                  object:
-                    id: sub_1J...
-                    object: subscription
-                    status: active
-                type: customer.subscription.created
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload
       responses:
         "200":
-          description: Webhook received successfully
+          description: Presigned upload information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignUploadResponse"
         "400":
-          description: Bad request - invalid payload
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
-          description: Internal server error
+          $ref: "#/components/responses/InternalServerError"
+  /v1/health:
+    get:
+      summary: Health check endpoint
+      description: Returns status of the API service.
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: virtual-staging-api
+  /v1/billing/subscriptions:
+    get:
+      summary: List current user's subscriptions
+      description: Retrieve all subscriptions associated with the authenticated user.
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A list of subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Subscription"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/billing/invoices:
+    get:
+      summary: List current user's invoices
+      description: Retrieve all invoices associated with the authenticated user.
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A list of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Invoice"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT token obtained from Auth0
+  responses:
+    UnauthorizedError:
+      description: Authentication is required to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequestError:
+      description: The request could not be understood due to malformed syntax
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFoundError:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: The request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+    InternalServerError:
+      description: The server encountered an unexpected condition
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
-    Project:
-      type: object
-      required:
-        - id
-        - name
-        - user_id
-        - created_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier for the project
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Name of the project
-          example: Living Room Staging
-        user_id:
-          type: string
-          format: uuid
-          description: ID of the user who owns this project
-          example: 123e4567-e89b-12d3-a456-426614174000
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the project was created
-          example: "2023-12-07T10:30:00Z"
-    CreateRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Name of the project
-          example: Living Room Staging
-    UpdateRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Updated name of the project
-          example: Modern Living Room Staging
-    PresignUploadRequest:
-      type: object
-      required:
-        - filename
-        - content_type
-        - file_size
-      properties:
-        filename:
-          type: string
-          minLength: 1
-          maxLength: 255
-          description: Name of the file to upload
-          example: living-room.jpg
-        content_type:
-          type: string
-          description: MIME type of the file
-          enum:
-            - image/jpeg
-            - image/png
-            - image/webp
-          example: image/jpeg
-        file_size:
-          type: integer
-          minimum: 1
-          maximum: 10485760
-          description: Size of the file in bytes (max 10MB)
-          example: 2048576
-    PresignUploadResponse:
-      type: object
-      required:
-        - upload_url
-        - file_key
-        - expires_in
-      properties:
-        upload_url:
-          type: string
-          format: uri
-          description: Presigned URL for uploading the file
-          example: https://bucket.s3.amazonaws.com/uploads/uuid/filename.jpg?...
-        file_key:
-          type: string
-          description: Unique key for the uploaded file
-          example: uploads/550e8400-e29b-41d4-a716-446655440000/living-room.jpg
-        expires_in:
-          type: integer
-          description: Number of seconds until the presigned URL expires
-          example: 900
     Error:
       type: object
-      required:
-        - error
-        - message
       properties:
         error:
           type: string
-          description: Error type identifier
-          example: validation_failed
+          example: bad_request
         message:
           type: string
-          description: Human-readable error message
-          example: The provided data is invalid
-        details:
-          type: object
-          description: Additional error details (optional)
-          additionalProperties: true
+          example: Invalid request format
     ValidationError:
       type: object
-      required:
-        - error
-        - message
-        - validation_errors
       properties:
         error:
           type: string
-          example: validation_failed
+          example: validation_error
         message:
           type: string
-          example: The provided data is invalid
+          example: One or more fields failed validation
         validation_errors:
           type: array
           items:
-            type: object
-            properties:
-              field:
-                type: string
-                example: name
-              message:
-                type: string
-                example: name is required
-    Image:
+            $ref: "#/components/schemas/ValidationErrorDetail"
+    ValidationErrorDetail:
       type: object
-      required:
-        - id
-        - project_id
-        - original_url
-        - status
-        - created_at
-        - updated_at
+      properties:
+        field:
+          type: string
+          example: name
+        message:
+          type: string
+          example: must not be empty
+    Project:
+      type: object
       properties:
         id:
           type: string
           format: uuid
-          description: Unique identifier for the image
+          example: 550e8400-e29b-41d4-a716-446655440000
+        user_id:
+          type: string
+          example: auth0|123456789
+        name:
+          type: string
+          example: Living Room Staging
+        description:
+          type: string
+          example: Staging for the living room with modern style
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: New Project
+        description:
+          type: string
+          example: A description of the project
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Updated Project Name
+        description:
+          type: string
+          example: Updated description of the project
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
           example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         project_id:
           type: string
           format: uuid
-          description: ID of the project this image belongs to
           example: 550e8400-e29b-41d4-a716-446655440000
         original_url:
           type: string
-          format: uri
-          description: URL of the original uploaded image
-          example: https://bucket.s3.amazonaws.com/uploads/uuid/original.jpg
+          example: https://s3.amazonaws.com/bucket/original.jpg
         staged_url:
           type: string
-          format: uri
-          description: URL of the staged (processed) image
-          example: https://bucket.s3.amazonaws.com/uploads/uuid/staged.jpg
-        room_type:
-          type: string
-          description: The type of the room in the image
-          example: living_room
-        style:
-          type: string
-          description: The staging style
-          example: modern
-        seed:
-          type: integer
-          format: int64
-          description: The seed used for the staging process
-          example: 1234567890
+          example: https://s3.amazonaws.com/bucket/staged.jpg
         status:
           type: string
-          enum:
-            - queued
-            - processing
-            - ready
-            - error
-          description: The status of the image
+          enum: [queued, processing, ready, failed]
           example: ready
-        error:
-          type: string
-          description: Any error message if the processing failed
-          example: Failed to process image
         created_at:
           type: string
           format: date-time
-          description: Timestamp when the image was created
-          example: "2023-12-07T10:30:00Z"
         updated_at:
           type: string
           format: date-time
-          description: Timestamp when the image was last updated
-          example: "2023-12-07T10:35:00Z"
     CreateImageRequest:
       type: object
       required:
@@ -588,71 +579,78 @@ components:
         project_id:
           type: string
           format: uuid
-          description: ID of the project to add the image to
           example: 550e8400-e29b-41d4-a716-446655440000
         original_url:
           type: string
-          format: uri
-          description: URL of the original uploaded image
-          example: https://bucket.s3.amazonaws.com/uploads/uuid/original.jpg
-  responses:
-    BadRequestError:
-      description: Bad request - invalid input data
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+          example: https://s3.amazonaws.com/bucket/original.jpg
+        style:
+          type: string
+          example: modern
+    PresignUploadRequest:
+      type: object
+      required:
+        - filename
+        - content_type
+      properties:
+        filename:
+          type: string
+          example: photo.jpg
+        content_type:
+          type: string
+          example: image/jpeg
+    PresignUploadResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://s3.amazonaws.com/presigned-url
+        fields:
+          type: object
+          additionalProperties:
+            type: string
           example:
-            error: bad_request
-            message: Invalid request format
-    UnauthorizedError:
-      description: Unauthorized - missing or invalid authentication
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error: unauthorized
-            message: Authentication required
-    NotFoundError:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error: not_found
-            message: Project not found
-    ValidationError:
-      description: Validation failed
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ValidationError"
-          example:
-            error: validation_failed
-            message: The provided data is invalid
-            validation_errors:
-              - field: name
-                message: name is required
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            error: internal_server_error
-            message: An unexpected error occurred
-    ProjectResponse:
-      description: A project object
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Project"
-    ImageResponse:
-      description: An image object
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Image"
+            key: uploads/photo.jpg
+            policy: eyJleHBpcmF0aW9uIjoiMjAyMy0wMS0wMVQwMDowMDowMFoiLCJjb25kaXRpb25zIjpbeyJidWNrZXQiOiJteS1idWNrZXQifSxbInN0YXJ0cy13aXRoIiwiJEtleSIsInVwbG9hZHMvIl1dfQ==
+            x-amz-algorithm: AWS4-HMAC-SHA256
+            x-amz-credential: AKIAIOSFODNN7EXAMPLE/20230101/us-east-1/s3/aws4_request
+            x-amz-date: 20230101T000000Z
+            x-amz-signature: 4a9c8b...
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        plan:
+          type: string
+          example: pro
+        status:
+          type: string
+          example: active
+        started_at:
+          type: string
+          format: date-time
+        current_period_end:
+          type: string
+          format: date-time
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        amount_due:
+          type: number
+          format: float
+          example: 49.99
+        currency:
+          type: string
+          example: USD
+        status:
+          type: string
+          example: paid
+        due_date:
+          type: string
+          format: date-time

@@ -3,12 +3,12 @@ FROM golang:1.25.1-alpine AS builder
 
 WORKDIR /app
 
-# Copy go.mod and go.sum to download dependencies first
-COPY go.mod go.sum ./
+# Copy module files and download deps
+COPY apps/api/go.mod apps/api/go.sum ./
 RUN go mod download
 
-# Copy the rest of the source code
-COPY . .
+# Copy API source code
+COPY apps/api/ ./
 
 # Build the application
 # CGO_ENABLED=0: build a statically linked binary

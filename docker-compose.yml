@@ -23,7 +23,9 @@ services:
     volumes:
       - minio-data:/data
   api:
-    build: ./apps/api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     environment:
       - APP_ENV=dev
       - AUTH0_DOMAIN=dev-sleeping-pandas.us.auth0.com
