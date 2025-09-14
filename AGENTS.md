@@ -31,9 +31,12 @@ This document orients contributors to Virtual Staging AI’s codebase and workfl
 
 ## Commit & Pull Request Guidelines
 - Commits: follow Conventional Commits (e.g., `feat(api): add presign upload endpoint`).
+- We use Conventional Commits for all changes. Format: `type(scope): subject`.
+  - Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `perf`.
+  - Example scopes: `api`, `worker`, `infra`, `docs`, `db`, `stripe`.
+  - Reference: https://www.conventionalcommits.org/
 - PRs: include purpose, linked issues, test plan/output, and screenshots/logs when relevant. Ensure `make test` and `make lint` pass. Touch docs when changing behavior (see `docs/`).
 
 ## Security & Configuration Tips
 - Do not commit secrets. Use `.env` for local values loaded by Docker Compose. See `docs/configuration.md`.
 - S3/Stripe/Auth0 configs are required to run end-to-end; for local testing, the stack uses test containers and LocalStack/MinIO where applicable.
-

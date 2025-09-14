@@ -60,4 +60,4 @@ Before you begin, make sure you have the following tools installed on your syste
 
 To test the authenticated endpoints, you will need to generate a test token from Auth0.
 
-For detailed instructions on how to do this, please refer to the [`AUTH_TOKEN_GENERATION.md`](../AUTH_TOKEN_GENERATION.md) document.
+For detailed instructions on how to do this, please refer to the [`AUTH_TOKEN_GENERATION.md`](guides/AUTH_TOKEN_GENERATION.md) document.

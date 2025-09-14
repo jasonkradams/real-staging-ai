@@ -98,3 +98,6 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [ ] Create a preview environment for the application
 - [ ] Deploy the application to the preview environment
 - [ ] Set up CI/CD pipeline with GitHub Actions
+
+## Milestone 7: Refactor
+- [ ] Refactor http handlers and break out handlers into their respective packages
