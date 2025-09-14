@@ -16,12 +16,13 @@ import (
 
 // Server holds the dependencies for the HTTP server.
 type Server struct {
-	echo         *echo.Echo
-	db           storage.Database
-	s3Service    storage.S3Service
-	imageHandler *ImageHandler
-	imageService image.Service
-	authConfig   *auth.Auth0Config
+    echo         *echo.Echo
+    db           storage.Database
+    s3Service    storage.S3Service
+    imageHandler *ImageHandler
+    imageService image.Service
+    authConfig   *auth.Auth0Config
+    pubsub       PubSub
 }
 
 // NewServer creates and configures a new Echo server.
@@ -39,9 +40,15 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	// Initialize Auth0 config
 	authConfig := auth.NewAuth0Config()
 
-	imageHandler := NewImageHandler(imageService)
+    imageHandler := NewImageHandler(imageService)
 
-	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, imageHandler: imageHandler}
+    // Initialize Pub/Sub (Redis) if configured
+    var ps PubSub
+    if p, err := NewDefaultPubSubFromEnv(); err == nil {
+        ps = p
+    }
+
+    s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, imageHandler: imageHandler, pubsub: ps}
 
 	// Health check route
 	e.GET("/health", s.healthCheck)
@@ -94,9 +101,9 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	imageHandler := NewImageHandler(imageService)
+    imageHandler := NewImageHandler(imageService)
 
-	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil, imageHandler: imageHandler}
+    s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil, imageHandler: imageHandler}
 
 	// Health check route (same as main server)
 	e.GET("/health", s.healthCheck)

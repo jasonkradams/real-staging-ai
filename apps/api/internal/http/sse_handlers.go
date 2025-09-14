@@ -1,12 +1,12 @@
 package http
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"time"
+    "context"
+    "encoding/json"
+    "fmt"
+    "time"
 
-	"github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4"
 )
 
 // SSEEvent represents a server-sent event.
@@ -48,29 +48,53 @@ func (s *Server) eventsHandler(c echo.Context) error {
 	ctx, cancel := context.WithCancel(c.Request().Context())
 	defer cancel()
 
-	// Send periodic heartbeat to keep connection alive
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
+    // Set up heartbeat and optional Pub/Sub forwarding
+    ticker := time.NewTicker(30 * time.Second)
+    defer ticker.Stop()
 
-	// In a real implementation, this would subscribe to a message queue or event system
-	// For now, we'll simulate periodic updates
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			// Send heartbeat
-			if err := s.sendSSEEvent(c, SSEEvent{
-				Event: "heartbeat",
-				Data: map[string]interface{}{
-					"timestamp": time.Now().Unix(),
-				},
-			}); err != nil {
-				return err
-			}
-			c.Response().Flush()
-		}
-	}
+    var (
+        msgCh <-chan []byte
+        unsubscribe func() error
+    )
+    if s.pubsub != nil {
+        ch, unsub, err := s.pubsub.Subscribe(ctx, "jobs.updates")
+        if err == nil {
+            msgCh = ch
+            unsubscribe = unsub
+            defer func() { if unsubscribe != nil { _ = unsubscribe() } }()
+        }
+    }
+
+    for {
+        select {
+        case <-ctx.Done():
+            return nil
+        case <-ticker.C:
+            // Send heartbeat
+            if err := s.sendSSEEvent(c, SSEEvent{
+                Event: "heartbeat",
+                Data: map[string]interface{}{
+                    "timestamp": time.Now().Unix(),
+                },
+            }); err != nil {
+                return err
+            }
+            c.Response().Flush()
+        case data, ok := <-msgCh:
+            if !ok {
+                msgCh = nil
+                continue
+            }
+            // Forward job updates (expect JSON payload)
+            var ev JobUpdateEvent
+            if err := json.Unmarshal(data, &ev); err == nil {
+                if err := s.sendSSEEvent(c, SSEEvent{Event: "job_update", Data: ev}); err != nil {
+                    return err
+                }
+                c.Response().Flush()
+            }
+        }
+    }
 }
 
 // sendSSEEvent sends a Server-Sent Event to the client.
