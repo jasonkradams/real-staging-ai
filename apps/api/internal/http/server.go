@@ -11,6 +11,7 @@ import (
 	"github.com/virtual-staging-ai/api/internal/auth"
 	"github.com/virtual-staging-ai/api/internal/billing"
 	"github.com/virtual-staging-ai/api/internal/image"
+	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/sse"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	webdocs "github.com/virtual-staging-ai/api/web"
@@ -66,11 +67,12 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	protected.Use(auth.JWTMiddleware(s.authConfig))
 
 	// Project routes
-	protected.POST("/projects", s.createProjectHandler)
-	protected.GET("/projects", s.getProjectsHandler)
-	protected.GET("/projects/:id", s.getProjectByIDHandler)
-	protected.PUT("/projects/:id", s.updateProjectHandler)
-	protected.DELETE("/projects/:id", s.deleteProjectHandler)
+	ph := project.NewDefaultHandler(s.db)
+	protected.POST("/projects", ph.Create)
+	protected.GET("/projects", ph.List)
+	protected.GET("/projects/:id", ph.GetByID)
+	protected.PUT("/projects/:id", ph.Update)
+	protected.DELETE("/projects/:id", ph.Delete)
 
 	// Upload routes
 	protected.POST("/uploads/presign", s.presignUploadHandler)
@@ -124,11 +126,12 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api.POST("/stripe/webhook", s.stripeWebhookHandler)
 
 	// Project routes (no auth required for testing)
-	api.POST("/projects", withTestUser(s.createProjectHandler))
-	api.GET("/projects", withTestUser(s.getProjectsHandler))
-	api.GET("/projects/:id", withTestUser(s.getProjectByIDHandler))
-	api.PUT("/projects/:id", withTestUser(s.updateProjectHandler))
-	api.DELETE("/projects/:id", withTestUser(s.deleteProjectHandler))
+	ph := project.NewDefaultHandler(s.db)
+	api.POST("/projects", withTestUser(ph.Create))
+	api.GET("/projects", withTestUser(ph.List))
+	api.GET("/projects/:id", withTestUser(ph.GetByID))
+	api.PUT("/projects/:id", withTestUser(ph.Update))
+	api.DELETE("/projects/:id", withTestUser(ph.Delete))
 
 	// Upload routes
 	api.POST("/uploads/presign", s.presignUploadHandler)

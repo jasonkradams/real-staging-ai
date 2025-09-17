@@ -14,6 +14,25 @@ import (
 	"github.com/virtual-staging-ai/api/internal/user"
 )
 
+// ErrorResponse represents an error response.
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
+// ValidationErrorDetail represents a validation error for a specific field.
+type ValidationErrorDetail struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+// ValidationErrorResponse represents a validation error response.
+type ValidationErrorResponse struct {
+	Error            string                  `json:"error"`
+	Message          string                  `json:"message"`
+	ValidationErrors []ValidationErrorDetail `json:"validation_errors"`
+}
+
 type PresignUploadRequest struct {
 	Filename    string `json:"filename" validate:"required,min=1,max=255"`
 	ContentType string `json:"content_type" validate:"required"`

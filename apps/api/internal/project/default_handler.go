@@ -1,4 +1,4 @@
-package http
+package project
 
 import (
 	"errors"
@@ -9,33 +9,53 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+
 	"github.com/virtual-staging-ai/api/internal/auth"
-	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/user"
 )
 
+// DefaultHandler provides Echo HTTP handlers for project operations.
+// It lives in the project package to follow the “handlers in their own package” pattern.
+type DefaultHandler struct {
+	db storage.Database
+}
+
+// NewDefaultHandler constructs a project HTTP handler backed by the provided DB.
+func NewDefaultHandler(db storage.Database) *DefaultHandler {
+	return &DefaultHandler{db: db}
+}
+
+// Ensure DefaultHandler implements Handler.
+var _ Handler = (*DefaultHandler)(nil)
+
+// ErrorResponse represents an error response.
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
 }
 
+// ValidationErrorDetail represents a validation error for a specific field.
+type ValidationErrorDetail struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+// ValidationErrorResponse represents a validation error response.
 type ValidationErrorResponse struct {
 	Error            string                  `json:"error"`
 	Message          string                  `json:"message"`
 	ValidationErrors []ValidationErrorDetail `json:"validation_errors"`
 }
 
-type ValidationErrorDetail struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
-}
-
+// ProjectListResponse is the response envelope for list endpoints.
 type ProjectListResponse struct {
-	Projects []project.Project `json:"projects"`
+	Projects []Project `json:"projects"`
 }
 
-func (s *Server) createProjectHandler(c echo.Context) error {
-	var req project.CreateRequest
+// Create handles POST /api/v1/projects
+func (h *DefaultHandler) Create(c echo.Context) error {
+	var req CreateRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -59,12 +79,11 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewDefaultRepository(s.db)
-	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// User not found, create a new one
-			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -81,12 +100,10 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		}
 	}
 
-	p := project.Project{
-		Name: req.Name,
-	}
+	p := Project{Name: req.Name}
 
-	projectStorage := project.NewDefaultRepository(s.db)
-	createdProject, err := projectStorage.CreateProject(c.Request().Context(), &p, user.ID.String())
+	repo := NewDefaultRepository(h.db)
+	created, err := repo.CreateProject(c.Request().Context(), &p, u.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   fmt.Sprintf("internal_server_error > %v", err),
@@ -94,10 +111,17 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, createdProject)
+	return c.JSON(http.StatusCreated, created)
 }
 
-func (s *Server) getProjectsHandler(c echo.Context) error {
+// List handles GET /api/v1/projects
+func (h *DefaultHandler) List(c echo.Context) error {
+	if h.db == nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error:   "unauthorized",
+			Message: "Invalid or missing JWT token",
+		})
+	}
 	auth0Sub, err := auth.GetUserIDOrDefault(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{
@@ -106,12 +130,11 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewDefaultRepository(s.db)
-	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// User not found, create a new one
-			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -128,8 +151,8 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultRepository(s.db)
-	projects, err := projectStorage.GetProjectsByUserID(c.Request().Context(), user.ID.String())
+	repo := NewDefaultRepository(h.db)
+	projects, err := repo.GetProjectsByUserID(c.Request().Context(), u.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -137,14 +160,11 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 		})
 	}
 
-	response := ProjectListResponse{
-		Projects: projects,
-	}
-
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, ProjectListResponse{Projects: projects})
 }
 
-func (s *Server) getProjectByIDHandler(c echo.Context) error {
+// GetByID handles GET /api/v1/projects/:id
+func (h *DefaultHandler) GetByID(c echo.Context) error {
 	projectID := c.Param("id")
 
 	if _, err := uuid.Parse(projectID); err != nil {
@@ -162,12 +182,11 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewDefaultRepository(s.db)
-	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// User not found, create a new one
-			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -184,8 +203,8 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultRepository(s.db)
-	project, err := projectStorage.GetProjectByIDAndUserID(c.Request().Context(), projectID, user.ID.String())
+	repo := NewDefaultRepository(h.db)
+	p, err := repo.GetProjectByIDAndUserID(c.Request().Context(), projectID, u.ID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -199,10 +218,11 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, project)
+	return c.JSON(http.StatusOK, p)
 }
 
-func (s *Server) updateProjectHandler(c echo.Context) error {
+// Update handles PUT /api/v1/projects/:id
+func (h *DefaultHandler) Update(c echo.Context) error {
 	projectID := c.Param("id")
 
 	if _, err := uuid.Parse(projectID); err != nil {
@@ -212,7 +232,7 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	var req project.UpdateRequest
+	var req UpdateRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "bad_request",
@@ -236,12 +256,11 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewDefaultRepository(s.db)
-	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// User not found, create a new one
-			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -258,8 +277,8 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultRepository(s.db)
-	updatedProject, err := projectStorage.UpdateProjectByUserID(c.Request().Context(), projectID, user.ID.String(), req.Name)
+	repo := NewDefaultRepository(h.db)
+	updated, err := repo.UpdateProjectByUserID(c.Request().Context(), projectID, u.ID.String(), req.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -273,10 +292,11 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, updatedProject)
+	return c.JSON(http.StatusOK, updated)
 }
 
-func (s *Server) deleteProjectHandler(c echo.Context) error {
+// Delete handles DELETE /api/v1/projects/:id
+func (h *DefaultHandler) Delete(c echo.Context) error {
 	projectID := c.Param("id")
 
 	if _, err := uuid.Parse(projectID); err != nil {
@@ -294,12 +314,11 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewDefaultRepository(s.db)
-	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// User not found, create a new one
-			user, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -316,9 +335,8 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		}
 	}
 
-	projectStorage := project.NewDefaultRepository(s.db)
-	err = projectStorage.DeleteProjectByUserID(c.Request().Context(), projectID, user.ID.String())
-	if err != nil {
+	repo := NewDefaultRepository(h.db)
+	if err := repo.DeleteProjectByUserID(c.Request().Context(), projectID, u.ID.String()); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
 				Error:   "not_found",
@@ -335,7 +353,8 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 }
 
 // Validation helpers
-func validateCreateProjectRequest(req *project.CreateRequest) []ValidationErrorDetail {
+
+func validateCreateProjectRequest(req *CreateRequest) []ValidationErrorDetail {
 	var errors []ValidationErrorDetail
 
 	name := strings.TrimSpace(req.Name)
@@ -354,7 +373,7 @@ func validateCreateProjectRequest(req *project.CreateRequest) []ValidationErrorD
 	return errors
 }
 
-func validateUpdateProjectRequest(req *project.UpdateRequest) []ValidationErrorDetail {
+func validateUpdateProjectRequest(req *UpdateRequest) []ValidationErrorDetail {
 	var errors []ValidationErrorDetail
 
 	name := strings.TrimSpace(req.Name)
