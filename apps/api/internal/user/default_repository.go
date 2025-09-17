@@ -19,8 +19,8 @@ type DefaultRepository struct {
 // Ensure DefaultRepository implements UserRepository interface.
 var _ Repository = (*DefaultRepository)(nil)
 
-// NewUserRepository creates a new DefaultRepository instance.
-func NewUserRepository(db storage.Database) *DefaultRepository {
+// NewDefaultRepository creates a new DefaultRepository instance.
+func NewDefaultRepository(db storage.Database) *DefaultRepository {
 	return &DefaultRepository{
 		queries: queries.New(db),
 	}

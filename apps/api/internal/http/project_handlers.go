@@ -59,7 +59,7 @@ func (s *Server) createProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -106,7 +106,7 @@ func (s *Server) getProjectsHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -162,7 +162,7 @@ func (s *Server) getProjectByIDHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -236,7 +236,7 @@ func (s *Server) updateProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -294,7 +294,7 @@ func (s *Server) deleteProjectHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	user, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

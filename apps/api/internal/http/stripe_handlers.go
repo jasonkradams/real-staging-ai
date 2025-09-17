@@ -186,7 +186,7 @@ func (s *Server) handleCheckoutSessionCompleted(ctx context.Context, event *Stri
 
 	// Link Stripe customer to a user by client_reference_id (Auth0 sub or internal user ref)
 	if clientReferenceID != "" && customerID != "" {
-		userRepo := user.NewUserRepository(s.db)
+		userRepo := user.NewDefaultRepository(s.db)
 		u, err := userRepo.GetByAuth0Sub(ctx, clientReferenceID)
 		if err == nil {
 			// Only set stripe_customer_id if it's not already set
@@ -224,7 +224,7 @@ func (s *Server) handleSubscriptionCreated(ctx context.Context, event *StripeEve
 
 	// Persist subscription state
 	subRepo := stripe.NewSubscriptionsRepository(s.db)
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	if customerID != "" && subscriptionID != "" {
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
 			// Extract optional subscription details
@@ -296,7 +296,7 @@ func (s *Server) handleSubscriptionUpdated(ctx context.Context, event *StripeEve
 
 	// Persist subscription state
 	subRepo := stripe.NewSubscriptionsRepository(s.db)
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	if customerID != "" && subscriptionID != "" {
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
 			// Extract optional subscription details
@@ -367,7 +367,7 @@ func (s *Server) handleSubscriptionDeleted(ctx context.Context, event *StripeEve
 
 	// Mark subscription as canceled/deactivated
 	subRepo := stripe.NewSubscriptionsRepository(s.db)
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	if customerID != "" && subscriptionID != "" {
 		// Stripe sends a final status (typically "canceled"); persist it
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
@@ -454,7 +454,7 @@ func (s *Server) handleInvoicePaymentSucceeded(ctx context.Context, event *Strip
 
 	// Persist invoice
 	if customerID != "" && invoiceID != "" {
-		userRepo := user.NewUserRepository(s.db)
+		userRepo := user.NewDefaultRepository(s.db)
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
 			invRepo := stripe.NewInvoicesRepository(s.db)
 
@@ -514,7 +514,7 @@ func (s *Server) handleInvoicePaymentFailed(ctx context.Context, event *StripeEv
 
 	// Persist invoice with failed status
 	if customerID != "" && invoiceID != "" {
-		userRepo := user.NewUserRepository(s.db)
+		userRepo := user.NewDefaultRepository(s.db)
 		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
 			invRepo := stripe.NewInvoicesRepository(s.db)
 

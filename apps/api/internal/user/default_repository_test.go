@@ -17,7 +17,7 @@ import (
 type mockQuerier = queries.QuerierMock
 
 func TestNewUserRepository(t *testing.T) {
-	repo := NewUserRepository(nil)
+	repo := NewDefaultRepository(nil)
 	assert.NotNil(t, repo)
 }
 

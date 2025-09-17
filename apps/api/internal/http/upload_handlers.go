@@ -53,7 +53,7 @@ func (s *Server) presignUploadHandler(c echo.Context) error {
 		})
 	}
 
-	userRepo := user.NewUserRepository(s.db)
+	userRepo := user.NewDefaultRepository(s.db)
 	u, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 
 	"github.com/virtual-staging-ai/api/internal/auth"
+	"github.com/virtual-staging-ai/api/internal/billing"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/sse"
 	"github.com/virtual-staging-ai/api/internal/storage"
@@ -90,8 +91,9 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	})
 
 	// Billing routes
-	protected.GET("/billing/subscriptions", s.getMySubscriptionsHandler)
-	protected.GET("/billing/invoices", s.getMyInvoicesHandler)
+	bh := billing.NewDefaultHandler(s.db)
+	protected.GET("/billing/subscriptions", bh.GetMySubscriptions)
+	protected.GET("/billing/invoices", bh.GetMyInvoices)
 
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)
@@ -147,8 +149,9 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	})
 
 	// Billing routes (public in test server)
-	api.GET("/billing/subscriptions", withTestUser(s.getMySubscriptionsHandler))
-	api.GET("/billing/invoices", withTestUser(s.getMyInvoicesHandler))
+	bh := billing.NewDefaultHandler(s.db)
+	api.GET("/billing/subscriptions", withTestUser(bh.GetMySubscriptions))
+	api.GET("/billing/invoices", withTestUser(bh.GetMyInvoices))
 
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)
