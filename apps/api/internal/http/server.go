@@ -2,32 +2,33 @@
 package http
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/labstack/echo/v4"
-    "github.com/labstack/echo/v4/middleware"
-    "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 
-    "github.com/virtual-staging-ai/api/internal/auth"
-    "github.com/virtual-staging-ai/api/internal/image"
-    "github.com/virtual-staging-ai/api/internal/storage"
-    webdocs "github.com/virtual-staging-ai/api/web"
+	"github.com/virtual-staging-ai/api/internal/auth"
+	"github.com/virtual-staging-ai/api/internal/image"
+	"github.com/virtual-staging-ai/api/internal/sse"
+	"github.com/virtual-staging-ai/api/internal/storage"
+	webdocs "github.com/virtual-staging-ai/api/web"
 )
 
 // Server holds the dependencies for the HTTP server.
 type Server struct {
-    echo         *echo.Echo
-    db           storage.Database
-    s3Service    storage.S3Service
-    imageHandler *ImageHandler
-    imageService image.Service
-    authConfig   *auth.Auth0Config
-    pubsub       PubSub
+	echo      *echo.Echo
+	db        storage.Database
+	s3Service storage.S3Service
+
+	imageService image.Service
+	authConfig   *auth.Auth0Config
+	pubsub       PubSub
 }
 
 // NewServer creates and configures a new Echo server.
 func NewServer(db storage.Database, s3Service storage.S3Service, imageService image.Service) *Server {
-    e := echo.New()
+	e := echo.New()
 
 	// Add OpenTelemetry middleware
 	e.Use(otelecho.Middleware("virtual-staging-api"))
@@ -40,15 +41,15 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	// Initialize Auth0 config
 	authConfig := auth.NewAuth0Config()
 
-    imageHandler := NewImageHandler(imageService)
+	imgHandler := image.NewDefaultHandler(imageService)
 
-    // Initialize Pub/Sub (Redis) if configured
-    var ps PubSub
-    if p, err := NewDefaultPubSubFromEnv(); err == nil {
-        ps = p
-    }
+	// Initialize Pub/Sub (Redis) if configured
+	var ps PubSub
+	if p, err := NewDefaultPubSubFromEnv(); err == nil {
+		ps = p
+	}
 
-    s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, imageHandler: imageHandler, pubsub: ps}
+	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, pubsub: ps}
 
 	// Health check route
 	e.GET("/health", s.healthCheck)
@@ -74,20 +75,26 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	protected.POST("/uploads/presign", s.presignUploadHandler)
 
 	// Image routes
-	protected.POST("/images", s.imageHandler.createImageHandler)
-	protected.GET("/images/:id", s.imageHandler.getImageHandler)
-	protected.DELETE("/images/:id", s.imageHandler.deleteImageHandler)
-	protected.GET("/projects/:project_id/images", s.imageHandler.getProjectImagesHandler)
+	protected.POST("/images", imgHandler.CreateImage)
+	protected.GET("/images/:id", imgHandler.GetImage)
+	protected.DELETE("/images/:id", imgHandler.DeleteImage)
+	protected.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
 
 	// SSE routes
-	protected.GET("/events", s.eventsHandler)
+	protected.GET("/events", func(c echo.Context) error {
+		h, err := sse.NewDefaultHandlerFromEnv(sse.Config{})
+		if err != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "pubsub not configured"})
+		}
+		return h.Events(c)
+	})
 
 	// Billing routes
 	protected.GET("/billing/subscriptions", s.getMySubscriptionsHandler)
 	protected.GET("/billing/invoices", s.getMyInvoicesHandler)
 
-    // Serve API documentation (embedded)
-    webdocs.RegisterRoutes(e)
+	// Serve API documentation (embedded)
+	webdocs.RegisterRoutes(e)
 
 	return s
 }
@@ -101,9 +108,9 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-    imageHandler := NewImageHandler(imageService)
+	imgHandler := image.NewDefaultHandler(imageService)
 
-    s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil, imageHandler: imageHandler}
+	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: nil}
 
 	// Health check route (same as main server)
 	e.GET("/health", s.healthCheck)
@@ -125,20 +132,26 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api.POST("/uploads/presign", s.presignUploadHandler)
 
 	// Image routes
-	api.POST("/images", s.imageHandler.createImageHandler)
-	api.GET("/images/:id", s.imageHandler.getImageHandler)
-	api.DELETE("/images/:id", s.imageHandler.deleteImageHandler)
-	api.GET("/projects/:project_id/images", s.imageHandler.getProjectImagesHandler)
+	api.POST("/images", imgHandler.CreateImage)
+	api.GET("/images/:id", imgHandler.GetImage)
+	api.DELETE("/images/:id", imgHandler.DeleteImage)
+	api.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
 
 	// SSE routes
-	api.GET("/events", s.eventsHandler)
+	api.GET("/events", func(c echo.Context) error {
+		h, err := sse.NewDefaultHandlerFromEnv(sse.Config{})
+		if err != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "pubsub not configured"})
+		}
+		return h.Events(c)
+	})
 
 	// Billing routes (public in test server)
 	api.GET("/billing/subscriptions", withTestUser(s.getMySubscriptionsHandler))
 	api.GET("/billing/invoices", withTestUser(s.getMyInvoicesHandler))
 
-    // Serve API documentation (embedded)
-    webdocs.RegisterRoutes(e)
+	// Serve API documentation (embedded)
+	webdocs.RegisterRoutes(e)
 
 	return s
 }
@@ -147,7 +160,6 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 func (s *Server) Start(addr string) error {
 	return s.echo.Start(addr)
 }
-
 
 // ServeHTTP implements the http.Handler interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

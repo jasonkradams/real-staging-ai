@@ -3,12 +3,12 @@
 - Audience & issuer must match environment config
 
 ### Resources
-- `POST /v1/uploads/presign` → Get S3 **presigned PUT** URL
-- `POST /v1/images` → Create image + enqueue job (body: `{project_id, original_key, room_type, style}`)
-- `GET /v1/images/{id}` → Fetch status/result
-- `GET /v1/projects` / `POST /v1/projects` → basic project CRUD
-- `POST /v1/stripe/webhook` → handle subscription events
-- `GET /v1/events` → Server-Sent Events (image/job updates)
+- `POST /api/v1/uploads/presign` → Get S3 **presigned PUT** URL
+- `POST /api/v1/images` → Create image + enqueue job (body: `{project_id, original_key, room_type, style}`)
+- `GET /api/v1/images/{id}` → Fetch status/result
+- `GET /api/v1/projects` / `POST /api/v1/projects` → basic project CRUD
+- `POST /api/v1/stripe/webhook` → handle subscription events
+- `GET /api/v1/events?image_id={id}` → Server-Sent Events (per-image channel; minimal payload with status only)
 
 ### OpenAPI Sketch
 ```yaml
@@ -19,7 +19,7 @@ info:
 servers:
   - url: https://api.local
 paths:
-  /v1/uploads/presign:
+  /api/v1/uploads/presign:
     post:
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -41,7 +41,7 @@ paths:
                 properties:
                   url: { type: string }
                   key: { type: string }
-  /v1/images:
+  /api/v1/images:
     post:
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -65,7 +65,7 @@ paths:
                 type: object
                 properties:
                   id: { type: string }
-  /v1/images/{id}:
+  /api/v1/images/{id}:
     get:
       security: [{ bearerAuth: [] }]
       parameters:
@@ -86,6 +86,17 @@ paths:
                   originalUrl: { type: string }
                   stagedUrl: { type: string, nullable: true }
                   error: { type: string, nullable: true }
+  /api/v1/events:
+    get:
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: image_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: server-sent events stream (per-image; status-only payload)
 components:
   securitySchemes:
     bearerAuth:

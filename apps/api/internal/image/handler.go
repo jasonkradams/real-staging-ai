@@ -1,8 +1,6 @@
 package image
 
 import (
-	"context"
-
 	"github.com/labstack/echo/v4"
 )
 
@@ -28,9 +26,8 @@ type ValidationErrorResponse struct {
 //go:generate go run github.com/matryer/moq@v0.5.3 -out handler_mock.go . Handler
 
 type Handler interface {
-	CreateImage(ctx context.Context, req *CreateImageRequest) (*Image, error)
-	GetImage(ctx context.Context, imageID string) (*Image, error)
+	CreateImage(c echo.Context) error
+	GetImage(c echo.Context) error
 	GetProjectImages(c echo.Context) error
-	DeleteImage(ctx context.Context, imageID string) error
-	GetImagesForUser(ctx context.Context, userID string) ([]*Image, error)
+	DeleteImage(c echo.Context) error
 }

@@ -4,7 +4,6 @@
 package image
 
 import (
-	"context"
 	"github.com/labstack/echo/v4"
 	"sync"
 )
@@ -19,17 +18,14 @@ var _ Handler = &HandlerMock{}
 //
 //		// make and configure a mocked Handler
 //		mockedHandler := &HandlerMock{
-//			CreateImageFunc: func(ctx context.Context, req *CreateImageRequest) (*Image, error) {
+//			CreateImageFunc: func(c echo.Context) error {
 //				panic("mock out the CreateImage method")
 //			},
-//			DeleteImageFunc: func(ctx context.Context, imageID string) error {
+//			DeleteImageFunc: func(c echo.Context) error {
 //				panic("mock out the DeleteImage method")
 //			},
-//			GetImageFunc: func(ctx context.Context, imageID string) (*Image, error) {
+//			GetImageFunc: func(c echo.Context) error {
 //				panic("mock out the GetImage method")
-//			},
-//			GetImagesForUserFunc: func(ctx context.Context, userID string) ([]*Image, error) {
-//				panic("mock out the GetImagesForUser method")
 //			},
 //			GetProjectImagesFunc: func(c echo.Context) error {
 //				panic("mock out the GetProjectImages method")
@@ -42,16 +38,13 @@ var _ Handler = &HandlerMock{}
 //	}
 type HandlerMock struct {
 	// CreateImageFunc mocks the CreateImage method.
-	CreateImageFunc func(ctx context.Context, req *CreateImageRequest) (*Image, error)
+	CreateImageFunc func(c echo.Context) error
 
 	// DeleteImageFunc mocks the DeleteImage method.
-	DeleteImageFunc func(ctx context.Context, imageID string) error
+	DeleteImageFunc func(c echo.Context) error
 
 	// GetImageFunc mocks the GetImage method.
-	GetImageFunc func(ctx context.Context, imageID string) (*Image, error)
-
-	// GetImagesForUserFunc mocks the GetImagesForUser method.
-	GetImagesForUserFunc func(ctx context.Context, userID string) ([]*Image, error)
+	GetImageFunc func(c echo.Context) error
 
 	// GetProjectImagesFunc mocks the GetProjectImages method.
 	GetProjectImagesFunc func(c echo.Context) error
@@ -60,31 +53,18 @@ type HandlerMock struct {
 	calls struct {
 		// CreateImage holds details about calls to the CreateImage method.
 		CreateImage []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Req is the req argument value.
-			Req *CreateImageRequest
+			// C is the c argument value.
+			C echo.Context
 		}
 		// DeleteImage holds details about calls to the DeleteImage method.
 		DeleteImage []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ImageID is the imageID argument value.
-			ImageID string
+			// C is the c argument value.
+			C echo.Context
 		}
 		// GetImage holds details about calls to the GetImage method.
 		GetImage []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ImageID is the imageID argument value.
-			ImageID string
-		}
-		// GetImagesForUser holds details about calls to the GetImagesForUser method.
-		GetImagesForUser []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// UserID is the userID argument value.
-			UserID string
+			// C is the c argument value.
+			C echo.Context
 		}
 		// GetProjectImages holds details about calls to the GetProjectImages method.
 		GetProjectImages []struct {
@@ -95,26 +75,23 @@ type HandlerMock struct {
 	lockCreateImage      sync.RWMutex
 	lockDeleteImage      sync.RWMutex
 	lockGetImage         sync.RWMutex
-	lockGetImagesForUser sync.RWMutex
 	lockGetProjectImages sync.RWMutex
 }
 
 // CreateImage calls CreateImageFunc.
-func (mock *HandlerMock) CreateImage(ctx context.Context, req *CreateImageRequest) (*Image, error) {
+func (mock *HandlerMock) CreateImage(c echo.Context) error {
 	if mock.CreateImageFunc == nil {
 		panic("HandlerMock.CreateImageFunc: method is nil but Handler.CreateImage was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		Req *CreateImageRequest
+		C echo.Context
 	}{
-		Ctx: ctx,
-		Req: req,
+		C: c,
 	}
 	mock.lockCreateImage.Lock()
 	mock.calls.CreateImage = append(mock.calls.CreateImage, callInfo)
 	mock.lockCreateImage.Unlock()
-	return mock.CreateImageFunc(ctx, req)
+	return mock.CreateImageFunc(c)
 }
 
 // CreateImageCalls gets all the calls that were made to CreateImage.
@@ -122,12 +99,10 @@ func (mock *HandlerMock) CreateImage(ctx context.Context, req *CreateImageReques
 //
 //	len(mockedHandler.CreateImageCalls())
 func (mock *HandlerMock) CreateImageCalls() []struct {
-	Ctx context.Context
-	Req *CreateImageRequest
+	C echo.Context
 } {
 	var calls []struct {
-		Ctx context.Context
-		Req *CreateImageRequest
+		C echo.Context
 	}
 	mock.lockCreateImage.RLock()
 	calls = mock.calls.CreateImage
@@ -136,21 +111,19 @@ func (mock *HandlerMock) CreateImageCalls() []struct {
 }
 
 // DeleteImage calls DeleteImageFunc.
-func (mock *HandlerMock) DeleteImage(ctx context.Context, imageID string) error {
+func (mock *HandlerMock) DeleteImage(c echo.Context) error {
 	if mock.DeleteImageFunc == nil {
 		panic("HandlerMock.DeleteImageFunc: method is nil but Handler.DeleteImage was just called")
 	}
 	callInfo := struct {
-		Ctx     context.Context
-		ImageID string
+		C echo.Context
 	}{
-		Ctx:     ctx,
-		ImageID: imageID,
+		C: c,
 	}
 	mock.lockDeleteImage.Lock()
 	mock.calls.DeleteImage = append(mock.calls.DeleteImage, callInfo)
 	mock.lockDeleteImage.Unlock()
-	return mock.DeleteImageFunc(ctx, imageID)
+	return mock.DeleteImageFunc(c)
 }
 
 // DeleteImageCalls gets all the calls that were made to DeleteImage.
@@ -158,12 +131,10 @@ func (mock *HandlerMock) DeleteImage(ctx context.Context, imageID string) error 
 //
 //	len(mockedHandler.DeleteImageCalls())
 func (mock *HandlerMock) DeleteImageCalls() []struct {
-	Ctx     context.Context
-	ImageID string
+	C echo.Context
 } {
 	var calls []struct {
-		Ctx     context.Context
-		ImageID string
+		C echo.Context
 	}
 	mock.lockDeleteImage.RLock()
 	calls = mock.calls.DeleteImage
@@ -172,21 +143,19 @@ func (mock *HandlerMock) DeleteImageCalls() []struct {
 }
 
 // GetImage calls GetImageFunc.
-func (mock *HandlerMock) GetImage(ctx context.Context, imageID string) (*Image, error) {
+func (mock *HandlerMock) GetImage(c echo.Context) error {
 	if mock.GetImageFunc == nil {
 		panic("HandlerMock.GetImageFunc: method is nil but Handler.GetImage was just called")
 	}
 	callInfo := struct {
-		Ctx     context.Context
-		ImageID string
+		C echo.Context
 	}{
-		Ctx:     ctx,
-		ImageID: imageID,
+		C: c,
 	}
 	mock.lockGetImage.Lock()
 	mock.calls.GetImage = append(mock.calls.GetImage, callInfo)
 	mock.lockGetImage.Unlock()
-	return mock.GetImageFunc(ctx, imageID)
+	return mock.GetImageFunc(c)
 }
 
 // GetImageCalls gets all the calls that were made to GetImage.
@@ -194,52 +163,14 @@ func (mock *HandlerMock) GetImage(ctx context.Context, imageID string) (*Image, 
 //
 //	len(mockedHandler.GetImageCalls())
 func (mock *HandlerMock) GetImageCalls() []struct {
-	Ctx     context.Context
-	ImageID string
+	C echo.Context
 } {
 	var calls []struct {
-		Ctx     context.Context
-		ImageID string
+		C echo.Context
 	}
 	mock.lockGetImage.RLock()
 	calls = mock.calls.GetImage
 	mock.lockGetImage.RUnlock()
-	return calls
-}
-
-// GetImagesForUser calls GetImagesForUserFunc.
-func (mock *HandlerMock) GetImagesForUser(ctx context.Context, userID string) ([]*Image, error) {
-	if mock.GetImagesForUserFunc == nil {
-		panic("HandlerMock.GetImagesForUserFunc: method is nil but Handler.GetImagesForUser was just called")
-	}
-	callInfo := struct {
-		Ctx    context.Context
-		UserID string
-	}{
-		Ctx:    ctx,
-		UserID: userID,
-	}
-	mock.lockGetImagesForUser.Lock()
-	mock.calls.GetImagesForUser = append(mock.calls.GetImagesForUser, callInfo)
-	mock.lockGetImagesForUser.Unlock()
-	return mock.GetImagesForUserFunc(ctx, userID)
-}
-
-// GetImagesForUserCalls gets all the calls that were made to GetImagesForUser.
-// Check the length with:
-//
-//	len(mockedHandler.GetImagesForUserCalls())
-func (mock *HandlerMock) GetImagesForUserCalls() []struct {
-	Ctx    context.Context
-	UserID string
-} {
-	var calls []struct {
-		Ctx    context.Context
-		UserID string
-	}
-	mock.lockGetImagesForUser.RLock()
-	calls = mock.calls.GetImagesForUser
-	mock.lockGetImagesForUser.RUnlock()
 	return calls
 }
 
