@@ -331,16 +331,3 @@ func TestSubscriptionsRepository_DeleteByStripeID_Exec(t *testing.T) {
 }
 
 /* ----------------------------- tiny helper ----------------------------- */
-
-// contains is a tiny helper to avoid pulling extra deps in tests.
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (func() bool {
-		// naive substring search
-		for i := 0; i+len(substr) <= len(s); i++ {
-			if s[i:i+len(substr)] == substr {
-				return true
-			}
-		}
-		return false
-	})()
-}

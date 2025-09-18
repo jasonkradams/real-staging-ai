@@ -14,6 +14,7 @@ import (
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/sse"
 	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/virtual-staging-ai/api/internal/stripe"
 	webdocs "github.com/virtual-staging-ai/api/web"
 )
 
@@ -60,7 +61,10 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	api := e.Group("/api/v1")
 
 	// Public routes (no authentication required)
-	api.POST("/stripe/webhook", s.stripeWebhookHandler)
+	api.POST("/stripe/webhook", func(c echo.Context) error {
+		sh := stripe.NewDefaultHandler(s.db)
+		return sh.Webhook(c)
+	})
 
 	// Protected routes (require JWT authentication)
 	protected := api.Group("")
@@ -123,7 +127,10 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api := e.Group("/api/v1")
 
 	// All routes are public for testing
-	api.POST("/stripe/webhook", s.stripeWebhookHandler)
+	api.POST("/stripe/webhook", func(c echo.Context) error {
+		sh := stripe.NewDefaultHandler(s.db)
+		return sh.Webhook(c)
+	})
 
 	// Project routes (no auth required for testing)
 	ph := project.NewDefaultHandler(s.db)
