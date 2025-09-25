@@ -90,7 +90,7 @@ func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID strin
 			flush(w)
 		case msg, ok := <-msgCh:
 			if !ok {
-				// Subscription channel closed; treat as done.
+				// Subscription channel closed (unsubscribe or Redis connection closed); exit gracefully.
 				return nil
 			}
 			// Expect minimal status-only JSON payload: {"status":"..."}

@@ -89,7 +89,10 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 
 	// SSE routes
 	protected.GET("/events", func(c echo.Context) error {
-		h, err := sse.NewDefaultHandlerFromEnv(sse.Config{})
+		cfg := sse.Config{
+			SubscribeTimeout: 2000000000,
+		}
+		h, err := sse.NewDefaultHandlerFromEnv(cfg)
 		if err != nil {
 			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "pubsub not configured"})
 		}
@@ -151,7 +154,10 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 
 	// SSE routes
 	api.GET("/events", func(c echo.Context) error {
-		h, err := sse.NewDefaultHandlerFromEnv(sse.Config{})
+		cfg := sse.Config{
+			SubscribeTimeout: 2000000000,
+		}
+		h, err := sse.NewDefaultHandlerFromEnv(cfg)
 		if err != nil {
 			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "pubsub not configured"})
 		}
