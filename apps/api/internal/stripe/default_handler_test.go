@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -913,5 +914,146 @@ func TestWebhook_MarkProcessed_DB_Success(t *testing.T) {
 	}
 	if !contains(rec.Body.String(), "received") {
 		t.Fatalf("expected response to contain 'received', got %s", rec.Body.String())
+	}
+}
+
+// Ensure we actually attempt Upsert (IsProcessed + Upsert -> 2 QueryRow calls)
+func TestWebhook_MarkProcessed_Upsert_CalledTwice(t *testing.T) {
+	t.Setenv("STRIPE_WEBHOOK_SECRET", "")
+	f := &fakeDBIdemFirstMissingThenUpsertOK{}
+	h := NewDefaultHandler(f)
+
+	body := makeEvent("unhandled.event", map[string]any{"ok": true})
+	c, _ := newEchoCtx(http.MethodPost, body, nil)
+
+	if err := h.Webhook(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.calls != 2 {
+		t.Fatalf("expected 2 QueryRow calls (IsProcessed + Upsert), got %d", f.calls)
+	}
+}
+
+// fakeDBIdemUpsertError simulates IsProcessed=false then Upsert failing (mark processed error)
+// Webhook should still acknowledge with 200.
+type fakeDBIdemUpsertError struct {
+	calls int
+}
+
+func (f *fakeDBIdemUpsertError) Close()                {}
+func (f *fakeDBIdemUpsertError) Pool() storage.PgxPool { return nil }
+func (f *fakeDBIdemUpsertError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	f.calls++
+	if f.calls == 1 {
+		// IsProcessed -> not found
+		return errRow{}
+	}
+	// Upsert -> error on scan
+	return failingRow{}
+}
+func (f *fakeDBIdemUpsertError) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+	return nil, nil
+}
+func (f *fakeDBIdemUpsertError) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+	return pgconn.CommandTag{}, nil
+}
+
+func TestWebhook_MarkProcessed_DB_UpsertError_OK(t *testing.T) {
+	t.Setenv("STRIPE_WEBHOOK_SECRET", "")
+	h := NewDefaultHandler(&fakeDBIdemUpsertError{})
+
+	body := makeEvent("unhandled.event", map[string]any{"x": "y"})
+	c, rec := newEchoCtx(http.MethodPost, body, nil)
+
+	if err := h.Webhook(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 even if mark-processed fails, got %d", rec.Code)
+	}
+	if !contains(rec.Body.String(), "received") {
+		t.Fatalf("expected response to contain 'received', got %s", rec.Body.String())
+	}
+}
+
+// Enforce STRIPE_WEBHOOK_SECRET in non-dev envs (simulate non-dev by setting envs and tweaking os.Args[0])
+func TestWebhook_MissingSecret_NonDev_ServiceUnavailable(t *testing.T) {
+	// Force non-dev
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("GO_ENV", "production")
+	t.Setenv("ENV", "production")
+	t.Setenv("NODE_ENV", "production")
+	t.Setenv("STRIPE_WEBHOOK_SECRET", "")
+
+	orig := os.Args[0]
+	os.Args[0] = "api-server" // avoid ".test" heuristic
+	defer func() { os.Args[0] = orig }()
+
+	h := NewDefaultHandler(nil)
+	body := makeEvent("customer.created", map[string]any{"id": "cus_nondev"})
+	c, rec := newEchoCtx(http.MethodPost, body, nil)
+
+	_ = h.Webhook(c)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 when secret missing in non-dev, got %d", rec.Code)
+	}
+	if !contains(rec.Body.String(), "secret not configured") {
+		t.Fatalf("expected response to mention 'secret not configured', got %s", rec.Body.String())
+	}
+}
+
+// Mapping edge-case: ensure subscription handler tolerates nested price/timestamps presence
+// even when user lookup fails (no-rows), exercising mapping paths.
+func Test_handleSubscriptionCreated_Mapping_PriceAndTimes_OK(t *testing.T) {
+	h := NewDefaultHandler(&userNotFoundDB{})
+	now := float64(time.Now().Unix())
+
+	evt := StripeEvent{
+		Data: map[string]interface{}{
+			"object": map[string]interface{}{
+				"customer": "cus_map",
+				"id":       "sub_map",
+				"status":   "active",
+				"items": map[string]any{
+					"data": []any{
+						map[string]any{
+							"price": map[string]any{"id": "price_123"},
+						},
+					},
+				},
+				"current_period_start": now - 3600,
+				"current_period_end":   now + 3600,
+				"cancel_at":            now + 7200,
+				"canceled_at":          now - 7200,
+				"cancel_at_period_end": true,
+			},
+		},
+	}
+
+	if err := h.handleSubscriptionCreated(context.Background(), &evt); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Mapping edge-case: invoice with partial data (no currency/number) should still process OK
+func Test_handleInvoicePaymentSucceeded_PartialData_OK(t *testing.T) {
+	h := NewDefaultHandler(&userNotFoundDB{})
+
+	evt := StripeEvent{
+		Data: map[string]interface{}{
+			"object": map[string]interface{}{
+				"id":           "in_partial",
+				"customer":     "cus_partial",
+				"subscription": "sub_partial",
+				"status":       "paid",
+				"amount_due":   float64(1234),
+				"amount_paid":  float64(1234),
+				// currency, number omitted intentionally
+			},
+		},
+	}
+
+	if err := h.handleInvoicePaymentSucceeded(context.Background(), &evt); err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

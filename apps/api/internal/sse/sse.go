@@ -60,4 +60,9 @@ type Config struct {
 	// HeartbeatInterval controls how often heartbeat events are emitted.
 	// If zero, a reasonable default (e.g., 30s) should be used.
 	HeartbeatInterval time.Duration
+
+	// SubscribeTimeout controls how long to wait when establishing a subscription
+	// to the underlying pub/sub before returning an error. If zero, implementations
+	// may choose a reasonable default or rely on context deadlines.
+	SubscribeTimeout time.Duration
 }

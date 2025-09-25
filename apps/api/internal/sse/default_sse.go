@@ -15,9 +15,10 @@ import (
 // DefaultSSE is a Redis Pub/Sub–backed implementation of SSE.
 // It streams minimal, status-only job update payloads over Server-Sent Events.
 type DefaultSSE struct {
-	rdb        *redis.Client
-	heartbeat  time.Duration
-	channelFmt string
+	rdb              *redis.Client
+	heartbeat        time.Duration
+	channelFmt       string
+	subscribeTimeout time.Duration
 }
 
 // NewDefaultSSEFromEnv constructs a DefaultSSE using REDIS_ADDR from the environment.
@@ -38,9 +39,10 @@ func NewDefaultSSE(rdb *redis.Client, cfg Config) *DefaultSSE {
 		hb = 30 * time.Second
 	}
 	return &DefaultSSE{
-		rdb:        rdb,
-		heartbeat:  hb,
-		channelFmt: "jobs:image:%s",
+		rdb:              rdb,
+		heartbeat:        hb,
+		channelFmt:       "jobs:image:%s",
+		subscribeTimeout: cfg.SubscribeTimeout,
 	}
 }
 
@@ -108,8 +110,14 @@ func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID strin
 }
 
 func (d *DefaultSSE) awaitSubscribe(ctx context.Context, sub *redis.PubSub) error {
+	callCtx := ctx
+	if d.subscribeTimeout > 0 {
+		var cancel context.CancelFunc
+		callCtx, cancel = context.WithTimeout(ctx, d.subscribeTimeout)
+		defer cancel()
+	}
 	// Receive returns when the subscription is created or on context cancellation/error.
-	_, err := sub.Receive(ctx)
+	_, err := sub.Receive(callCtx)
 	return err
 }
 

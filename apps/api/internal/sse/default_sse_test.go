@@ -174,3 +174,128 @@ func TestDefaultSSE_SubscribeError(t *testing.T) {
 		t.Fatal("expected error due to subscription failure, got nil")
 	}
 }
+
+func TestDefaultSSE_HeartbeatCadence(t *testing.T) {
+	// Start in-memory Redis
+	mr := miniredis.RunT(t)
+	defer mr.Close()
+
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer func() { _ = rdb.Close() }()
+
+	// Use a short heartbeat to observe multiple events quickly
+	sse := NewDefaultSSE(rdb, Config{HeartbeatInterval: 50 * time.Millisecond})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	w := &bufFlusher{}
+	done := make(chan struct{})
+	go func() {
+		_ = sse.StreamImage(ctx, w, "img-hb")
+		close(done)
+	}()
+
+	// Wait for initial connected event
+	waitFor(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(w.String(), "event: connected")
+	})
+
+	// Expect at least two heartbeat events within a reasonable window
+	waitFor(t, 1*time.Second, func() bool {
+		return strings.Count(w.String(), "event: heartbeat") >= 2
+	})
+
+	// Cleanup
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("stream did not stop after cancel")
+	}
+}
+
+func TestDefaultSSE_MultipleSubscribers_Isolation(t *testing.T) {
+	// Start in-memory Redis
+	mr := miniredis.RunT(t)
+	defer mr.Close()
+
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer func() { _ = rdb.Close() }()
+
+	sse := NewDefaultSSE(rdb, Config{HeartbeatInterval: 50 * time.Millisecond})
+
+	// Start two subscribers for different images
+	ctxA, cancelA := context.WithCancel(context.Background())
+	ctxB, cancelB := context.WithCancel(context.Background())
+	defer cancelA()
+	defer cancelB()
+
+	wA := &bufFlusher{}
+	wB := &bufFlusher{}
+
+	doneA := make(chan struct{})
+	doneB := make(chan struct{})
+
+	go func() {
+		_ = sse.StreamImage(ctxA, wA, "img-A")
+		close(doneA)
+	}()
+	go func() {
+		_ = sse.StreamImage(ctxB, wB, "img-B")
+		close(doneB)
+	}()
+
+	// Wait for both to be connected
+	waitFor(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(wA.String(), "event: connected")
+	})
+	waitFor(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(wB.String(), "event: connected")
+	})
+
+	// Publish to A only
+	channelA := "jobs:image:img-A"
+	if err := rdb.Publish(ctxA, channelA, `{"status":"processing"}`).Err(); err != nil {
+		t.Fatalf("publish to A failed: %v", err)
+	}
+
+	// A should see processing; B should not
+	waitFor(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(wA.String(), `event: job_update`) && strings.Contains(wA.String(), `data: {"status":"processing"}`)
+	})
+	// Give a short window to ensure B did not get A's update
+	time.Sleep(150 * time.Millisecond)
+	if strings.Contains(wB.String(), `data: {"status":"processing"}`) {
+		t.Fatalf("B received update intended for A: %s", wB.String())
+	}
+
+	// Publish to B only
+	channelB := "jobs:image:img-B"
+	if err := rdb.Publish(ctxB, channelB, `{"status":"ready"}`).Err(); err != nil {
+		t.Fatalf("publish to B failed: %v", err)
+	}
+
+	// B should see ready; A should not get B's ready
+	waitFor(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(wB.String(), `event: job_update`) && strings.Contains(wB.String(), `data: {"status":"ready"}`)
+	})
+	time.Sleep(150 * time.Millisecond)
+	if strings.Contains(wA.String(), `data: {"status":"ready"}`) {
+		t.Fatalf("A received update intended for B: %s", wA.String())
+	}
+
+	// Cleanup both streams
+	cancelA()
+	cancelB()
+	select {
+	case <-doneA:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("stream A did not stop after cancel")
+	}
+	select {
+	case <-doneB:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("stream B did not stop after cancel")
+	}
+}

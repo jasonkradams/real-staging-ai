@@ -50,8 +50,8 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Implement the `stage:run` task in the worker
 - [x] Replace mock queue with Redis/asynq in API and worker; define task payload contract
 - [x] API enqueues `stage:run` to Redis/asynq on image creation
-- [ ] Worker updates images table on start/success/failure; idempotent transitions
-- [ ] Wire Redis pub/sub for SSE and stream updates in API
+- [x] Worker updates images table on start/success/failure; idempotent transitions
+- [ ] Wire Redis pub/sub for SSE and stream updates in API (define channels/payload schema, ensure API subscribes and emits, add heartbeats)
 
 
 ### 3.5. File Uploads (S3)

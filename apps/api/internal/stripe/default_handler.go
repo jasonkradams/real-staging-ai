@@ -75,9 +75,17 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 		})
 	}
 
-	// In production, verify the webhook signature using STRIPE_WEBHOOK_SECRET
+	// Enforce STRIPE_WEBHOOK_SECRET in non-dev environments and verify signature when present
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
-	//nolint:staticcheck
+	// If secret is missing in a non-dev environment, fail fast
+	if webhookSecret == "" && !isDevLikeEnv() {
+		log.Printf("Stripe webhook misconfiguration: STRIPE_WEBHOOK_SECRET not set in non-dev environment")
+		return c.JSON(http.StatusServiceUnavailable, errorResponse{
+			Error:   "service_unavailable",
+			Message: "Stripe webhook secret not configured",
+		})
+	}
+	// Verify signature when a secret is configured
 	if webhookSecret != "" {
 		stripeSignature := c.Request().Header.Get("Stripe-Signature")
 		if err := verifyStripeSignature(body, stripeSignature, webhookSecret, 5*time.Minute, time.Now); err != nil {
@@ -88,9 +96,8 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 			})
 		}
 	} else {
-		// STRIPE_WEBHOOK_SECRET is not set; skipping signature verification.
-		// This is acceptable in local/dev environments, but MUST be configured in production.
-		log.Printf("Stripe webhook: STRIPE_WEBHOOK_SECRET not set; skipping signature verification")
+		// In dev-like environments, allow missing secret for local testing
+		log.Printf("Stripe webhook: STRIPE_WEBHOOK_SECRET not set; skipping signature verification (dev-like env)")
 	}
 
 	// Parse the webhook event
@@ -721,6 +728,25 @@ func computeStripeSignature(body []byte, ts int64, secret string) []byte {
 	_, _ = fmt.Fprintf(mac, "%d.", ts)
 	_, _ = mac.Write(body)
 	return mac.Sum(nil)
+}
+
+// isDevLikeEnv reports whether the current process appears to be running in a dev/test environment.
+func isDevLikeEnv() bool {
+	// Check common env markers
+	for _, key := range []string{"APP_ENV", "GO_ENV", "ENV", "NODE_ENV"} {
+		val := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+		switch val {
+		case "", "dev", "development", "local", "test":
+			return true
+		case "prod", "production", "staging":
+			// explicit non-dev markers; continue checking others but prefer non-dev
+		}
+	}
+	// Heuristic: go test binaries typically end with ".test"
+	if strings.HasSuffix(os.Args[0], ".test") {
+		return true
+	}
+	return false
 }
 
 // ---------------------------- Idempotency Helpers ----------------------------

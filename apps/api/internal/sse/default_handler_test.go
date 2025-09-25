@@ -115,3 +115,64 @@ func TestDefaultHandler_Events_NoPubSubConfigured(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
 	assert.Contains(t, rec.Body.String(), "pubsub not configured")
 }
+
+func TestDefaultHandler_Events_MultiUpdates(t *testing.T) {
+	// Start in-memory Redis and set REDIS_ADDR
+	mr := miniredis.RunT(t)
+	defer mr.Close()
+	t.Setenv("REDIS_ADDR", mr.Addr())
+
+	// Build handler from env (uses DefaultSSE)
+	h, err := NewDefaultHandlerFromEnv(Config{HeartbeatInterval: 50 * time.Millisecond})
+	require.NoError(t, err)
+
+	// Prepare Echo context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/events?image_id=img-abc", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Run handler with cancelable context to end the stream
+	ctx, cancel := context.WithCancel(context.Background())
+	req = req.WithContext(ctx)
+	c.SetRequest(req)
+
+	done := make(chan struct{})
+	go func() {
+		_ = h.Events(c)
+		close(done)
+	}()
+
+	// Wait for initial "connected" event
+	waitForHandler(t, 500*time.Millisecond, func() bool {
+		return strings.Contains(rec.Body.String(), "event: connected")
+	})
+
+	// Publish a sequence of status updates
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer func() { _ = rdb.Close() }()
+	_ = rdb.Publish(ctx, "jobs:image:img-abc", `{"status":"processing"}`).Err()
+	_ = rdb.Publish(ctx, "jobs:image:img-abc", `{"status":"ready"}`).Err()
+	_ = rdb.Publish(ctx, "jobs:image:img-abc", `{"status":"error"}`).Err()
+
+	// Expect all three updates to appear in the stream
+	waitForHandler(t, 1*time.Second, func() bool {
+		s := rec.Body.String()
+		return strings.Count(s, "event: job_update") >= 3 &&
+			strings.Contains(s, `data: {"status":"processing"}`) &&
+			strings.Contains(s, `data: {"status":"ready"}`) &&
+			strings.Contains(s, `data: {"status":"error"}`)
+	})
+
+	// Stop the stream and ensure the goroutine exits
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("stream did not stop after cancel")
+	}
+
+	// Assertions
+	assert.Equal(t, "text/event-stream", rec.Header().Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, rec.Code)
+}

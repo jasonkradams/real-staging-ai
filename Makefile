@@ -15,14 +15,14 @@ test: ## Run unit tests
 	@echo "--> Running api tests"
 	cd apps/api && go test -timeout 30s ./...
 	@echo "--> Running worker tests"
-	cd apps/worker && go test -v ./...
+	cd apps/worker && go test -timeout 60s -v ./internal/repository ./internal/events ./...
 
 test-cover: ## Run unit tests with coverage
 	@echo "Running unit tests with coverage..."
 	@echo "--> Running api tests"
 	cd apps/api && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 	@echo "--> Running worker tests"
-	cd apps/worker && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
+	cd apps/worker && go test -coverprofile=coverage.out ./internal/repository ./internal/events ./... && go tool cover -html=coverage.out -o coverage.html
 
 migrate-test: migrate-down-all ## Run database migrations on the test database
 	@echo "Running database migrations on the test database..."
