@@ -35,7 +35,8 @@ func main() {
 	imageRepo := image.NewDefaultRepository(db)
 	jobRepo := job.NewDefaultRepository(db)
 
-	// Create services
+	// Create services (image service sets up queue enqueuer from env, e.g., REDIS_ADDR)
+	log.Println("Setting up image service with job enqueuer (REDIS_ADDR, JOB_QUEUE_NAME)")
 	imageService := image.NewDefaultService(imageRepo, jobRepo)
 
 	s := http.NewServer(db, s3Service, imageService)

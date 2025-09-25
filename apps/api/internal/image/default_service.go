@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/virtual-staging-ai/api/internal/job"
+	"github.com/virtual-staging-ai/api/internal/queue"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
@@ -15,13 +16,22 @@ var jsonMarshal = json.Marshal
 type DefaultService struct {
 	imageRepo Repository
 	jobRepo   job.Repository
+	enqueuer  queue.Enqueuer
 }
 
 // NewDefaultService creates a new DefaultService instance.
 func NewDefaultService(imageRepo Repository, jobRepo job.Repository) *DefaultService {
+	// Best-effort build an enqueuer from env; fall back to Noop if not configured.
+	var enq queue.Enqueuer
+	if e, err := queue.NewAsynqEnqueuerFromEnv(); err == nil {
+		enq = e
+	} else {
+		enq = queue.NoopEnqueuer{}
+	}
 	return &DefaultService{
 		imageRepo: imageRepo,
 		jobRepo:   jobRepo,
+		enqueuer:  enq,
 	}
 }
 
@@ -61,10 +71,21 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		return nil, fmt.Errorf("failed to marshal job payload: %w", err)
 	}
 
-	// Create a job for processing the image
+	// Create a job for processing the image (persist metadata)
 	_, err = s.jobRepo.CreateJob(ctx, domainImage.ID.String(), "stage:run", payloadJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create job: %w", err)
+	}
+
+	// Enqueue processing task to the queue
+	if _, err := s.enqueuer.EnqueueStageRun(ctx, queue.StageRunPayload{
+		ImageID:     domainImage.ID.String(),
+		OriginalURL: domainImage.OriginalURL,
+		RoomType:    domainImage.RoomType,
+		Style:       domainImage.Style,
+		Seed:        domainImage.Seed,
+	}, nil); err != nil {
+		return nil, fmt.Errorf("failed to enqueue stage:run: %w", err)
 	}
 
 	return domainImage, nil

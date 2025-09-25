@@ -74,6 +74,10 @@ sqlc-generate: ## Generate Go code from SQL queries using sqlc
 	cd apps/api && ~/go/bin/sqlc generate
 
 generate: clean-all ## Generate all code (mocks, sqlc, etc.)
+	$(MAKE) generate-api
+	$(MAKE) generate-worker
+
+generate-api:
 	@echo "Generating all code..."
 	$(MAKE) sqlc-generate
 	@echo "Generating mocks..."
@@ -82,6 +86,16 @@ generate: clean-all ## Generate all code (mocks, sqlc, etc.)
 		cd apps/api && go install github.com/matryer/moq@v0.5.3; \
 	fi
 	cd apps/api && go generate ./...
+
+generate-worker:
+	@echo "Generating all code..."
+	$(MAKE) sqlc-generate
+	@echo "Generating mocks..."
+	@if ! command -v mockgen >/dev/null 2>&1; then \
+		echo "Installing mockgen..."; \
+		cd apps/worker && go install github.com/matryer/moq@v0.5.3; \
+	fi
+	cd apps/worker && go generate ./...
 
 lint: ## Run golangci-lint on all Go modules
 	@echo "Running golangci-lint..."
@@ -119,3 +133,7 @@ clean-all: clean ## Remove all mock files as well
 
 token: ## Generate a Auth0 Token
 	@go run apps/api/cmd/token/main.go | jq -r .access_token
+
+tidy: ## Run go mod tidy for each app
+	cd apps/api && go mod tidy
+	cd apps/worker && go mod tidy
