@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,15 +17,18 @@ import (
 	"github.com/stretchr/testify/require"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
+	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestMain(m *testing.M) {
+	log := logging.Default()
+	ctx := context.Background()
 	// Set APP_ENV to test to ensure the correct S3 configuration is used.
 	os.Setenv("APP_ENV", "test")
 	if os.Getenv("RUN_S3_INTEGRATION_TESTS") == "1" {
 		if err := setupS3(); err != nil {
-			log.Fatalf("Failed to set up S3: %v", err)
+			log.Error(ctx, fmt.Sprintf("Failed to set up S3: %v", err))
 		}
 	}
 	os.Exit(m.Run())

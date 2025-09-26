@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/virtual-staging-ai/api/internal/job"
+	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/queue"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
@@ -37,8 +38,11 @@ func NewDefaultService(imageRepo Repository, jobRepo job.Repository) *DefaultSer
 
 // CreateImage creates a new image and queues it for processing.
 func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageRequest) (*Image, error) {
+	log := logging.NewDefaultLogger()
 	if req == nil {
-		return nil, fmt.Errorf("request cannot be nil")
+		err := fmt.Errorf("request cannot be nil")
+		log.Error(ctx, "create image: invalid request", "error", err)
+		return nil, err
 	}
 
 	// Create the image in the database
@@ -51,6 +55,7 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		req.Seed,
 	)
 	if err != nil {
+		log.Error(ctx, "create image: repo failure", "project_id", req.ProjectID.String(), "original_url", req.OriginalURL, "error", err)
 		return nil, fmt.Errorf("failed to create image: %w", err)
 	}
 
@@ -65,7 +70,6 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		Style:       domainImage.Style,
 		Seed:        domainImage.Seed,
 	}
-
 	payloadJSON, err := jsonMarshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal job payload: %w", err)
@@ -74,10 +78,12 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 	// Create a job for processing the image (persist metadata)
 	_, err = s.jobRepo.CreateJob(ctx, domainImage.ID.String(), "stage:run", payloadJSON)
 	if err != nil {
+		log.Error(ctx, "create image: job create failed", "image_id", domainImage.ID.String(), "error", err)
 		return nil, fmt.Errorf("failed to create job: %w", err)
 	}
 
 	// Enqueue processing task to the queue
+	log.Info(ctx, "enqueue stage:run", "image_id", domainImage.ID.String())
 	if _, err := s.enqueuer.EnqueueStageRun(ctx, queue.StageRunPayload{
 		ImageID:     domainImage.ID.String(),
 		OriginalURL: domainImage.OriginalURL,
@@ -85,8 +91,10 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		Style:       domainImage.Style,
 		Seed:        domainImage.Seed,
 	}, nil); err != nil {
+		log.Error(ctx, "enqueue stage:run failed", "image_id", domainImage.ID.String(), "error", err)
 		return nil, fmt.Errorf("failed to enqueue stage:run: %w", err)
 	}
+	log.Info(ctx, "image enqueued", "image_id", domainImage.ID.String())
 
 	return domainImage, nil
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/virtual-staging-ai/api/internal/logging"
 )
 
 // DefaultHandler provides Echo HTTP handlers for SSE endpoints.
@@ -46,10 +47,12 @@ func (h *DefaultHandler) Events(c echo.Context) error {
 
 	imageID := c.QueryParam("image_id")
 	if imageID == "" {
+		logging.NewDefaultLogger().Warn(c.Request().Context(), "missing image_id for SSE events")
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing image_id"})
 	}
 
 	if h.sse == nil {
+		logging.NewDefaultLogger().Error(c.Request().Context(), "pubsub not configured for SSE", "image_id", imageID)
 		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "pubsub not configured"})
 	}
 

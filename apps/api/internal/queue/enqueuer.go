@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/virtual-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -102,17 +103,21 @@ func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPay
 	ctx, span := tracer.Start(ctx, "queue.EnqueueStageRun")
 	defer span.End()
 
+	log := logging.NewDefaultLogger()
+
 	// Basic validation to catch obvious mistakes early.
 	if payload.ImageID == "" {
 		err := errors.New("payload.image_id is required")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		log.Error(ctx, "enqueue validation failed", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "error", err)
 		return "", err
 	}
 	if payload.OriginalURL == "" {
 		err := errors.New("payload.original_url is required")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		log.Error(ctx, "enqueue validation failed", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "error", err)
 		return "", err
 	}
 
@@ -125,6 +130,7 @@ func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPay
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "marshal payload")
+		log.Error(ctx, "marshal payload failed", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "error", err)
 		return "", fmt.Errorf("marshal payload: %w", err)
 	}
 
@@ -152,16 +158,19 @@ func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPay
 		}
 	}
 
+	log.Info(ctx, "enqueue attempt", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "queue", selectedQueue)
 	info, err := e.client.EnqueueContext(ctx, task, asynqOpts...)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "enqueue error")
+		log.Error(ctx, "enqueue failed", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "queue", selectedQueue, "error", err)
 		return "", fmt.Errorf("enqueue stage:run: %w", err)
 	}
 	span.SetAttributes(
 		attribute.String("queue.id", info.ID),
 		attribute.String("queue.name", selectedQueue),
 	)
+	log.Info(ctx, "enqueued stage:run", "image_id", payload.ImageID, "queue", selectedQueue, "task_id", info.ID)
 	return info.ID, nil
 }
 

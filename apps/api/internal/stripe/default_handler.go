@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/user"
 )
@@ -56,10 +56,13 @@ type CheckoutSession struct {
 
 // Webhook handles POST /api/v1/stripe/webhook requests.
 func (h *DefaultHandler) Webhook(c echo.Context) error {
+	log := logging.Default()
+	ctx := context.Background()
+
 	// Read the request body
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		log.Printf("Error reading webhook body: %v", err)
+		log.Error(ctx, fmt.Sprintf("Error reading webhook body: %v", err))
 		return c.JSON(http.StatusBadRequest, errorResponse{
 			Error:   "bad_request",
 			Message: "Unable to read request body",
@@ -68,7 +71,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	// Check for empty body
 	if len(body) == 0 {
-		log.Printf("Empty webhook body received")
+		log.Error(ctx, "Empty webhook body received")
 		return c.JSON(http.StatusBadRequest, errorResponse{
 			Error:   "bad_request",
 			Message: "Empty request body",
@@ -79,7 +82,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
 	// If secret is missing in a non-dev environment, fail fast
 	if webhookSecret == "" && !isDevLikeEnv() {
-		log.Printf("Stripe webhook misconfiguration: STRIPE_WEBHOOK_SECRET not set in non-dev environment")
+		log.Error(ctx, "Stripe webhook misconfiguration: STRIPE_WEBHOOK_SECRET not set in non-dev environment")
 		return c.JSON(http.StatusServiceUnavailable, errorResponse{
 			Error:   "service_unavailable",
 			Message: "Stripe webhook secret not configured",
@@ -89,7 +92,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 	if webhookSecret != "" {
 		stripeSignature := c.Request().Header.Get("Stripe-Signature")
 		if err := verifyStripeSignature(body, stripeSignature, webhookSecret, 5*time.Minute, time.Now); err != nil {
-			log.Printf("Stripe signature verification failed: %v", err)
+			log.Error(ctx, fmt.Sprintf("Stripe signature verification failed: %v", err))
 			return c.JSON(http.StatusUnauthorized, errorResponse{
 				Error:   "unauthorized",
 				Message: "Invalid webhook signature",
@@ -97,25 +100,25 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 		}
 	} else {
 		// In dev-like environments, allow missing secret for local testing
-		log.Printf("Stripe webhook: STRIPE_WEBHOOK_SECRET not set; skipping signature verification (dev-like env)")
+		log.Error(ctx, "Stripe webhook: STRIPE_WEBHOOK_SECRET not set; skipping signature verification (dev-like env)")
 	}
 
 	// Parse the webhook event
 	var event StripeEvent
 	if err := json.Unmarshal(body, &event); err != nil {
-		log.Printf("Error parsing webhook JSON: %v", err)
+		log.Error(ctx, fmt.Sprintf("Error parsing webhook JSON: %v", err))
 		return c.JSON(http.StatusBadRequest, errorResponse{
 			Error:   "bad_request",
 			Message: "Invalid JSON format",
 		})
 	}
 
-	log.Printf("Received Stripe webhook event: %s (ID: %s)", event.Type, event.ID)
+	log.Error(ctx, fmt.Sprintf("Received Stripe webhook event: %s (ID: %s)", event.Type, event.ID))
 
 	// Idempotency check: ensure the event hasn't already been processed
 	processed, err := h.alreadyProcessedStripeEvent(c.Request().Context(), event.ID)
 	if err != nil {
-		log.Printf("Error checking Stripe event idempotency: %v", err)
+		log.Error(ctx, fmt.Sprintf("Error checking Stripe event idempotency: %v", err))
 		return c.JSON(http.StatusInternalServerError, errorResponse{
 			Error:   "internal_server_error",
 			Message: "Failed to process webhook",
@@ -132,7 +135,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 	switch event.Type {
 	case "checkout.session.completed":
 		if err := h.handleCheckoutSessionCompleted(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling checkout.session.completed: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling checkout.session.completed: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -141,7 +144,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.subscription.created":
 		if err := h.handleSubscriptionCreated(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.subscription.created: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.subscription.created: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -150,7 +153,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.subscription.updated":
 		if err := h.handleSubscriptionUpdated(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.subscription.updated: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.subscription.updated: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -159,7 +162,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.subscription.deleted":
 		if err := h.handleSubscriptionDeleted(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.subscription.deleted: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.subscription.deleted: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -168,7 +171,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.created":
 		if err := h.handleCustomerCreated(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.created: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.created: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -177,7 +180,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.updated":
 		if err := h.handleCustomerUpdated(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.updated: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.updated: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -186,7 +189,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "customer.deleted":
 		if err := h.handleCustomerDeleted(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling customer.deleted: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling customer.deleted: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -195,7 +198,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "invoice.payment_succeeded":
 		if err := h.handleInvoicePaymentSucceeded(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling invoice.payment_succeeded: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling invoice.payment_succeeded: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -204,7 +207,7 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 	case "invoice.payment_failed":
 		if err := h.handleInvoicePaymentFailed(c.Request().Context(), &event); err != nil {
-			log.Printf("Error handling invoice.payment_failed: %v", err)
+			log.Error(ctx, fmt.Sprintf("Error handling invoice.payment_failed: %v", err))
 			return c.JSON(http.StatusInternalServerError, errorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to process webhook",
@@ -212,12 +215,12 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 		}
 
 	default:
-		log.Printf("Unhandled webhook event type: %s", event.Type)
+		log.Error(ctx, fmt.Sprintf("Unhandled webhook event type: %s", event.Type))
 	}
 
 	// Mark event as processed (idempotency scaffold). If this fails, log and still acknowledge.
 	if err := h.markStripeEventProcessed(c.Request().Context(), event.ID, event.Type, body); err != nil {
-		log.Printf("Failed to mark Stripe event processed: %v", err)
+		log.Error(ctx, fmt.Sprintf("Failed to mark Stripe event processed: %v", err))
 	}
 
 	// Return 200 to acknowledge receipt of the webhook
@@ -230,6 +233,8 @@ func (h *DefaultHandler) Webhook(c echo.Context) error {
 
 // handleCheckoutSessionCompleted processes successful checkout sessions.
 func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	// Extract checkout session data
 	sessionData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
@@ -244,8 +249,8 @@ func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, eve
 	paymentStatus, _ := sessionData["payment_status"].(string)
 	clientReferenceID, _ := sessionData["client_reference_id"].(string)
 
-	log.Printf("Checkout completed - Customer: %s, Payment Status: %s, Reference: %s",
-		customerID, paymentStatus, clientReferenceID)
+	log.Error(ctx, fmt.Sprintf("Checkout completed - Customer: %s, Payment Status: %s, Reference: %s",
+		customerID, paymentStatus, clientReferenceID))
 
 	// Link Stripe customer to a user by client_reference_id (Auth0 sub or internal user ref)
 	if clientReferenceID != "" && customerID != "" {
@@ -255,12 +260,12 @@ func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, eve
 			// Only set stripe_customer_id if it's not already set
 			if !u.StripeCustomerID.Valid || u.StripeCustomerID.String == "" {
 				if _, err := userRepo.UpdateStripeCustomerID(ctx, u.ID.String(), customerID); err != nil {
-					log.Printf("Failed to update user's Stripe customer ID: %v", err)
+					log.Error(ctx, fmt.Sprintf("Failed to update user's Stripe customer ID: %v", err))
 				}
 			}
 		} else {
 			// Not fatal for webhook handling; just log
-			log.Printf("Could not find user by client_reference_id=%s to link Stripe customer=%s: %v", clientReferenceID, customerID, err)
+			log.Error(ctx, fmt.Sprintf("Could not find user by client_reference_id=%s to link Stripe customer=%s: %v", clientReferenceID, customerID, err))
 		}
 	}
 
@@ -269,6 +274,8 @@ func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, eve
 
 // handleSubscriptionCreated processes new subscription events.
 func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	subscriptionData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
@@ -282,8 +289,8 @@ func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *S
 	subscriptionID, _ := subscriptionData["id"].(string)
 	status, _ := subscriptionData["status"].(string)
 
-	log.Printf("Subscription created - Customer: %s, Subscription: %s, Status: %s",
-		customerID, subscriptionID, status)
+	log.Error(ctx, fmt.Sprintf("Subscription created - Customer: %s, Subscription: %s, Status: %s",
+		customerID, subscriptionID, status))
 
 	// Persist subscription state
 	subRepo := NewSubscriptionsRepository(h.db)
@@ -330,10 +337,10 @@ func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *S
 			}
 
 			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
-				log.Printf("Failed to upsert subscription (created): %v", err)
+				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (created): %v", err))
 			}
 		} else {
-			log.Printf("No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err)
+			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -341,6 +348,8 @@ func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *S
 
 // handleSubscriptionUpdated processes subscription update events.
 func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	subscriptionData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
@@ -354,8 +363,8 @@ func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *S
 	subscriptionID, _ := subscriptionData["id"].(string)
 	status, _ := subscriptionData["status"].(string)
 
-	log.Printf("Subscription updated - Customer: %s, Subscription: %s, Status: %s",
-		customerID, subscriptionID, status)
+	log.Error(ctx, fmt.Sprintf("Subscription updated - Customer: %s, Subscription: %s, Status: %s",
+		customerID, subscriptionID, status))
 
 	// Persist subscription state
 	subRepo := NewSubscriptionsRepository(h.db)
@@ -402,10 +411,10 @@ func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *S
 			}
 
 			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
-				log.Printf("Failed to upsert subscription (updated): %v", err)
+				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (updated): %v", err))
 			}
 		} else {
-			log.Printf("No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err)
+			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -413,6 +422,8 @@ func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *S
 
 // handleSubscriptionDeleted processes subscription cancellation events.
 func (h *DefaultHandler) handleSubscriptionDeleted(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	subscriptionData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
@@ -425,8 +436,8 @@ func (h *DefaultHandler) handleSubscriptionDeleted(ctx context.Context, event *S
 	customerID, _ := subscriptionData["customer"].(string)
 	subscriptionID, _ := subscriptionData["id"].(string)
 
-	log.Printf("Subscription deleted - Customer: %s, Subscription: %s",
-		customerID, subscriptionID)
+	log.Error(ctx, fmt.Sprintf("Subscription deleted - Customer: %s, Subscription: %s",
+		customerID, subscriptionID))
 
 	// Mark subscription as canceled/deactivated
 	subRepo := NewSubscriptionsRepository(h.db)
@@ -474,10 +485,10 @@ func (h *DefaultHandler) handleSubscriptionDeleted(ctx context.Context, event *S
 			}
 
 			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, "canceled", priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
-				log.Printf("Failed to upsert subscription (deleted): %v", err)
+				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (deleted): %v", err))
 			}
 		} else {
-			log.Printf("No user found for Stripe customer on subscription.deleted: %s (err=%v)", customerID, err)
+			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.deleted: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -485,6 +496,8 @@ func (h *DefaultHandler) handleSubscriptionDeleted(ctx context.Context, event *S
 
 // handleInvoicePaymentSucceeded processes successful payment events.
 func (h *DefaultHandler) handleInvoicePaymentSucceeded(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	invoiceData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid invoice data")
@@ -512,8 +525,8 @@ func (h *DefaultHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 	currency, _ := invoiceData["currency"].(string)
 	invoiceNumber, _ := invoiceData["number"].(string)
 
-	log.Printf("Invoice payment succeeded - Invoice: %s, Customer: %s, Subscription: %s, AmountPaid: %.2f",
-		invoiceID, customerID, subscriptionID, float64(amountPaidI)/100)
+	log.Error(ctx, fmt.Sprintf("Invoice payment succeeded - Invoice: %s, Customer: %s, Subscription: %s, AmountPaid: %.2f",
+		invoiceID, customerID, subscriptionID, float64(amountPaidI)/100))
 
 	// Persist invoice
 	if customerID != "" && invoiceID != "" {
@@ -533,10 +546,10 @@ func (h *DefaultHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 			}
 
 			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
-				log.Printf("Failed to upsert invoice (payment_succeeded): %v", err)
+				log.Error(ctx, fmt.Sprintf("Failed to upsert invoice (payment_succeeded): %v", err))
 			}
 		} else {
-			log.Printf("No user found for Stripe customer on invoice.payment_succeeded: %s (err=%v)", customerID, err)
+			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on invoice.payment_succeeded: %s (err=%v)", customerID, err))
 		}
 	}
 
@@ -545,6 +558,8 @@ func (h *DefaultHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 
 // handleInvoicePaymentFailed processes failed payment events.
 func (h *DefaultHandler) handleInvoicePaymentFailed(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	invoiceData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid invoice data")
@@ -572,8 +587,8 @@ func (h *DefaultHandler) handleInvoicePaymentFailed(ctx context.Context, event *
 	currency, _ := invoiceData["currency"].(string)
 	invoiceNumber, _ := invoiceData["number"].(string)
 
-	log.Printf("Invoice payment failed - Invoice: %s, Customer: %s, Subscription: %s",
-		invoiceID, customerID, subscriptionID)
+	log.Error(ctx, fmt.Sprintf("Invoice payment failed - Invoice: %s, Customer: %s, Subscription: %s",
+		invoiceID, customerID, subscriptionID))
 
 	// Persist invoice with failed status
 	if customerID != "" && invoiceID != "" {
@@ -593,10 +608,10 @@ func (h *DefaultHandler) handleInvoicePaymentFailed(ctx context.Context, event *
 			}
 
 			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
-				log.Printf("Failed to upsert invoice (payment_failed): %v", err)
+				log.Error(ctx, fmt.Sprintf("Failed to upsert invoice (payment_failed): %v", err))
 			}
 		} else {
-			log.Printf("No user found for Stripe customer on invoice.payment_failed: %s (err=%v)", customerID, err)
+			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on invoice.payment_failed: %s (err=%v)", customerID, err))
 		}
 	}
 
@@ -604,7 +619,9 @@ func (h *DefaultHandler) handleInvoicePaymentFailed(ctx context.Context, event *
 }
 
 // handleCustomerCreated processes new customer events.
-func (h *DefaultHandler) handleCustomerCreated(_ context.Context, event *StripeEvent) error {
+func (h *DefaultHandler) handleCustomerCreated(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	customerData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid customer data")
@@ -613,14 +630,16 @@ func (h *DefaultHandler) handleCustomerCreated(_ context.Context, event *StripeE
 	customerID, _ := customerData["id"].(string)
 	email, _ := customerData["email"].(string)
 
-	log.Printf("Customer created: ID=%s, Email=%s", customerID, email)
+	log.Error(ctx, fmt.Sprintf("Customer created: ID=%s, Email=%s", customerID, email))
 	// TODO: Implement customer creation logic (optional)
 
 	return nil
 }
 
 // handleCustomerUpdated processes customer update events.
-func (h *DefaultHandler) handleCustomerUpdated(_ context.Context, event *StripeEvent) error {
+func (h *DefaultHandler) handleCustomerUpdated(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	customerData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid customer data")
@@ -629,14 +648,16 @@ func (h *DefaultHandler) handleCustomerUpdated(_ context.Context, event *StripeE
 	customerID, _ := customerData["id"].(string)
 	email, _ := customerData["email"].(string)
 
-	log.Printf("Customer updated: ID=%s, Email=%s", customerID, email)
+	log.Error(ctx, fmt.Sprintf("Customer updated: ID=%s, Email=%s", customerID, email))
 	// TODO: Implement customer update logic (optional)
 
 	return nil
 }
 
 // handleCustomerDeleted processes customer deletion events.
-func (h *DefaultHandler) handleCustomerDeleted(_ context.Context, event *StripeEvent) error {
+func (h *DefaultHandler) handleCustomerDeleted(ctx context.Context, event *StripeEvent) error {
+	log := logging.Default()
+
 	customerData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid customer data")
@@ -644,7 +665,7 @@ func (h *DefaultHandler) handleCustomerDeleted(_ context.Context, event *StripeE
 
 	customerID, _ := customerData["id"].(string)
 
-	log.Printf("Customer deleted: ID=%s", customerID)
+	log.Error(ctx, fmt.Sprintf("Customer deleted: ID=%s", customerID))
 	// TODO: Implement customer deletion logic (optional)
 
 	return nil

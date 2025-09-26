@@ -10,7 +10,6 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Define environment variables and setup instructions in `SETUP.md`
 - [x] Define contribution guidelines in `CONTRIBUTING.md`
 - [x] Set up `Makefile` with `test` and `test-integration` targets
-- [x] Set up `docker-compose.test.yml` for integration tests
 - [x] Implement golangci-lint with v2 standards and make target
 - [x] Implement database migrations for the initial schema
 - [x] Create seed data fixtures for the test database
@@ -22,7 +21,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Update all API endpoints to be prefixed with `/api/v1`.
 - [x] Serve the API documentation at the `/api/v1/docs` endpoint.
 - [x] Create a `make docs` target to validate the OAS3 file.
-- [ ] Configure GitHub Pages to publish the API documentation.
+- [x] Configure GitHub Pages to publish the API documentation.
 
 ## Milestone 3: Core Backend Features
 

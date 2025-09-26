@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +13,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/virtual-staging-ai/worker/internal/events"
+	"github.com/virtual-staging-ai/worker/internal/logging"
 	"github.com/virtual-staging-ai/worker/internal/processor"
 	"github.com/virtual-staging-ai/worker/internal/queue"
 	"github.com/virtual-staging-ai/worker/internal/repository"
@@ -21,16 +21,17 @@ import (
 )
 
 func main() {
+	log := logging.Default()
 	ctx := context.Background()
 
 	// Initialize OpenTelemetry
 	shutdown, err := telemetry.InitTracing(ctx, "virtual-staging-worker")
 	if err != nil {
-		log.Fatal("Failed to initialize tracing:", err)
+		log.Error(ctx, "Failed to initialize tracing:", err)
 	}
 	defer func() {
 		if err := shutdown(ctx); err != nil {
-			log.Printf("Failed to shutdown tracing: %v", err)
+			log.Error(ctx, fmt.Sprintf("Failed to shutdown tracing: %v", err))
 		}
 	}()
 
@@ -63,21 +64,21 @@ func main() {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, dbname, sslmode)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatal("Failed to open database:", err)
+		log.Error(ctx, fmt.Sprintf("Failed to open database: %v", err))
 	}
 	if err := db.PingContext(ctx); err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Error(ctx, fmt.Sprintf("Failed to connect to database: %v", err))
 	}
 
 	defer func() {
 		if err := db.Close(); err != nil {
-			log.Fatal("Failed to close database:", err)
+			log.Error(ctx, fmt.Sprintf("Failed to close database: %v", err))
 		}
 	}()
 
 	imgRepo := repository.NewImageRepository(db)
 
-	log.Println("Starting Virtual Staging AI Worker...")
+	log.Info(ctx, "Starting Virtual Staging AI Worker...")
 
 	// Create context that listens for the interrupt signal from the OS
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
@@ -90,10 +91,10 @@ func main() {
 	var queueClient queue.QueueClient
 	if qc, err := queue.NewAsynqQueueClientFromEnv(); err == nil {
 		queueClient = qc
-		log.Println("Using Asynq queue backend")
+		log.Info(ctx, "Using Asynq queue backend")
 	} else {
 		queueClient = queue.NewMockQueueClient()
-		log.Println("Using mock queue backend (no REDIS_ADDR configured)")
+		log.Info(ctx, "Using mock queue backend (no REDIS_ADDR configured)")
 	}
 
 	// Initialize events publisher (Redis) if configured
@@ -107,13 +108,13 @@ func main() {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("Shutting down worker...")
+				log.Info(ctx, "Shutting down worker...")
 				return
 			default:
 				// Poll for jobs
 				job, err := queueClient.GetNextJob(ctx)
 				if err != nil {
-					log.Printf("Error getting next job: %v", err)
+					log.Error(ctx, fmt.Sprintf("Error getting next job: %v", err))
 					time.Sleep(5 * time.Second)
 					continue
 				}
@@ -125,7 +126,7 @@ func main() {
 				}
 
 				// Process the job
-				log.Printf("Processing job %s of type %s", job.ID, job.Type)
+				log.Info(ctx, fmt.Sprintf("Processing job %s of type %s", job.ID, job.Type))
 
 				// Decode payload (image id + original url)
 				var payload struct {
@@ -133,39 +134,39 @@ func main() {
 					OriginalURL string `json:"original_url"`
 				}
 				if err := json.Unmarshal(job.Payload, &payload); err != nil {
-					log.Printf("Failed to decode job payload: %v", err)
+					log.Error(ctx, fmt.Sprintf("Failed to decode job payload: %v", err))
 				}
 
 				// Update DB: processing
 				if err := imgRepo.SetProcessing(ctx, payload.ImageID); err != nil {
-					log.Printf("Failed to set image %s processing: %v", payload.ImageID, err)
+					log.Error(ctx, fmt.Sprintf("Failed to set image %s processing: %v", payload.ImageID, err))
 				}
 				// Publish 'processing' status
 				if pub != nil {
 					_ = pub.PublishJobUpdate(ctx, events.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "processing"})
 				}
 				if err := processor.ProcessJob(ctx, job); err != nil {
-					log.Printf("Error processing job %s: %v", job.ID, err)
+					log.Error(ctx, fmt.Sprintf("Error processing job %s: %v", job.ID, err))
 					if markErr := queueClient.MarkJobFailed(ctx, job.ID, err.Error()); markErr != nil {
-						log.Printf("Failed to mark job %s as failed: %v", job.ID, markErr)
+						log.Error(ctx, fmt.Sprintf("Failed to mark job %s as failed: %v", job.ID, markErr))
 					}
 					// Update DB: error
 					if setErr := imgRepo.SetError(ctx, payload.ImageID, err.Error()); setErr != nil {
-						log.Printf("Failed to set image %s error: %v", payload.ImageID, setErr)
+						log.Error(ctx, fmt.Sprintf("Failed to set image %s error: %v", payload.ImageID, setErr))
 					}
 					// Publish 'error' status
 					if pub != nil {
 						_ = pub.PublishJobUpdate(ctx, events.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "error", Error: err.Error()})
 					}
 				} else {
-					log.Printf("Successfully processed job %s", job.ID)
+					log.Info(ctx, fmt.Sprintf("Successfully processed job %s", job.ID))
 					if markErr := queueClient.MarkJobCompleted(ctx, job.ID); markErr != nil {
-						log.Printf("Failed to mark job %s as completed: %v", job.ID, markErr)
+						log.Error(ctx, fmt.Sprintf("Failed to mark job %s as completed: %v", job.ID, markErr))
 					}
 					// Update DB: ready + staged_url
 					stagedURL := fmt.Sprintf("%s-staged.jpg", payload.OriginalURL)
 					if setErr := imgRepo.SetReady(ctx, payload.ImageID, stagedURL); setErr != nil {
-						log.Printf("Failed to set image %s ready: %v", payload.ImageID, setErr)
+						log.Error(ctx, fmt.Sprintf("Failed to set image %s ready: %v", payload.ImageID, setErr))
 					}
 					// Publish 'ready' status
 					if pub != nil {
@@ -176,7 +177,7 @@ func main() {
 		}
 	}()
 
-	log.Println("Worker started. Press Ctrl+C to stop.")
+	log.Info(ctx, "Worker started. Press Ctrl+C to stop.")
 	<-ctx.Done()
-	log.Println("Worker stopped.")
+	log.Info(ctx, "Worker stopped.")
 }

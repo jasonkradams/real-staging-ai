@@ -16,7 +16,9 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 ## Next
 
 - [ ] E2E happy path (optional env-gated) documentation and CI toggle
-- [ ] API Docs publishing: add link to README and repo description
+- API Docs publishing:
+  - [x] Add link to README
+  - [ ] Update repo description with docs link
 - [ ] Frontend bootstrap (Next.js + Auth0):
   - [ ] App scaffold under `apps/web`
   - [ ] Auth0 login flow and token storage
@@ -27,4 +29,3 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 - [ ] CI enhancements:
   - [ ] Lint and unit tests matrix for api/worker
   - [ ] Optional integration tests on labels or nightly
-

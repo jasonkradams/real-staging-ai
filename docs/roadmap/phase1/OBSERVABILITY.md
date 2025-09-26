@@ -1,3 +1,3 @@
 - **Traces**: Wrap Echo, HTTP clients (S3/Stripe), pgx, Redis with OTEL instrumentation
 - **Metrics**: request counts, queue depth, job latency, image sizes
-- **Logs**: structured JSON (zerolog) with request ids, user ids, job ids
+- **Logs**: structured JSON (Go `slog`) with request ids, user ids, job ids, trace/span correlation
