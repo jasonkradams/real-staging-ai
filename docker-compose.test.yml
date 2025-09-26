@@ -30,6 +30,11 @@ services:
     entrypoint:
       ["psql", "-h", "postgres-test", "-U", "testuser", "-d", "testdb"]
 
+  redis-test:
+    image: redis:8.2
+    ports:
+      - "6379:6379"
+
   localstack:
     image: localstack/localstack:2.3
     ports:

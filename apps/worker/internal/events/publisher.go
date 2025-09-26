@@ -2,13 +2,9 @@ package events
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"os"
-
-	redis "github.com/redis/go-redis/v9"
 )
+
+//go:generate go run github.com/matryer/moq@v0.5.3 -out publisher_mock.go . Publisher
 
 // JobUpdateEvent mirrors the API's SSE payload for job updates.
 type JobUpdateEvent struct {
@@ -19,29 +15,9 @@ type JobUpdateEvent struct {
 	Progress int    `json:"progress,omitempty"`
 }
 
+// Publisher publishes job update events to a pub/sub backend (Redis),
+// which the API consumes to stream Server-Sent Events (SSE).
 type Publisher interface {
+	// PublishJobUpdate publishes a minimal status-only payload for a given image.
 	PublishJobUpdate(ctx context.Context, ev JobUpdateEvent) error
-}
-
-// NewDefaultPublisherFromEnv returns a Redis-backed publisher if REDIS_ADDR is set.
-func NewDefaultPublisherFromEnv() (Publisher, error) {
-	addr := os.Getenv("REDIS_ADDR")
-	if addr == "" {
-		return nil, errors.New("REDIS_ADDR not set")
-	}
-	rdb := redis.NewClient(&redis.Options{Addr: addr})
-	return &redisPublisher{rdb: rdb}, nil
-}
-
-type redisPublisher struct {
-	rdb *redis.Client
-}
-
-func (p *redisPublisher) PublishJobUpdate(ctx context.Context, ev JobUpdateEvent) error {
-	b, err := json.Marshal(map[string]string{"status": ev.Status})
-	if err != nil {
-		return err
-	}
-	channel := fmt.Sprintf("jobs:image:%s", ev.ImageID)
-	return p.rdb.Publish(ctx, channel, b).Err()
 }

@@ -51,7 +51,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Replace mock queue with Redis/asynq in API and worker; define task payload contract
 - [x] API enqueues `stage:run` to Redis/asynq on image creation
 - [x] Worker updates images table on start/success/failure; idempotent transitions
-- [ ] Wire Redis pub/sub for SSE and stream updates in API (define channels/payload schema, ensure API subscribes and emits, add heartbeats)
+- [x] Wire Redis pub/sub for SSE and stream updates in API (define channels/payload schema, ensure API subscribes and emits, add heartbeats)
 
 
 ### 3.5. File Uploads (S3)
@@ -87,14 +87,14 @@ This document outlines the systematic plan and checklist to implement the Virtua
     - [ ] `fail: requires auth`
     - [ ] `success: returns presigned URL`
 - [ ] **Image Job Endpoint**
-    - [ ] `success: enqueues and persists`
-    - [ ] `success: returns status flow`
+    - [x] `success: enqueues and persists`
+    - [x] `success: returns status flow`
 - [ ] **Background Worker**
-    - [ ] `success: creates placeholder and updates DB`
+    - [x] `success: creates placeholder and updates DB`
 - [ ] **Stripe Webhook Endpoint**
     - [ ] `success: handles checkout session`
 - [ ] **Server-Sent Events (SSE) Endpoint**
-    - [ ] `success: streams job updates`
+    - [x] `success: streams job updates`
 - [ ] **End-to-End Integration Test**
     - [ ] `success: happy path`
 
