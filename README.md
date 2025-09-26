@@ -91,6 +91,12 @@ See `docs/configuration.md` for all environment variables. Highlights:
 make docs
 ```
 
+### Hosted API Docs (GitHub Pages)
+
+- Latest published docs: https://jasonkradams.github.io/virtual-staging-ai/
+- Deployment runs via [pages.yml](.github/workflows/pages.yml) on pushes to `main`.
+- Repository settings must keep **Settings → Pages → Source → GitHub Actions** enabled.
+
 ## Conventional Commits
 
 We use Conventional Commits. Examples:

@@ -1,81 +1,101 @@
 package sse
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"os"
-	"time"
+    "context"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "io"
+    "log"
+    "os"
+    "time"
 
-	redis "github.com/redis/go-redis/v9"
+    redis "github.com/redis/go-redis/v9"
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/attribute"
+    "go.opentelemetry.io/otel/codes"
 )
 
 // DefaultSSE is a Redis Pub/Sub–backed implementation of SSE.
 // It streams minimal, status-only job update payloads over Server-Sent Events.
 type DefaultSSE struct {
-	rdb              *redis.Client
-	heartbeat        time.Duration
-	channelFmt       string
-	subscribeTimeout time.Duration
+    rdb              *redis.Client
+    heartbeat        time.Duration
+    channelFmt       string
+    subscribeTimeout time.Duration
 }
 
 // NewDefaultSSEFromEnv constructs a DefaultSSE using REDIS_ADDR from the environment.
 func NewDefaultSSEFromEnv(cfg Config) (*DefaultSSE, error) {
-	addr := os.Getenv("REDIS_ADDR")
-	if addr == "" {
-		return nil, errors.New("REDIS_ADDR not set")
-	}
-	rdb := redis.NewClient(&redis.Options{Addr: addr})
-	return NewDefaultSSE(rdb, cfg), nil
+    addr := os.Getenv("REDIS_ADDR")
+    if addr == "" {
+        return nil, errors.New("REDIS_ADDR not set")
+    }
+    rdb := redis.NewClient(&redis.Options{Addr: addr})
+    return NewDefaultSSE(rdb, cfg), nil
 }
 
 // NewDefaultSSE initializes a DefaultSSE with an existing Redis client.
 // If cfg.HeartbeatInterval is zero, a 30s default is used.
 func NewDefaultSSE(rdb *redis.Client, cfg Config) *DefaultSSE {
-	hb := cfg.HeartbeatInterval
-	if hb <= 0 {
-		hb = 30 * time.Second
-	}
-	return &DefaultSSE{
-		rdb:              rdb,
-		heartbeat:        hb,
-		channelFmt:       "jobs:image:%s",
-		subscribeTimeout: cfg.SubscribeTimeout,
-	}
+    hb := cfg.HeartbeatInterval
+    if hb <= 0 {
+        hb = 30 * time.Second
+    }
+    return &DefaultSSE{
+        rdb:              rdb,
+        heartbeat:        hb,
+        channelFmt:       "jobs:image:%s",
+        subscribeTimeout: cfg.SubscribeTimeout,
+    }
 }
 
 // StreamImage subscribes to a per-image channel and forwards status-only updates via SSE.
 // It emits an initial "connected" event, periodic "heartbeat" events, and "job_update" events
 // containing a minimal payload: {"status":"..."}.
 func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID string) error {
-	if d.rdb == nil {
-		return errors.New("redis client is nil")
-	}
-	if imageID == "" {
-		return errors.New("imageID required")
-	}
+    tracer := otel.Tracer("virtual-staging-api/sse")
+    ctx, span := tracer.Start(ctx, "sse.StreamImage")
+    span.SetAttributes(attribute.String("image.id", imageID))
+    defer span.End()
 
-	channel := fmt.Sprintf(d.channelFmt, imageID)
-	sub := d.rdb.Subscribe(ctx, channel)
-	defer func() { _ = sub.Close() }()
+    if d.rdb == nil {
+        err := errors.New("redis client is nil")
+        span.RecordError(err)
+        span.SetStatus(codes.Error, err.Error())
+        return err
+    }
+    if imageID == "" {
+        err := errors.New("imageID required")
+        span.RecordError(err)
+        span.SetStatus(codes.Error, err.Error())
+        return err
+    }
+
+    channel := fmt.Sprintf(d.channelFmt, imageID)
+    span.SetAttributes(attribute.String("sse.channel", channel))
+    sub := d.rdb.Subscribe(ctx, channel)
+    defer func() { _ = sub.Close() }()
 
 	// Optionally wait for subscription to be established
 	// (Receive returns a Subscription or PONG internally; ignore value).
-	if err := d.awaitSubscribe(ctx, sub); err != nil {
-		return fmt.Errorf("subscribe to %s: %w", channel, err)
-	}
+    if err := d.awaitSubscribe(ctx, sub); err != nil {
+        span.RecordError(err)
+        span.SetStatus(codes.Error, "subscribe failed")
+        return fmt.Errorf("subscribe to %s: %w", channel, err)
+    }
 
 	// Initial "connected" event
-	if err := writeSSE(w, EventConnected, map[string]string{"message": "Connected to image stream"}); err != nil {
-		return err
-	}
-	flush(w)
+    if err := writeSSE(w, EventConnected, map[string]string{"message": "Connected to image stream"}); err != nil {
+        span.RecordError(err)
+        span.SetStatus(codes.Error, "write connected event failed")
+        return err
+    }
+    flush(w)
 
-	// Heartbeat ticker
-	ticker := time.NewTicker(d.heartbeat)
-	defer ticker.Stop()
+    // Heartbeat ticker
+    ticker := time.NewTicker(d.heartbeat)
+    defer ticker.Stop()
 
 	msgCh := sub.Channel()
 
@@ -84,29 +104,37 @@ func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID strin
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			if err := writeSSE(w, EventHeartbeat, map[string]any{"timestamp": time.Now().Unix()}); err != nil {
-				return err
-			}
-			flush(w)
-		case msg, ok := <-msgCh:
-			if !ok {
-				// Subscription channel closed (unsubscribe or Redis connection closed); exit gracefully.
-				return nil
-			}
-			// Expect minimal status-only JSON payload: {"status":"..."}
-			var payload struct {
-				Status string `json:"status"`
-			}
-			if err := json.Unmarshal([]byte(msg.Payload), &payload); err != nil || payload.Status == "" {
-				// Ignore malformed payloads to keep the stream healthy.
-				continue
-			}
-			if err := writeSSE(w, EventJobUpdate, map[string]string{"status": payload.Status}); err != nil {
-				return err
-			}
-			flush(w)
-		}
-	}
+            if err := writeSSE(w, EventHeartbeat, map[string]any{"timestamp": time.Now().Unix()}); err != nil {
+                span.RecordError(err)
+                span.SetStatus(codes.Error, "write heartbeat failed")
+                return err
+            }
+            flush(w)
+        case msg, ok := <-msgCh:
+            if !ok {
+                // Subscription channel closed (unsubscribe or Redis connection closed); exit gracefully.
+                log.Printf("sse: subscription channel closed for %s", channel)
+                return nil
+            }
+            // Expect minimal status-only JSON payload: {"status":"..."}
+            var payload struct {
+                Status string `json:"status"`
+            }
+            if err := json.Unmarshal([]byte(msg.Payload), &payload); err != nil || payload.Status == "" {
+                // Ignore malformed payloads to keep the stream healthy.
+                if err != nil {
+                    log.Printf("sse: ignore malformed payload on %s: %v", channel, err)
+                }
+                continue
+            }
+            if err := writeSSE(w, EventJobUpdate, map[string]string{"status": payload.Status}); err != nil {
+                span.RecordError(err)
+                span.SetStatus(codes.Error, "write job_update failed")
+                return err
+            }
+            flush(w)
+        }
+    }
 }
 
 func (d *DefaultSSE) awaitSubscribe(ctx context.Context, sub *redis.PubSub) error {

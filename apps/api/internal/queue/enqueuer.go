@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 // TaskTypeStageRun is the queue task type for running the staging pipeline.
@@ -95,26 +98,45 @@ func NewAsynqEnqueuerFromEnv() (*AsynqEnqueuer, error) {
 
 // EnqueueStageRun enqueues a stage:run task with the provided payload.
 func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPayload, opts *EnqueueOpts) (string, error) {
+	tracer := otel.Tracer("virtual-staging-api/queue")
+	ctx, span := tracer.Start(ctx, "queue.EnqueueStageRun")
+	defer span.End()
+
 	// Basic validation to catch obvious mistakes early.
 	if payload.ImageID == "" {
-		return "", errors.New("payload.image_id is required")
+		err := errors.New("payload.image_id is required")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
 	}
 	if payload.OriginalURL == "" {
-		return "", errors.New("payload.original_url is required")
+		err := errors.New("payload.original_url is required")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
 	}
+
+	span.SetAttributes(
+		attribute.String("queue.task_type", TaskTypeStageRun),
+		attribute.String("image.id", payload.ImageID),
+	)
 
 	b, err := json.Marshal(payload)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "marshal payload")
 		return "", fmt.Errorf("marshal payload: %w", err)
 	}
 
 	task := asynq.NewTask(TaskTypeStageRun, b)
 
 	// Map our generic EnqueueOpts to asynq options.
-	asynqOpts := []asynq.Option{asynq.Queue(e.defaultQueue)}
+	selectedQueue := e.defaultQueue
+	asynqOpts := []asynq.Option{asynq.Queue(selectedQueue)}
 	if opts != nil {
 		if opts.Queue != "" {
-			asynqOpts[0] = asynq.Queue(opts.Queue)
+			selectedQueue = opts.Queue
+			asynqOpts[0] = asynq.Queue(selectedQueue)
 		}
 		if opts.Retry >= 0 {
 			asynqOpts = append(asynqOpts, asynq.MaxRetry(opts.Retry))
@@ -132,8 +154,14 @@ func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPay
 
 	info, err := e.client.EnqueueContext(ctx, task, asynqOpts...)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "enqueue error")
 		return "", fmt.Errorf("enqueue stage:run: %w", err)
 	}
+	span.SetAttributes(
+		attribute.String("queue.id", info.ID),
+		attribute.String("queue.name", selectedQueue),
+	)
 	return info.ID, nil
 }
 
