@@ -4,3 +4,7 @@ coverage.*.out
 coverage.out
 .localstack/
 .env*
+
+# Local secrets (do not commit)
+secrets.yml
+.secrets/

@@ -1,24 +1,25 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "log"
+    "net/http"
+    "os"
 
-	"gopkg.in/yaml.v2"
+    "gopkg.in/yaml.v2"
 )
 
 type config struct {
-	Auth0 struct {
-		ClientID     string `yaml:"client_id"`
-		ClientSecret string `yaml:"client_secret"`
-		Audience     string `yaml:"audience"`
-		GrantType    string `yaml:"grant_type"`
-	} `yaml:"auth0"`
+    Auth0 struct {
+        ClientID     string `yaml:"client_id"`
+        ClientSecret string `yaml:"client_secret"`
+        Audience     string `yaml:"audience"`
+        GrantType    string `yaml:"grant_type"`
+        Domain       string `yaml:"domain"`
+    } `yaml:"auth0"`
 }
 
 // make requestPayload a struct type
@@ -30,10 +31,17 @@ type requestPayload struct {
 }
 
 func main() {
+    cfg := loadConfig()
 
-	url := "https://dev-sleeping-pandas.us.auth0.com/oauth/token"
+    domain := os.Getenv("AUTH0_DOMAIN")
+    if domain == "" {
+        domain = cfg.Auth0.Domain
+    }
+    if domain == "" {
+        log.Fatal("AUTH0_DOMAIN not set (set env or .secrets/auth0.yml)")
+    }
 
-	cfg := loadConfig()
+    url := fmt.Sprintf("https://%s/oauth/token", domain)
 
 	auth0Config := &requestPayload{
 		ClientID:     cfg.Auth0.ClientID,
@@ -75,13 +83,48 @@ func main() {
 }
 
 func loadConfig() config {
-	var cfg config
-	data, err := os.ReadFile("secrets.yml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		log.Fatal(err)
-	}
-	return cfg
+    var cfg config
+
+    // 1) Env-first
+    if v := os.Getenv("AUTH0_CLIENT_ID"); v != "" {
+        cfg.Auth0.ClientID = v
+    }
+    if v := os.Getenv("AUTH0_CLIENT_SECRET"); v != "" {
+        cfg.Auth0.ClientSecret = v
+    }
+    if v := os.Getenv("AUTH0_AUDIENCE"); v != "" {
+        cfg.Auth0.Audience = v
+    }
+    if v := os.Getenv("AUTH0_GRANT_TYPE"); v != "" {
+        cfg.Auth0.GrantType = v
+    }
+    if v := os.Getenv("AUTH0_DOMAIN"); v != "" {
+        cfg.Auth0.Domain = v
+    }
+
+    // 2) Fallback to .secrets/auth0.yml or secrets.yml if any critical is missing
+    if cfg.Auth0.ClientID == "" || cfg.Auth0.ClientSecret == "" || cfg.Auth0.Audience == "" || cfg.Auth0.Domain == "" {
+        paths := []string{".secrets/auth0.yml", "secrets.yml"}
+        for _, p := range paths {
+            data, err := os.ReadFile(p)
+            if err != nil {
+                continue
+            }
+            if err := yaml.Unmarshal(data, &cfg); err == nil {
+                break
+            }
+        }
+    }
+
+    // Default grant type
+    if cfg.Auth0.GrantType == "" {
+        cfg.Auth0.GrantType = "client_credentials"
+    }
+
+    // Validate
+    if cfg.Auth0.ClientID == "" || cfg.Auth0.ClientSecret == "" || cfg.Auth0.Audience == "" {
+        log.Fatal("missing AUTH0_CLIENT_ID/SECRET/AUDIENCE (set env or .secrets/auth0.yml)")
+    }
+
+    return cfg
 }

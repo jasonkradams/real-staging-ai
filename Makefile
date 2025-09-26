@@ -132,7 +132,7 @@ clean-all: clean ## Remove all mock files as well
 	find . -type f -name "*_mock.go" -exec rm -rf {} + &
 
 token: ## Generate a Auth0 Token
-	@go run apps/api/cmd/token/main.go | jq -r .access_token
+	@go run -C apps/api ./cmd/token/main.go | jq -r .access_token
 
 tidy: ## Run go mod tidy for each app
 	cd apps/api && go mod tidy
