@@ -52,6 +52,10 @@ migrate: ## Run database migrations on the development database
 	@echo "Running database migrations on the development database..."
 	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/virtualstaging?sslmode=disable up
 
+migrate-down-dev: ## Rollback database migrations on the development database
+	@echo "Running database migrations on the development database..."
+	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/virtualstaging?sslmode=disable down -all
+
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
 	docker compose -f docker-compose.test.yml run --rm -T -e PGPASSWORD=testpassword -v ./apps/api/tests/integration/testdata:/seed postgres-client -f /seed/seed.sql
@@ -115,20 +119,11 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 
 up: migrate ## Run the api server
 	@echo Starting Application...
-	$(MAKE) up-api
+	docker compose -f docker-compose.yml up --build -d --remove-orphans api worker
 	$(MAKE) up-web
 
 down: ## Stop the api server
 	@echo Stopping Application...
-	$(MAKE) down-api
-	$(MAKE) down-web
-
-up-api: migrate ## Run the api server
-	@echo Running API server...
-	docker compose -f docker-compose.yml up --build -d --remove-orphans api
-
-down-api: ## Stop the api server
-	@echo Stopping API server...
 	docker compose -f docker-compose.yml stop
 
 up-web: ## Run the web server
@@ -150,6 +145,7 @@ clean: ## Remove unused and unnecessary files
 
 clean-all: clean ## Remove all mock files as well
 	find . -type f -name "*_mock.go" -exec rm -rf {} + &
+	$(MAKE) migrate-down-dev
 
 token: ## Generate a Auth0 Token
 	@go run -C apps/api ./cmd/token/main.go | jq -r .access_token

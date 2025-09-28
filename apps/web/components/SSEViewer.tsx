@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function SSEViewer() {
-  const [imageId, setImageId] = useState("");
+type SSEViewerProps = {
+  initialImageId?: string;
+};
+
+export default function SSEViewer({ initialImageId }: SSEViewerProps = {}) {
+  const [imageId, setImageId] = useState(initialImageId ?? "");
   const [connected, setConnected] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const esRef = useRef<EventSource | null>(null);
@@ -17,17 +21,23 @@ export default function SSEViewer() {
     };
   }, []);
 
+  useEffect(() => {
+    if (initialImageId !== undefined && initialImageId !== imageId) {
+      setImageId(initialImageId);
+    }
+  }, [initialImageId, imageId]);
+
   const connect = () => {
     if (!imageId) return;
     if (esRef.current) {
       esRef.current.close();
       esRef.current = null;
     }
-    const base = process.env.NEXT_PUBLIC_API_BASE || '/api';
+    const base = process.env.NEXT_PUBLIC_API_BASE || "/api";
     let url = `${base}/v1/events?image_id=${encodeURIComponent(imageId)}`;
     // Append access_token from localStorage for auth (EventSource can't set headers)
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
       if (token) {
         url += `&access_token=${encodeURIComponent(token)}`;
       }

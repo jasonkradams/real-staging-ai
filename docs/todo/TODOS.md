@@ -67,6 +67,27 @@ This document outlines the systematic plan and checklist to implement the Virtua
 - [x] Instrument the API server and other components with OpenTelemetry
 - [x] Adopt structured JSON logging (Go `slog`) across API and worker with OTEL trace/span correlation
 
+### 3.8. Storage Reconciliation (MinIO vs DB)
+
+- [ ] Implement a reconciliation module under `apps/api/internal/reconcile` that checks S3/MinIO for the existence of `original_url` and `staged_url` using HeadObject.
+- [ ] Provide two entry points:
+   - [ ] Admin-only endpoint: `POST /api/v1/admin/reconcile/images` (role-gated), accepts filters: `project_id`, `status`, `limit`, `cursor`, and `dry_run`.
+   - [ ] CLI command: `apps/api/cmd/reconcile/main.go` with flags: `--batch-size`, `--concurrency`, `--dry-run`, `--project-id`, `--status`.
+- [ ] Logic:
+   - [ ] If `original_url` is missing in storage: set `status=error`, `error='original missing in storage'`.
+   - [ ] If `status=ready` and `staged_url` is missing: set `status=error`, `error='staged missing in storage'`.
+   - [ ] If `status IN (queued, processing)` and `original_url` exists: no change; if missing: set `status=error`.
+   - [ ] Idempotent writes; safe to re-run repeatedly.
+- [ ] Batching & pagination over `images` (avoid long transactions); use a worker pool with configurable concurrency and per-bucket rate limiting.
+- [ ] Observability: OTEL spans (`reconcile.images`), attributes (`image.id`, `check.kind`), counters for checked/missing/updated; structured logs with summaries.
+- [ ] Dry-run mode: record would-be changes; emit a final diff summary (counts by transition and example rows).
+- [ ] Feature flag via `RECONCILE_ENABLED`; ensure endpoint is disabled by default in non-admin contexts.
+- [ ] Makefile target `reconcile-images` to run in dev: `docker compose exec api /api-server reconcile --dry-run`.
+- [ ] Tests:
+   - [ ] Unit tests with mocked S3 and repository (table-driven: success/failure cases).
+   - [ ] Integration tests with MinIO + Postgres fixtures.
+- [ ] Add `docs/operations/reconciliation.md` runbook describing when/how to run, troubleshooting, and rollback steps.
+
 ## Milestone 4: Frontend Implementation (Next.js)
 
 - [ ] Set up a new Next.js application in `/apps/web`

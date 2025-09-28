@@ -79,13 +79,12 @@ func main() {
 	imgRepo := repository.NewImageRepository(db)
 
 	log.Info(ctx, "Starting Virtual Staging AI Worker...")
-
 	// Create context that listens for the interrupt signal from the OS
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	// Initialize the job processor
-	processor := processor.NewImageProcessor()
+	proc := processor.NewImageProcessor()
 
 	// Initialize the queue client (Redis/asynq in production)
 	var queueClient queue.QueueClient
@@ -102,6 +101,8 @@ func main() {
 	if p, err := events.NewDefaultPublisherFromEnv(); err == nil {
 		pub = p
 	}
+
+	log.Info(ctx, "Worker started. Press Ctrl+C to stop.")
 
 	// Start processing jobs
 	go func() {
@@ -145,18 +146,21 @@ func main() {
 				if pub != nil {
 					_ = pub.PublishJobUpdate(ctx, events.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "processing"})
 				}
-				if err := processor.ProcessJob(ctx, job); err != nil {
+				// Process the job
+				if err := proc.ProcessJob(ctx, job); err != nil {
 					log.Error(ctx, fmt.Sprintf("Error processing job %s: %v", job.ID, err))
 					if markErr := queueClient.MarkJobFailed(ctx, job.ID, err.Error()); markErr != nil {
 						log.Error(ctx, fmt.Sprintf("Failed to mark job %s as failed: %v", job.ID, markErr))
-					}
+				}
 					// Update DB: error
 					if setErr := imgRepo.SetError(ctx, payload.ImageID, err.Error()); setErr != nil {
 						log.Error(ctx, fmt.Sprintf("Failed to set image %s error: %v", payload.ImageID, setErr))
 					}
 					// Publish 'error' status
 					if pub != nil {
-						_ = pub.PublishJobUpdate(ctx, events.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "error", Error: err.Error()})
+						if err := pub.PublishJobUpdate(ctx, events.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "error", Error: err.Error()}); err != nil {
+							log.Error(ctx, fmt.Sprintf("Failed to publish job %s error: %v", job.ID, err))
+						}
 					}
 				} else {
 					log.Info(ctx, fmt.Sprintf("Successfully processed job %s", job.ID))
