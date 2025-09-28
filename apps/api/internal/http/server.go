@@ -39,7 +39,16 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	// Add other middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000", "http://localhost:3001"},
+		AllowMethods: []string{
+			http.MethodGet, http.MethodHead, http.MethodPut,
+			http.MethodPatch, http.MethodPost, http.MethodDelete,
+		},
+		AllowHeaders: []string{
+			echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization,
+		},
+	}))
 
 	// Initialize Auth0 config
 	authConfig := auth.NewAuth0Config()
