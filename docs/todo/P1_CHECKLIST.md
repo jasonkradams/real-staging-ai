@@ -6,12 +6,12 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 
 - [x] GitHub Pages workflow to publish API docs from `apps/api/web/api/v1/`
 - [x] OpenTelemetry spans for queue enqueuer, SSE streaming, worker events publisher, and worker processor
+- [x] Add structured logging around queue enqueue → worker process → DB updates → SSE publish
+- [x] Add log correlation fields (trace_id, span_id) to logs in API and worker
 
 ## In Progress
 
-- [ ] Add structured logging around queue enqueue → worker process → DB updates → SSE publish
-- [ ] Add log correlation fields (trace_id, span_id) to logs in API and worker
-- [ ] Document local OTEL setup and collector config (`docs/observability.md`)
+- [ ] Document local OTEL setup and collector config (`docs/roadmap/phase1/OBSERVABILITY.md`)
 
 ## Next
 

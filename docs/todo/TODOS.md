@@ -65,6 +65,7 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 - [x] Set up OpenTelemetry collector in `docker-compose.yml`
 - [x] Instrument the API server and other components with OpenTelemetry
+- [x] Adopt structured JSON logging (Go `slog`) across API and worker with OTEL trace/span correlation
 
 ## Milestone 4: Frontend Implementation (Next.js)
 

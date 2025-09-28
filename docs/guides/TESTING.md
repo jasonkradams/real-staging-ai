@@ -9,6 +9,12 @@
 - `make test` → unit tests (fast)
 - `make test-integration` → spins docker-compose.test (pg, redis, minio) and runs end-to-end flows
 
+Optional end-to-end upload → ready flow (SSE-verified) is gated by an env flag:
+
+```
+RUN_E2E_UPLOAD_READY=1 make test-integration
+```
+
 ### Example Test Scenarios (Phase 1)
 - **Auth**: reject requests without/invalid JWT; accept with valid Auth0 JWT (mock JWKS)
 - **Presign Upload**: POST `/v1/uploads/presign` returns URL, key; enforces content-type/size
@@ -17,6 +23,7 @@
 - **Worker**: given a job, downloads original (minio), creates placeholder staged, uploads, updates DB
 - **Stripe Webhook**: handles `checkout.session.completed`, sets plan & `stripe_customer_id`
 - **SSE**: `/v1/events` streams job updates (can be tested with a short-lived server + client)
+  - Full presign → upload → create image → SSE ready path exists under `apps/api/tests/integration/e2e_upload_ready_test.go` and is enabled when `RUN_E2E_UPLOAD_READY=1`.
 
 ### Test Utilities
 - Testcontainers or docker-compose for integration

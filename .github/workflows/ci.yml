@@ -5,6 +5,15 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      run_integration_tests:
+        description: "Run integration tests (docker-compose.test)"
+        type: boolean
+        required: false
+        default: false
+  schedule:
+    - cron: '0 8 * * *'
 
 permissions:
   contents: read
@@ -12,6 +21,9 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [api, worker]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,16 +44,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Build API
-        working-directory: apps/api
+      - name: Build ${{ matrix.module }}
+        working-directory: apps/${{ matrix.module }}
         run: go build ./...
 
-      - name: Build Worker
-        working-directory: apps/worker
-        run: go build ./...
-
-      - name: Run unit tests
-        run: make test
+      - name: Run unit tests (${{ matrix.module }})
+        working-directory: apps/${{ matrix.module }}
+        run: go test -timeout 60s ./...
 
   docs:
     runs-on: ubuntu-latest
@@ -51,4 +60,33 @@ jobs:
 
       - name: Validate OpenAPI spec
         run: make docs
+
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [api, worker]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run golangci-lint (${{ matrix.module }})
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/app -w /app/apps/${{ matrix.module }} golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+
+  integration:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_integration_tests == true) || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          check-latest: true
+
+      - name: Run integration tests (docker compose)
+        run: make test-integration
 
