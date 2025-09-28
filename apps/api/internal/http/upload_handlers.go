@@ -106,7 +106,7 @@ func (s *Server) presignUploadHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
-			Message: "Failed to generate upload URL",
+			Message: fmt.Sprintf("Failed to generate upload URL: %v", err),
 		})
 	}
 

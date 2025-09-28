@@ -103,6 +103,8 @@ lint: ## Run golangci-lint on all Go modules
 	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run
 	@echo "--> Linting worker module"
 	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+	@echo "--> Linting web server"
+	cd apps/web && npm run lint
 
 lint-fix: ## Run golangci-lint with --fix on all Go modules
 	@echo "Running golangci-lint with --fix..."
@@ -112,12 +114,30 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
 
 up: migrate ## Run the api server
+	@echo Starting Application...
+	$(MAKE) up-api
+	$(MAKE) up-web
+
+down: ## Stop the api server
+	@echo Stopping Application...
+	$(MAKE) down-api
+	$(MAKE) down-web
+
+up-api: migrate ## Run the api server
 	@echo Running API server...
 	docker compose -f docker-compose.yml up --build -d --remove-orphans api
 
-down: ## Stop the api server
+down-api: ## Stop the api server
 	@echo Stopping API server...
-	docker compose -f docker-compose.yml down
+	docker compose -f docker-compose.yml stop
+
+up-web: ## Run the web server
+	@echo Running web server...
+	cd apps/web && npm run dev
+
+down-web: ## Stop the web server
+	@echo Stopping web server...
+	docker compose -f docker-compose.yml stop web
 
 clean: ## Remove unused and unnecessary files
 	@echo "Removing unused and unnecessary files..."

@@ -65,6 +65,37 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 
 	}
 
+	// If a custom S3 endpoint is provided (e.g., MinIO), configure client for dev/local
+	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
+		region := os.Getenv("S3_REGION")
+		if region == "" {
+			region = "us-east-1"
+		}
+		accessKey := os.Getenv("S3_ACCESS_KEY")
+		secretKey := os.Getenv("S3_SECRET_KEY")
+		cfg, err = awsConfigLoader(ctx,
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load AWS config for dev: %w", err)
+		}
+
+		client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(endpoint)
+			// default to true if unset
+			usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
+			if usePath == "" || usePath == "true" || usePath == "1" {
+				o.UsePathStyle = true
+			}
+		})
+
+		return &DefaultS3Service{
+			client:     client,
+			bucketName: bucketName,
+		}, nil
+	}
+
 	// Use default AWS config for production
 	cfg, err = awsConfigLoader(ctx)
 	if err != nil {
@@ -74,8 +105,7 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 	client := s3.NewFromConfig(cfg)
 
 	return &DefaultS3Service{
-		client:     client,
-		bucketName: bucketName,
+		client: client,
 	}, nil
 }
 
@@ -87,8 +117,33 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 	uniqueID := uuid.New().String()
 	fileKey := fmt.Sprintf("uploads/%s/%s-%s%s", userID, baseName, uniqueID, fileExt)
 
+	// Choose a client for presigning. If S3_PUBLIC_ENDPOINT is set, use a client
+	// with that base endpoint so the URL host is browser-accessible. Provide
+	// static credentials to avoid IMDS.
+	presignBase := s.client
+	if public := os.Getenv("S3_PUBLIC_ENDPOINT"); public != "" {
+		region := os.Getenv("S3_REGION")
+		if region == "" {
+			region = "us-east-1"
+		}
+		accessKey := os.Getenv("S3_ACCESS_KEY")
+		secretKey := os.Getenv("S3_SECRET_KEY")
+		presignCfg, cfgErr := awsConfigLoader(ctx,
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		)
+		if cfgErr == nil {
+			presignBase = s3.NewFromConfig(presignCfg, func(o *s3.Options) {
+				o.BaseEndpoint = aws.String(public)
+				usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
+				if usePath == "" || usePath == "true" || usePath == "1" {
+					o.UsePathStyle = true
+				}
+			})
+		}
+	}
 	// Create the presign client
-	presignClient := s3.NewPresignClient(s.client)
+	presignClient := s3.NewPresignClient(presignBase)
 
 	// Set the expiration time (15 minutes)
 	expirationDuration := 15 * time.Minute

@@ -23,7 +23,15 @@ export default function SSEViewer() {
       esRef.current.close();
       esRef.current = null;
     }
-    const url = `/api/v1/events?image_id=${encodeURIComponent(imageId)}`;
+    const base = process.env.NEXT_PUBLIC_API_BASE || '/api';
+    let url = `${base}/v1/events?image_id=${encodeURIComponent(imageId)}`;
+    // Append access_token from localStorage for auth (EventSource can't set headers)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        url += `&access_token=${encodeURIComponent(token)}`;
+      }
+    }
     const es = new EventSource(url);
     esRef.current = es;
 

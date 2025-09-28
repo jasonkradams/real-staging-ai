@@ -41,7 +41,6 @@ func NewAuth0Config() *Auth0Config {
 	return &Auth0Config{
 		Domain:   os.Getenv("AUTH0_DOMAIN"),
 		Audience: os.Getenv("AUTH0_AUDIENCE"),
-		Issuer:   fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN")),
 	}
 }
 
@@ -63,7 +62,8 @@ func JWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 			// Get the public key from Auth0's JWKS endpoint
 			return getPublicKey(config.Domain, kid)
 		},
-		TokenLookup: "header:Authorization:Bearer ",
+		// Allow tokens via Authorization header or access_token query param (for browser EventSource)
+		TokenLookup: "header:Authorization:Bearer ,query:access_token",
 		ErrorHandler: func(c echo.Context, err error) error {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid or missing JWT token")
 		},
@@ -74,14 +74,16 @@ func JWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 func OptionalJWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// Check if Authorization header exists
+			// Check for Authorization header or access_token query param
 			authHeader := c.Request().Header.Get("Authorization")
-			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			tokenParam := c.QueryParam("access_token")
+			hasBearer := authHeader != "" && strings.HasPrefix(authHeader, "Bearer ")
+			if !hasBearer && tokenParam == "" {
 				// No token provided, continue without authentication
 				return next(c)
 			}
 
-			// Token provided, validate it
+			// Token provided in header or query, validate it
 			jwtMiddleware := JWTMiddleware(config)
 			return jwtMiddleware(next)(c)
 		}
@@ -91,7 +93,6 @@ func OptionalJWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 // getPublicKey fetches and parses the public key from Auth0's JWKS endpoint
 func getPublicKey(domain, kid string) (*rsa.PublicKey, error) {
 	jwksURL := fmt.Sprintf("https://%s/.well-known/jwks.json", domain)
-
 	resp, err := http.Get(jwksURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
