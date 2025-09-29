@@ -3,8 +3,8 @@
 - Audience & issuer must match environment config
 
 ### Resources
-- `POST /api/v1/uploads/presign` → Get S3 **presigned PUT** URL
-- `POST /api/v1/images` → Create image + enqueue job (body: `{project_id, original_key, room_type, style}`)
+- `POST /api/v1/uploads/presign` → Get S3 **presigned PUT** URL (body: `{filename, content_type, file_size}`)
+- `POST /api/v1/images` → Create image + enqueue job (body: `{project_id, original_url, room_type?, style?, seed?}`)
 - `GET /api/v1/images/{id}` → Fetch status/result
 - `GET /api/v1/projects` / `POST /api/v1/projects` → basic project CRUD
 - `POST /api/v1/stripe/webhook` → handle subscription events
@@ -29,8 +29,9 @@ paths:
             schema:
               type: object
               properties:
-                contentType: { type: string }
-                projectId: { type: string }
+                filename: { type: string }
+                content_type: { type: string }
+                file_size: { type: integer }
       responses:
         '200':
           description: presigned upload
@@ -39,8 +40,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  url: { type: string }
-                  key: { type: string }
+                  upload_url: { type: string }
+                  file_key: { type: string }
+                  expires_in: { type: integer }
   /api/v1/images:
     post:
       security: [{ bearerAuth: [] }]
@@ -50,12 +52,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [projectId, originalKey]
+              required: [project_id, original_url]
               properties:
-                projectId: { type: string }
-                originalKey: { type: string }
-                roomType: { type: string }
+                project_id: { type: string }
+                original_url: { type: string }
+                room_type: { type: string }
                 style: { type: string }
+                seed: { type: integer }
       responses:
         '202':
           description: accepted

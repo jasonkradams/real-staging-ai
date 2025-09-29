@@ -22,7 +22,7 @@ The API service exposes the following groups of HTTP handlers:
 - **Uploads (`/api/v1/uploads`):** Handles file uploads, including generating presigned URLs for S3.
 - **Images (`/api/v1/images`):** Handles CRUD operations for images.
 - **Events (`/api/v1/events`):** Handles Server-Sent Events (SSE) for real-time updates.
-- **Stripe (`/api/v1/stripe`):** Handles webhooks from Stripe for payment processing.
+- **Stripe (`/api/v1/stripe/webhook`):** Handles webhooks from Stripe for payment processing (public route, signature-verified, idempotent).
 
 ## Database Interaction
 

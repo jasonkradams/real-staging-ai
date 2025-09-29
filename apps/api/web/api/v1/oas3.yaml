@@ -4,9 +4,9 @@ info:
   description: API for the Virtual Staging AI application.
   version: 0.1.0
 servers:
-  - url: /api
+  - url: http://localhost:8080
 paths:
-  /v1/projects:
+  /api/v1/projects:
     get:
       summary: Get all projects for the authenticated user
       description:
@@ -60,7 +60,7 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/projects/{id}:
+  /api/v1/projects/{id}:
     get:
       summary: Get a project by ID
       description:
@@ -160,7 +160,7 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/uploads/presign:
+  /api/v1/uploads/presign:
     post:
       summary: Generate presigned URL for file upload
       description: Generate a presigned URL that allows direct upload to S3 storage
@@ -189,7 +189,7 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/images:
+  /api/v1/images:
     post:
       summary: Add an image to a project
       description: Add a new image to a project.
@@ -218,7 +218,7 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/images/{id}:
+  /api/v1/images/{id}:
     get:
       summary: Get an image by ID
       description:
@@ -275,7 +275,7 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/projects/{project_id}/images:
+  /api/v1/projects/{project_id}/images:
     get:
       summary: Get all images for a project
       description: Retrieve a list of images associated with a specific project.
@@ -310,7 +310,7 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/events:
+  /api/v1/events:
     get:
       summary: Server-Sent Events for real-time updates
       description: Stream job and image status updates for the authenticated user.
@@ -318,6 +318,13 @@ paths:
         - Events
       security:
         - bearerAuth: []
+      parameters:
+        - name: image_id
+          in: query
+          required: true
+          description: The image identifier to subscribe to
+          schema:
+            type: string
       responses:
         "200":
           description: Event stream established
@@ -326,45 +333,23 @@ paths:
               schema:
                 type: string
                 example: |
-                  event: message
-                  data: {"type":"job_update","status":"processing","image_id":"a1b2c3"}
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-  /v1/uploads:
-    post:
-      summary: Upload a file to S3 via presigned request
-      description: Securely upload files directly to S3 using a presigned URL.
-      tags:
-        - Uploads
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: The file to upload
-      responses:
-        "200":
-          description: Presigned upload information
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PresignUploadResponse"
+                  event: connected
+                  data: {"message":"Connected to image stream"}
+
+                  event: heartbeat
+                  data: {"timestamp":1700000000}
+
+                  event: job_update
+                  data: {"status":"processing"}
         "400":
           $ref: "#/components/responses/BadRequestError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/health:
+        "503":
+          description: Pub/Sub not configured or unavailable
+  /health:
     get:
       summary: Health check endpoint
       description: Returns status of the API service.
@@ -384,7 +369,89 @@ paths:
                   service:
                     type: string
                     example: virtual-staging-api
-  /v1/billing/subscriptions:
+  /api/v1/images/{id}/presign:
+    get:
+      summary: Generate presigned download URL for an image
+      description: Returns a browser-accessible presigned URL for the image's original or staged file.
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the image
+          schema:
+            type: string
+            format: uuid
+        - name: kind
+          in: query
+          required: false
+          description: Which file to presign
+          schema:
+            type: string
+            enum: [original, staged]
+            default: original
+        - name: expires_in
+          in: query
+          required: false
+          description: URL expiration in seconds (default 600)
+          schema:
+            type: integer
+        - name: download
+          in: query
+          required: false
+          description: Set to 1 to force Content-Disposition=attachment
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        "200":
+          description: Presigned URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/stripe/webhook:
+    post:
+      summary: Stripe webhook endpoint
+      description: Receives Stripe events. Verifies signature and processes events idempotently.
+      tags:
+        - Stripe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Event received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: received
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "503":
+          description: Webhook secret not configured
+  /api/v1/billing/subscriptions:
     get:
       summary: List current user's subscriptions
       description: Retrieve all subscriptions associated with the authenticated user.
@@ -428,7 +495,7 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /v1/billing/invoices:
+  /api/v1/billing/invoices:
     get:
       summary: List current user's invoices
       description: Retrieve all invoices associated with the authenticated user.
@@ -554,9 +621,6 @@ components:
         name:
           type: string
           example: Living Room Staging
-        description:
-          type: string
-          example: Staging for the living room with modern style
         created_at:
           type: string
           format: date-time
@@ -571,18 +635,12 @@ components:
         name:
           type: string
           example: New Project
-        description:
-          type: string
-          example: A description of the project
     UpdateProjectRequest:
       type: object
       properties:
         name:
           type: string
           example: Updated Project Name
-        description:
-          type: string
-          example: Updated description of the project
     Image:
       type: object
       properties:
@@ -600,10 +658,23 @@ components:
         staged_url:
           type: string
           example: https://s3.amazonaws.com/bucket/staged.jpg
+        room_type:
+          type: string
+          example: living_room
+        style:
+          type: string
+          example: modern
+        seed:
+          type: integer
+          format: int64
+          example: 123
         status:
           type: string
-          enum: [queued, processing, ready, failed]
+          enum: [queued, processing, ready, error]
           example: ready
+        error:
+          type: string
+          example: failed to process image
         created_at:
           type: string
           format: date-time
@@ -623,14 +694,21 @@ components:
         original_url:
           type: string
           example: https://s3.amazonaws.com/bucket/original.jpg
+        room_type:
+          type: string
+          example: living_room
         style:
           type: string
           example: modern
+        seed:
+          type: integer
+          format: int64
     PresignUploadRequest:
       type: object
       required:
         - filename
         - content_type
+        - file_size
       properties:
         filename:
           type: string
@@ -638,23 +716,22 @@ components:
         content_type:
           type: string
           example: image/jpeg
+        file_size:
+          type: integer
+          format: int64
+          example: 1048576
     PresignUploadResponse:
       type: object
       properties:
-        url:
+        upload_url:
           type: string
-          example: https://s3.amazonaws.com/presigned-url
-        fields:
-          type: object
-          additionalProperties:
-            type: string
-          example:
-            key: uploads/photo.jpg
-            policy: eyJleHBpcmF0aW9uIjoiMjAyMy0wMS0wMVQwMDowMDowMFoiLCJjb25kaXRpb25zIjpbeyJidWNrZXQiOiJteS1idWNrZXQifSxbInN0YXJ0cy13aXRoIiwiJEtleSIsInVwbG9hZHMvIl1dfQ==
-            x-amz-algorithm: AWS4-HMAC-SHA256
-            x-amz-credential: AKIAIOSFODNN7EXAMPLE/20230101/us-west-1/s3/aws4_request
-            x-amz-date: 20230101T000000Z
-            x-amz-signature: 4a9c8b...
+          example: https://s3.amazonaws.com/presigned-put-url
+        file_key:
+          type: string
+          example: uploads/user-123/photo-uuid.jpg
+        expires_in:
+          type: integer
+          example: 900
     Subscription:
       type: object
       properties:

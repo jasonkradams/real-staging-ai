@@ -1,4 +1,4 @@
-.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs sqlc-generate generate lint lint-fix
+.PHONY: help test test-integration migrate-test migrate-up-all migrate-up migrate-down-all migrate-down seed-test docs postman sqlc-generate generate lint lint-fix
 .DEFAULT_GOAL := help
 
 TAB = $(shell printf '\t')
@@ -72,6 +72,10 @@ test-integration: migrate-test ## Run integration tests
 docs: ## Validate the OpenAPI specification
 	@echo "Validating OpenAPI specification..."
 	docker run --rm -v $(CURDIR)/apps/api/web/api/v1:/spec python:3.13-slim /bin/sh -c "pip install openapi-spec-validator && openapi-spec-validator /spec/oas3.yaml"
+
+postman: ## Generate a Postman collection from the OpenAPI specification
+	@echo "Generating Postman collection..."
+	@npx openapi-to-postmanv2 -s apps/api/web/api/v1/oas3.yaml -o postman_collection.json
 
 sqlc-generate: ## Generate Go code from SQL queries using sqlc
 	@echo "Generating sqlc code..."

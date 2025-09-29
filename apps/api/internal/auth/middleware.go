@@ -41,6 +41,7 @@ func NewAuth0Config() *Auth0Config {
 	return &Auth0Config{
 		Domain:   os.Getenv("AUTH0_DOMAIN"),
 		Audience: os.Getenv("AUTH0_AUDIENCE"),
+		Issuer:   fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN")),
 	}
 }
 

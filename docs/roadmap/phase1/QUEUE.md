@@ -1,4 +1,6 @@
 - **asynq** task types (Phase 1):
-  - `stage:run` → payload `{ image_id, original_key, style, room_type }`
-- Retries with exponential backoff; DLQ optional
-- Visibility via asynqmon (optional in later phase)
+  - `stage:run` → payload `{ image_id, original_url, room_type?, style?, seed? }`
+    - Matches `apps/api/internal/queue/enqueuer.go` `StageRunPayload`
+  - Retries with exponential backoff; DLQ optional
+  - Visibility via asynqmon (optional in later phase)
+  - Env: `REDIS_ADDR` (required), `JOB_QUEUE_NAME` (optional, default `default`)
