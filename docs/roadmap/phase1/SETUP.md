@@ -27,7 +27,7 @@ REDIS_ADDR=localhost:6379
 
 # S3 / MinIO
 S3_ENDPOINT=http://localhost:9000
-S3_REGION=us-east-1
+S3_REGION=us-west-1
 S3_BUCKET=virtual-staging
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin

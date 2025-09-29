@@ -24,6 +24,9 @@ var _ S3Service = &S3ServiceMock{}
 //			DeleteFileFunc: func(ctx context.Context, fileKey string) error {
 //				panic("mock out the DeleteFile method")
 //			},
+//			GeneratePresignedGetURLFunc: func(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error) {
+//				panic("mock out the GeneratePresignedGetURL method")
+//			},
 //			GeneratePresignedUploadURLFunc: func(ctx context.Context, userID string, filename string, contentType string, fileSize int64) (*PresignedUploadResult, error) {
 //				panic("mock out the GeneratePresignedUploadURL method")
 //			},
@@ -45,6 +48,9 @@ type S3ServiceMock struct {
 
 	// DeleteFileFunc mocks the DeleteFile method.
 	DeleteFileFunc func(ctx context.Context, fileKey string) error
+
+	// GeneratePresignedGetURLFunc mocks the GeneratePresignedGetURL method.
+	GeneratePresignedGetURLFunc func(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error)
 
 	// GeneratePresignedUploadURLFunc mocks the GeneratePresignedUploadURL method.
 	GeneratePresignedUploadURLFunc func(ctx context.Context, userID string, filename string, contentType string, fileSize int64) (*PresignedUploadResult, error)
@@ -68,6 +74,17 @@ type S3ServiceMock struct {
 			Ctx context.Context
 			// FileKey is the fileKey argument value.
 			FileKey string
+		}
+		// GeneratePresignedGetURL holds details about calls to the GeneratePresignedGetURL method.
+		GeneratePresignedGetURL []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// FileKey is the fileKey argument value.
+			FileKey string
+			// ExpiresInSeconds is the expiresInSeconds argument value.
+			ExpiresInSeconds int64
+			// ContentDisposition is the contentDisposition argument value.
+			ContentDisposition string
 		}
 		// GeneratePresignedUploadURL holds details about calls to the GeneratePresignedUploadURL method.
 		GeneratePresignedUploadURL []struct {
@@ -97,6 +114,7 @@ type S3ServiceMock struct {
 	}
 	lockCreateBucket               sync.RWMutex
 	lockDeleteFile                 sync.RWMutex
+	lockGeneratePresignedGetURL    sync.RWMutex
 	lockGeneratePresignedUploadURL sync.RWMutex
 	lockGetFileURL                 sync.RWMutex
 	lockHeadFile                   sync.RWMutex
@@ -167,6 +185,50 @@ func (mock *S3ServiceMock) DeleteFileCalls() []struct {
 	mock.lockDeleteFile.RLock()
 	calls = mock.calls.DeleteFile
 	mock.lockDeleteFile.RUnlock()
+	return calls
+}
+
+// GeneratePresignedGetURL calls GeneratePresignedGetURLFunc.
+func (mock *S3ServiceMock) GeneratePresignedGetURL(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error) {
+	if mock.GeneratePresignedGetURLFunc == nil {
+		panic("S3ServiceMock.GeneratePresignedGetURLFunc: method is nil but S3Service.GeneratePresignedGetURL was just called")
+	}
+	callInfo := struct {
+		Ctx                context.Context
+		FileKey            string
+		ExpiresInSeconds   int64
+		ContentDisposition string
+	}{
+		Ctx:                ctx,
+		FileKey:            fileKey,
+		ExpiresInSeconds:   expiresInSeconds,
+		ContentDisposition: contentDisposition,
+	}
+	mock.lockGeneratePresignedGetURL.Lock()
+	mock.calls.GeneratePresignedGetURL = append(mock.calls.GeneratePresignedGetURL, callInfo)
+	mock.lockGeneratePresignedGetURL.Unlock()
+	return mock.GeneratePresignedGetURLFunc(ctx, fileKey, expiresInSeconds, contentDisposition)
+}
+
+// GeneratePresignedGetURLCalls gets all the calls that were made to GeneratePresignedGetURL.
+// Check the length with:
+//
+//	len(mockedS3Service.GeneratePresignedGetURLCalls())
+func (mock *S3ServiceMock) GeneratePresignedGetURLCalls() []struct {
+	Ctx                context.Context
+	FileKey            string
+	ExpiresInSeconds   int64
+	ContentDisposition string
+} {
+	var calls []struct {
+		Ctx                context.Context
+		FileKey            string
+		ExpiresInSeconds   int64
+		ContentDisposition string
+	}
+	mock.lockGeneratePresignedGetURL.RLock()
+	calls = mock.calls.GeneratePresignedGetURL
+	mock.lockGeneratePresignedGetURL.RUnlock()
 	return calls
 }
 

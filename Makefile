@@ -80,6 +80,7 @@ sqlc-generate: ## Generate Go code from SQL queries using sqlc
 generate: clean-all ## Generate all code (mocks, sqlc, etc.)
 	$(MAKE) generate-api
 	$(MAKE) generate-worker
+	$(MAKE) tidy
 
 generate-api:
 	@echo "Generating all code..."

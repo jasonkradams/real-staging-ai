@@ -25,6 +25,56 @@ type PresignedUploadResult struct {
 	ExpiresIn int64  `json:"expires_in"`
 }
 
+// GeneratePresignedGetURL generates a browser-accessible presigned GET URL for a specific file key.
+func (s *DefaultS3Service) GeneratePresignedGetURL(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error) {
+	// Choose a client for presigning that uses the public endpoint if set.
+	presignBase := s.client
+	if public := os.Getenv("S3_PUBLIC_ENDPOINT"); public != "" {
+		region := os.Getenv("S3_REGION")
+		if region == "" {
+			region = "us-west-1"
+		}
+		accessKey := os.Getenv("S3_ACCESS_KEY")
+		secretKey := os.Getenv("S3_SECRET_KEY")
+		presignCfg, cfgErr := awsConfigLoader(ctx,
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		)
+		if cfgErr == nil {
+			presignBase = s3.NewFromConfig(presignCfg, func(o *s3.Options) {
+				o.BaseEndpoint = aws.String(public)
+				usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
+				if usePath == "" || usePath == "true" || usePath == "1" {
+					o.UsePathStyle = true
+				}
+			})
+		}
+	}
+
+	presignClient := s3.NewPresignClient(presignBase)
+	exp := time.Duration(expiresInSeconds) * time.Second
+	if exp <= 0 {
+		exp = 10 * time.Minute
+	}
+
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(s.bucketName),
+		Key:    aws.String(fileKey),
+	}
+	if contentDisposition != "" {
+		input.ResponseContentDisposition = aws.String(contentDisposition)
+	}
+	// Let caller/browser infer content-type when omitted; optionally we could set ResponseContentType.
+
+	req, err := presignClient.PresignGetObject(ctx, input, func(o *s3.PresignOptions) {
+		o.Expires = exp
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned GET URL: %w", err)
+	}
+	return req.URL, nil
+}
+
 // DefaultS3Service handles S3 operations for file storage.
 type DefaultS3Service struct {
 	client     *s3.Client
@@ -46,7 +96,7 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 
 	if os.Getenv("APP_ENV") == "test" {
 		cfg, err = awsConfigLoader(ctx,
-			config.WithRegion("us-east-1"),
+			config.WithRegion("us-west-1"),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "test")),
 		)
 		if err != nil {
@@ -69,7 +119,7 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
 		region := os.Getenv("S3_REGION")
 		if region == "" {
-			region = "us-east-1"
+			region = "us-west-1"
 		}
 		accessKey := os.Getenv("S3_ACCESS_KEY")
 		secretKey := os.Getenv("S3_SECRET_KEY")
@@ -105,7 +155,8 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 	client := s3.NewFromConfig(cfg)
 
 	return &DefaultS3Service{
-		client: client,
+		client:     client,
+		bucketName: bucketName,
 	}, nil
 }
 
@@ -124,7 +175,7 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 	if public := os.Getenv("S3_PUBLIC_ENDPOINT"); public != "" {
 		region := os.Getenv("S3_REGION")
 		if region == "" {
-			region = "us-east-1"
+			region = "us-west-1"
 		}
 		accessKey := os.Getenv("S3_ACCESS_KEY")
 		secretKey := os.Getenv("S3_SECRET_KEY")

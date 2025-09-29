@@ -298,7 +298,7 @@ func TestNewDefaultS3Service_LoadDefaultConfig_Error_TestEnv(t *testing.T) {
 func TestNewDefaultS3Service_Production(t *testing.T) {
 	// Cover non-test branch using default AWS config. We only assert construction succeeds.
 	t.Setenv("APP_ENV", "")
-	t.Setenv("AWS_REGION", "us-east-1")
+	t.Setenv("AWS_REGION", "us-west-1")
 	ctx := context.Background()
 	svc, err := NewDefaultS3Service(ctx, "unit-prod-bucket")
 	if err != nil {
@@ -345,7 +345,7 @@ func TestNewDefaultS3Service_ContextCanceled_TestEnv(t *testing.T) {
 
 func TestNewDefaultS3Service_ContextCanceled_ProdEnv(t *testing.T) {
 	t.Setenv("APP_ENV", "")
-	t.Setenv("AWS_REGION", "us-east-1")
+	t.Setenv("AWS_REGION", "us-west-1")
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

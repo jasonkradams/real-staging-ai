@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 type SSEViewerProps = {
   initialImageId?: string;
+  onStatus?: (status: string) => void;
 };
 
-export default function SSEViewer({ initialImageId }: SSEViewerProps = {}) {
+export default function SSEViewer({ initialImageId, onStatus }: SSEViewerProps = {}) {
   const [imageId, setImageId] = useState(initialImageId ?? "");
   const [connected, setConnected] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -70,11 +71,18 @@ export default function SSEViewer({ initialImageId }: SSEViewerProps = {}) {
 
     es.addEventListener("job_update", (ev) => {
       try {
-        const data = (ev as MessageEvent).data as string;
+        const dataStr = (ev as MessageEvent).data as string;
         setLog((prev) => [
-          `[${new Date().toLocaleTimeString()}] job_update ${data}`,
+          `[${new Date().toLocaleTimeString()}] job_update ${dataStr}`,
           ...prev,
         ]);
+        try {
+          const parsed = JSON.parse(dataStr);
+          const status = parsed?.status as string | undefined;
+          if (status && onStatus) onStatus(status);
+        } catch {
+          // ignore parse errors for callback
+        }
       } catch {
         setLog((prev) => [
           `[${new Date().toLocaleTimeString()}] job_update (unparseable)`,

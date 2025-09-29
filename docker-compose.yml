@@ -13,6 +13,11 @@ services:
   redis:
     image: redis:8.2
     ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -45,7 +50,13 @@ services:
       - S3_REGION=us-west-1
       - S3_SECRET_KEY=minioadmin
       - S3_USE_PATH_STYLE=true
-    depends_on: [postgres, redis, minio]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
     ports: ["8080:8080"]
   worker:
     build:
@@ -67,7 +78,13 @@ services:
       - S3_REGION=us-west-1
       - S3_SECRET_KEY=minioadmin
       - S3_USE_PATH_STYLE=true
-    depends_on: [postgres, redis, minio]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
   otel:
     image: otel/opentelemetry-collector:0.133.0
     command: ["--config=/etc/otelcol-config.yaml"]

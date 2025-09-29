@@ -84,7 +84,6 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	protected.POST("/projects", ph.Create)
 	protected.GET("/projects", ph.List)
 	protected.GET("/projects/:id", ph.GetByID)
-	protected.PUT("/projects/:id", ph.Update)
 	protected.DELETE("/projects/:id", ph.Delete)
 
 	// Upload routes
@@ -93,6 +92,7 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	// Image routes
 	protected.POST("/images", imgHandler.CreateImage)
 	protected.GET("/images/:id", imgHandler.GetImage)
+	protected.GET("/images/:id/presign", s.presignImageDownloadHandler)
 	protected.DELETE("/images/:id", imgHandler.DeleteImage)
 	protected.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
 
@@ -158,6 +158,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	// Image routes
 	api.POST("/images", imgHandler.CreateImage)
 	api.GET("/images/:id", imgHandler.GetImage)
+	api.GET("/images/:id/presign", s.presignImageDownloadHandler)
 	api.DELETE("/images/:id", imgHandler.DeleteImage)
 	api.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
 

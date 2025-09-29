@@ -612,7 +612,7 @@ components:
             key: uploads/photo.jpg
             policy: eyJleHBpcmF0aW9uIjoiMjAyMy0wMS0wMVQwMDowMDowMFoiLCJjb25kaXRpb25zIjpbeyJidWNrZXQiOiJteS1idWNrZXQifSxbInN0YXJ0cy13aXRoIiwiJEtleSIsInVwbG9hZHMvIl1dfQ==
             x-amz-algorithm: AWS4-HMAC-SHA256
-            x-amz-credential: AKIAIOSFODNN7EXAMPLE/20230101/us-east-1/s3/aws4_request
+            x-amz-credential: AKIAIOSFODNN7EXAMPLE/20230101/us-west-1/s3/aws4_request
             x-amz-date: 20230101T000000Z
             x-amz-signature: 4a9c8b...
     Subscription:

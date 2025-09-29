@@ -88,6 +88,14 @@ func main() {
 
 	// Initialize the queue client (Redis/asynq in production)
 	var queueClient queue.QueueClient
+	// Log queue-related configuration for clarity
+	redisAddr := os.Getenv("REDIS_ADDR")
+	queueName := os.Getenv("JOB_QUEUE_NAME")
+	if queueName == "" {
+		queueName = "default"
+	}
+	concStr := os.Getenv("WORKER_CONCURRENCY")
+	log.Info(ctx, "Queue configuration", "redis_addr", redisAddr, "queue", queueName, "concurrency", concStr)
 	if qc, err := queue.NewAsynqQueueClientFromEnv(); err == nil {
 		queueClient = qc
 		log.Info(ctx, "Using Asynq queue backend")
@@ -100,6 +108,9 @@ func main() {
 	var pub events.Publisher
 	if p, err := events.NewDefaultPublisherFromEnv(); err == nil {
 		pub = p
+		log.Info(ctx, "Events publisher enabled", "redis_addr", redisAddr)
+	} else {
+		log.Info(ctx, "Events publisher disabled (no REDIS_ADDR)")
 	}
 
 	log.Info(ctx, "Worker started. Press Ctrl+C to stop.")

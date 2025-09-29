@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/virtual-staging-ai/worker/internal/logging"
 )
 
 // Job represents a processing job.
@@ -49,7 +50,6 @@ func (m *MockQueueClient) GetNextJob(ctx context.Context) (*Job, error) {
 
 // MarkJobCompleted marks a job as completed.
 func (m *MockQueueClient) MarkJobCompleted(ctx context.Context, jobID string) error {
-	// In a real implementation, this would update the job status in the database
 	return nil
 }
 
@@ -88,11 +88,16 @@ func NewAsynqQueueClientFromEnv() (*AsynqQueueClient, error) {
 		}
 	}
 
+	logger := logging.Default()
+
 	srv := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: addr},
 		asynq.Config{
 			Concurrency: concurrency,
 			Queues:      map[string]int{queueName: 1},
+			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, t *asynq.Task, err error) {
+				logger.Error(ctx, "asynq handler error", "type", t.Type(), "error", err)
+			}),
 		},
 	)
 
@@ -103,8 +108,9 @@ func NewAsynqQueueClientFromEnv() (*AsynqQueueClient, error) {
 	}
 
 	mux := asynq.NewServeMux()
-	// Bridge all task types; specialized routing can be added as needed.
-	mux.HandleFunc("*", func(ctx context.Context, t *asynq.Task) error {
+	// Register exact task type used by the API enqueuer.
+	// Wildcards are not supported by asynq mux.
+	mux.HandleFunc("stage:run", func(ctx context.Context, t *asynq.Task) error {
 		// Create a local job id to correlate completion/failure.
 		jobID := fmt.Sprintf("%d", time.Now().UnixNano())
 		jb := &Job{
@@ -113,14 +119,14 @@ func NewAsynqQueueClientFromEnv() (*AsynqQueueClient, error) {
 			Payload: t.Payload(),
 			Status:  "queued",
 		}
-
-		// Register a result channel for this job.
 		resCh := make(chan error, 1)
 		c.mu.Lock()
 		c.results[jobID] = resCh
 		c.mu.Unlock()
 
-		// Deliver job to consumer loop.
+		// Deliver job to consumer
+		logger := logging.Default()
+		logger.Info(ctx, "asynq task received", "task_type", t.Type(), "job_id", jobID)
 		select {
 		case c.jobs <- jb:
 		case <-ctx.Done():
@@ -133,15 +139,26 @@ func NewAsynqQueueClientFromEnv() (*AsynqQueueClient, error) {
 		// Wait for processing result from the worker.
 		select {
 		case err := <-resCh:
+			if err != nil {
+				logger.Warn(ctx, "worker marked task failed", "task_type", t.Type(), "job_id", jobID, "error", err)
+			} else {
+				logger.Info(ctx, "worker marked task completed", "task_type", t.Type(), "job_id", jobID)
+			}
 			return err
 		case <-ctx.Done():
+			c.mu.Lock()
+			delete(c.results, jobID)
+			c.mu.Unlock()
 			return ctx.Err()
 		}
 	})
 
 	// Start the asynq server in the background.
+	logger.Info(context.Background(), "starting asynq server", "redis_addr", addr, "queue", queueName, "concurrency", concurrency)
 	go func() {
-		_ = srv.Run(mux)
+		if err := srv.Run(mux); err != nil {
+			logger.Error(context.Background(), "asynq server exited", "error", err)
+		}
 	}()
 
 	return c, nil

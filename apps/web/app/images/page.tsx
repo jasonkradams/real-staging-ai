@@ -55,6 +55,22 @@ export default function ImagesPage() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingImages, setLoadingImages] = useState(false);
 
+  async function openPresigned(imageId: string, kind: 'original' | 'staged', download = false) {
+    try {
+      const params = new URLSearchParams({ kind })
+      if (download) params.set('download', '1')
+      const res = await apiFetch<{ url: string }>(`/v1/images/${imageId}/presign?${params.toString()}`)
+      if (res?.url) {
+        window.open(res.url, '_blank', 'noopener,noreferrer')
+      } else {
+        setStatusMessage('Failed to generate presigned URL')
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      setStatusMessage(message)
+    }
+  }
+
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) ?? null,
     [projects, selectedProjectId]
@@ -242,9 +258,11 @@ export default function ImagesPage() {
                         </td>
                         <td className="py-2 pr-4">
                           <a
-                            href={image.original_url}
-                            target="_blank"
-                            rel="noreferrer"
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              void openPresigned(image.id, 'original')
+                            }}
                             className="text-indigo-600 hover:underline"
                           >
                             Original
@@ -253,9 +271,11 @@ export default function ImagesPage() {
                         <td className="py-2 pr-4">
                           {image.staged_url ? (
                             <a
-                              href={image.staged_url}
-                              target="_blank"
-                              rel="noreferrer"
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                void openPresigned(image.id, 'staged')
+                              }}
                               className="text-indigo-600 hover:underline"
                             >
                               View
@@ -315,7 +335,15 @@ export default function ImagesPage() {
       <div className="card">
         <div className="card-header">Live updates</div>
         <div className="card-body">
-          <SSEViewer initialImageId={selectedImageId || undefined} />
+          <SSEViewer
+            initialImageId={selectedImageId || undefined}
+            onStatus={(status) => {
+              // When the selected image reports ready/error, refresh list to display final state
+              if ((status === "ready" || status === "error") && selectedProjectId) {
+                void loadImages(selectedProjectId)
+              }
+            }}
+          />
         </div>
       </div>
     </div>

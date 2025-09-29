@@ -16,4 +16,7 @@ type S3Service interface {
 	GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*PresignedUploadResult, error)
 	// CreateBucket creates the S3 bucket if it doesn't exist.
 	CreateBucket(ctx context.Context) error
+	// GeneratePresignedGetURL generates a presigned URL for downloading a file from S3.
+	// The returned URL is suitable for direct browser access without requiring bucket-wide public access.
+	GeneratePresignedGetURL(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error)
 }
