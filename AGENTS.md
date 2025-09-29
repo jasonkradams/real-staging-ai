@@ -18,6 +18,7 @@ This document orients contributors to Virtual Staging AI’s codebase and workfl
 - Mock generation (moq): define an interface (e.g., in `service.go`) and add `//go:generate go run github.com/matryer/moq@v0.5.3 -out <file> . <Interface>`. Provide the concrete implementation in a matching `default_*.go` file.
 - `make migrate`, `make migrate-*(up|down)`: Apply migrations to dev or test DBs.
 - `make token`: Print an Auth0 access token for local testing.
+- all database mocking will be done using `storage.DatabaseMock`, `storage.PgxPoolMock`, and github.com/pashagolub/pgxmock/v2
 
 ## Coding Style & Naming Conventions
 - Language: Go 1.22+; format with `gofmt` and lint with `golangci-lint`. Provide Godoc comments and follow idiomatic Go practices.
