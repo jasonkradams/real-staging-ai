@@ -2,13 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, p1-bootstrap-frontend ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       run_integration_tests:
         description: "Run integration tests (docker-compose.test)"
+        type: boolean
+        required: false
+        default: false
+      run_e2e_upload_ready:
+        description: "Enable E2E presign→upload→image→SSE happy-path (RUN_E2E_UPLOAD_READY=1)"
         type: boolean
         required: false
         default: false
@@ -74,8 +79,26 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/app -w /app/apps/${{ matrix.module }} golangci/golangci-lint:v2.4.0-alpine golangci-lint run
 
+  lint_web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install deps (web)
+        working-directory: apps/web
+        run: npm ci
+      - name: Run ESLint (web)
+        working-directory: apps/web
+        run: npm run lint
+
   integration:
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_integration_tests == true) || github.event_name == 'schedule' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.run_integration_tests == true || inputs.run_e2e_upload_ready == true)) || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -88,5 +111,10 @@ jobs:
           check-latest: true
 
       - name: Run integration tests (docker compose)
-        run: make test-integration
+        run: |
+          # Optionally enable E2E happy-path test via workflow_dispatch input
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_e2e_upload_ready }}" = "true" ]; then
+            export RUN_E2E_UPLOAD_READY=1
+          fi
+          make test-integration
 

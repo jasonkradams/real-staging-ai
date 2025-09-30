@@ -30,7 +30,7 @@ This roadmap outlines Phase 1 for Virtual Staging AI: validate core flows end-to
 Use these living lists for progress tracking and next steps:
 - Engineering milestones and checklists: `../../todo/TODOS.md`
 - Documentation tasks: `../../todo/DOC.md`
-- Latest deep-dive review and Stripe progress: `../review/2025-09-13-analysis.md`
+- Latest deep-dive review and Stripe progress: `../review/2025-09-29-analysis.md`
 
 ## Next Phases (High-Level)
 

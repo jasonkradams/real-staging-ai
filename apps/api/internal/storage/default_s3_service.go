@@ -96,7 +96,7 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 
 	if os.Getenv("APP_ENV") == "test" {
 		cfg, err = awsConfigLoader(ctx,
-			config.WithRegion("us-west-1"),
+			config.WithRegion("us-east-1"),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "test")),
 		)
 		if err != nil {

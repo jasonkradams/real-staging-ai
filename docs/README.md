@@ -56,7 +56,7 @@ Authenticated via Auth0 (JWT Bearer). Core endpoints:
 - Stripe webhooks: `/api/v1/stripe/webhook`
 - Billing (added): `/api/v1/billing/subscriptions`, `/api/v1/billing/invoices`
 
-OpenAPI: lives under `web/api/v1/oas3.yaml` (to be finalized and published via Pages). The roadmap contains an OpenAPI sketch under `docs/roadmap/phase1/API.md`.
+OpenAPI: lives under `web/api/v1/oas3.yaml` and is published via GitHub Pages at https://jasonkradams.github.io/virtual-staging-ai/. The roadmap contains an OpenAPI sketch under `docs/roadmap/phase1/API.md`.
 
 ## Configuration & Environments
 
@@ -101,7 +101,7 @@ High-level milestones and checklists: `docs/todo/TODOS.md` and `docs/todo/DOC.md
 
 ## Recent Review Notes
 
-Latest deep-dive and Stripe progress summaries are captured in `docs/review/2025-09-13-analysis.md`. Highlights:
+Latest deep-dive and Stripe progress summaries are captured in `docs/review/2025-09-29-analysis.md`. Highlights:
 - Stripe webhook signature verification + idempotency
 - Subscriptions & invoices tables and repositories
 - New billing endpoints: subscriptions, invoices
