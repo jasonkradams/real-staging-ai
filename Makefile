@@ -81,7 +81,8 @@ sqlc-generate: ## Generate Go code from SQL queries using sqlc
 	@echo "Generating sqlc code..."
 	cd apps/api && ~/go/bin/sqlc generate
 
-generate: clean-all ## Generate all code (mocks, sqlc, etc.)
+generate: ## Generate all code (mocks, sqlc, etc.)
+	$(MAKE) clean-mock
 	$(MAKE) generate-api
 	$(MAKE) generate-worker
 	$(MAKE) tidy
@@ -148,9 +149,14 @@ clean: ## Remove unused and unnecessary files
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
 
-clean-all: clean ## Remove all mock files as well
+clean-mock: ## Remove all mock files
 	find . -type f -name "*_mock.go" -exec rm -rf {} + &
+
+clean-all: clean ## Remove all mock files and clean databases/storage
 	$(MAKE) migrate-down-dev
+	@echo "Cleaning MinIO buckets..."
+	docker compose exec minio sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc rm --recursive --force local/virtual-staging/uploads/ || true"
+	$(MAKE) tidy
 
 token: ## Generate a Auth0 Token
 	@go run -C apps/api ./cmd/token/main.go | jq -r .access_token
@@ -158,3 +164,7 @@ token: ## Generate a Auth0 Token
 tidy: ## Run go mod tidy for each app
 	cd apps/api && go mod tidy
 	cd apps/worker && go mod tidy
+
+reconcile-images: ## Run storage reconciliation CLI (use DRY_RUN=1 for dry-run)
+	@echo "Running storage reconciliation..."
+	docker compose exec api /bin/sh -c "/reconcile --dry-run=$(or $(DRY_RUN),true) --batch-size=$(or $(BATCH_SIZE),100) --concurrency=$(or $(CONCURRENCY),5)"

@@ -46,6 +46,7 @@ type Querier interface {
 	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error)
 	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+	ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error)
 	ListInvoicesByUserID(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
 	ListSubscriptionsByUserID(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)

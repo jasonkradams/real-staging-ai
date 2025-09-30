@@ -8,17 +8,22 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 - [x] OpenTelemetry spans for queue enqueuer, SSE streaming, worker events publisher, and worker processor
 - [x] Add structured logging around queue enqueue → worker process → DB updates → SSE publish
 - [x] Add log correlation fields (trace_id, span_id) to logs in API and worker
+- [x] Document local OTEL setup and collector config (`docs/roadmap/phase1/OBSERVABILITY.md`)
+- [x] E2E happy path (optional env-gated) tests and CI toggle implemented
+- [x] Storage Reconciliation: Module, service, SQL queries, admin endpoint, and CLI
+- [x] Storage Reconciliation: Operations runbook (`docs/operations/reconciliation.md`)
+- [x] Storage Reconciliation: Makefile target `reconcile-images`
+- [x] CI matrix for api/worker (test and lint jobs)
 
 ## In Progress
 
-- [ ] Document local OTEL setup and collector config (`docs/roadmap/phase1/OBSERVABILITY.md`)
-
 ## Next
 
-- [ ] E2E happy path (optional env-gated) documentation and CI toggle
+- [ ] Storage Reconciliation: Add integration tests with mocked S3 and DB
+- [ ] Storage Reconciliation: Add unit tests for extractS3Key and parseUUID helpers
 - API Docs publishing:
   - [x] Add link to README
-  - [ ] Update repo description with docs link
+  - [x] Update repo description with docs link (manual action: add https://jasonkradams.github.io/virtual-staging-ai/ to GitHub repo settings)
 - [ ] Frontend bootstrap (Next.js + Auth0):
   - [ ] App scaffold under `apps/web`
   - [ ] Auth0 login flow and token storage
@@ -26,6 +31,6 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 - [ ] Security polish:
   - [ ] Document `STRIPE_WEBHOOK_SECRET` rotation steps (added)
   - [ ] Review auth scopes for protected routes
-- [ ] CI enhancements:
-  - [ ] Lint and unit tests matrix for api/worker
-  - [ ] Optional integration tests on labels or nightly
+- [x] CI enhancements:
+  - [x] Lint and unit tests matrix for api/worker
+  - [x] Optional integration tests on labels or nightly (workflow_dispatch + schedule)

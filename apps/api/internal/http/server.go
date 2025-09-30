@@ -12,6 +12,7 @@ import (
 	"github.com/virtual-staging-ai/api/internal/billing"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/virtual-staging-ai/api/internal/reconcile"
 	"github.com/virtual-staging-ai/api/internal/sse"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/stripe"
@@ -113,6 +114,12 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	protected.GET("/billing/subscriptions", bh.GetMySubscriptions)
 	protected.GET("/billing/invoices", bh.GetMyInvoices)
 
+	// Admin routes (feature-flagged)
+	admin := protected.Group("/admin")
+	reconcileSvc := reconcile.NewDefaultService(s.db, s.s3Service)
+	reconcileHandler := reconcile.NewDefaultHandler(reconcileSvc)
+	admin.POST("/reconcile/images", reconcileHandler.ReconcileImages)
+
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)
 
@@ -178,6 +185,12 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	bh := billing.NewDefaultHandler(s.db)
 	api.GET("/billing/subscriptions", withTestUser(bh.GetMySubscriptions))
 	api.GET("/billing/invoices", withTestUser(bh.GetMyInvoices))
+
+	// Admin routes (public in test server, feature-flagged)
+	admin := api.Group("/admin")
+	reconcileSvc := reconcile.NewDefaultService(s.db, s.s3Service)
+	reconcileHandler := reconcile.NewDefaultHandler(reconcileSvc)
+	admin.POST("/reconcile/images", reconcileHandler.ReconcileImages)
 
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)

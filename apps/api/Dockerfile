@@ -15,12 +15,14 @@ COPY apps/api/ ./
 # -o /api-server: specify the output file name
 # ./cmd/api: specify the main package to build
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /api-server ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /reconcile ./cmd/reconcile
 
 # ---- Runner ----
 FROM alpine:latest
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /api-server /api-server
+COPY --from=builder /reconcile /reconcile
 
 # Expose the port the application runs on
 EXPOSE 8080

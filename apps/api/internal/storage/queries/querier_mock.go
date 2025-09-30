@@ -115,6 +115,9 @@ var _ Querier = &QuerierMock{}
 //			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
 //				panic("mock out the GetUserByStripeCustomerID method")
 //			},
+//			ListImagesForReconcileFunc: func(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+//				panic("mock out the ListImagesForReconcile method")
+//			},
 //			ListInvoicesByUserIDFunc: func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error) {
 //				panic("mock out the ListInvoicesByUserID method")
 //			},
@@ -262,6 +265,9 @@ type QuerierMock struct {
 
 	// GetUserByStripeCustomerIDFunc mocks the GetUserByStripeCustomerID method.
 	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+
+	// ListImagesForReconcileFunc mocks the ListImagesForReconcile method.
+	ListImagesForReconcileFunc func(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error)
 
 	// ListInvoicesByUserIDFunc mocks the ListInvoicesByUserID method.
 	ListInvoicesByUserIDFunc func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
@@ -530,6 +536,13 @@ type QuerierMock struct {
 			// StripeCustomerID is the stripeCustomerID argument value.
 			StripeCustomerID pgtype.Text
 		}
+		// ListImagesForReconcile holds details about calls to the ListImagesForReconcile method.
+		ListImagesForReconcile []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg ListImagesForReconcileParams
+		}
 		// ListInvoicesByUserID holds details about calls to the ListInvoicesByUserID method.
 		ListInvoicesByUserID []struct {
 			// Ctx is the ctx argument value.
@@ -668,6 +681,7 @@ type QuerierMock struct {
 	lockGetUserByAuth0Sub              sync.RWMutex
 	lockGetUserByID                    sync.RWMutex
 	lockGetUserByStripeCustomerID      sync.RWMutex
+	lockListImagesForReconcile         sync.RWMutex
 	lockListInvoicesByUserID           sync.RWMutex
 	lockListSubscriptionsByUserID      sync.RWMutex
 	lockListUsers                      sync.RWMutex
@@ -1826,6 +1840,42 @@ func (mock *QuerierMock) GetUserByStripeCustomerIDCalls() []struct {
 	mock.lockGetUserByStripeCustomerID.RLock()
 	calls = mock.calls.GetUserByStripeCustomerID
 	mock.lockGetUserByStripeCustomerID.RUnlock()
+	return calls
+}
+
+// ListImagesForReconcile calls ListImagesForReconcileFunc.
+func (mock *QuerierMock) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+	if mock.ListImagesForReconcileFunc == nil {
+		panic("QuerierMock.ListImagesForReconcileFunc: method is nil but Querier.ListImagesForReconcile was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg ListImagesForReconcileParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockListImagesForReconcile.Lock()
+	mock.calls.ListImagesForReconcile = append(mock.calls.ListImagesForReconcile, callInfo)
+	mock.lockListImagesForReconcile.Unlock()
+	return mock.ListImagesForReconcileFunc(ctx, arg)
+}
+
+// ListImagesForReconcileCalls gets all the calls that were made to ListImagesForReconcile.
+// Check the length with:
+//
+//	len(mockedQuerier.ListImagesForReconcileCalls())
+func (mock *QuerierMock) ListImagesForReconcileCalls() []struct {
+	Ctx context.Context
+	Arg ListImagesForReconcileParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg ListImagesForReconcileParams
+	}
+	mock.lockListImagesForReconcile.RLock()
+	calls = mock.calls.ListImagesForReconcile
+	mock.lockListImagesForReconcile.RUnlock()
 	return calls
 }
 

@@ -134,6 +134,60 @@ func (q *Queries) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUI
 	return items, nil
 }
 
+const ListImagesForReconcile = `-- name: ListImagesForReconcile :many
+SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at
+FROM images
+WHERE ($1::uuid IS NULL OR project_id = $1::uuid)
+  AND ($2::text IS NULL OR $2::text = '' OR status = $2::image_status)
+  AND ($3::uuid IS NULL OR id > $3::uuid)
+ORDER BY id ASC
+LIMIT $4
+`
+
+type ListImagesForReconcileParams struct {
+	Column1 pgtype.UUID `json:"column_1"`
+	Column2 string      `json:"column_2"`
+	Column3 pgtype.UUID `json:"column_3"`
+	Limit   int32       `json:"limit"`
+}
+
+func (q *Queries) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+	rows, err := q.db.Query(ctx, ListImagesForReconcile,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Image{}
+	for rows.Next() {
+		var i Image
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.OriginalUrl,
+			&i.StagedUrl,
+			&i.RoomType,
+			&i.Style,
+			&i.Seed,
+			&i.Status,
+			&i.Error,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const UpdateImageStatus = `-- name: UpdateImageStatus :one
 UPDATE images
 SET status = $2, updated_at = now()

@@ -39,3 +39,12 @@ WHERE id = $1;
 -- name: DeleteImagesByProjectID :exec
 DELETE FROM images
 WHERE project_id = $1;
+
+-- name: ListImagesForReconcile :many
+SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at
+FROM images
+WHERE ($1::uuid IS NULL OR project_id = $1::uuid)
+  AND ($2::text IS NULL OR $2::text = '' OR status = $2::image_status)
+  AND ($3::uuid IS NULL OR id > $3::uuid)
+ORDER BY id ASC
+LIMIT $4;
