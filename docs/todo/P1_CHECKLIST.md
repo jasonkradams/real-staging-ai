@@ -34,14 +34,17 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
   - [x] Lint and unit tests matrix for api/worker
   - [x] Optional integration tests on labels or nightly
 
-## Phase 2 (Future)
+## Phase 2 (In Progress)
 
-- [ ] Auth0 SDK integration for proper OAuth flow
+- [x] Storage Reconciliation: Add integration tests with mocked S3 and DB
+- [x] Fix dry-run bug in reconciliation service (Updated counter was incorrectly incremented)
+- [x] Security polish:
+  - [x] Document `STRIPE_WEBHOOK_SECRET` rotation steps (`docs/security/STRIPE_WEBHOOK_ROTATION.md`)
+- [ ] Auth0 SDK integration for proper OAuth flow (Deferred to Phase 3)
   - [ ] Login/logout with Auth0 Universal Login
   - [ ] Protected routes and session management
   - [ ] Token refresh and automatic re-authentication
-- [ ] Storage Reconciliation: Add integration tests with mocked S3 and DB
-- [ ] Security polish:
-  - [ ] Document `STRIPE_WEBHOOK_SECRET` rotation steps
+- [ ] Additional security improvements:
   - [ ] Review auth scopes for protected routes
   - [ ] Add CSRF protection
+  - [ ] Document general secrets management procedures

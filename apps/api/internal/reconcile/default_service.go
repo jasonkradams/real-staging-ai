@@ -189,10 +189,6 @@ func (s *DefaultService) ReconcileImages(ctx context.Context, opts ReconcileOpti
 						result.Updated++
 						mu.Unlock()
 					}
-				} else {
-					mu.Lock()
-					result.Updated++
-					mu.Unlock()
 				}
 			}
 		}(img)
