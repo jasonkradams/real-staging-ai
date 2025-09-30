@@ -100,7 +100,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				assert.Equal(t, 1, result.Checked)
 				assert.Equal(t, 1, result.MissingOrig)
 				assert.Equal(t, 0, result.MissingStaged)
-				assert.Equal(t, 1, result.Updated) // Would be updated
+				assert.Equal(t, 0, result.Updated) // Dry-run does not update
 				assert.True(t, result.DryRun)
 				require.Len(t, result.Examples, 1)
 				assert.Contains(t, result.Examples[0].Error, "original missing")
@@ -130,7 +130,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				assert.Equal(t, 1, result.Checked)
 				assert.Equal(t, 0, result.MissingOrig)
 				assert.Equal(t, 1, result.MissingStaged)
-				assert.Equal(t, 1, result.Updated)
+				assert.Equal(t, 0, result.Updated) // Dry-run does not update
 				assert.True(t, result.DryRun)
 				require.Len(t, result.Examples, 1)
 				assert.Contains(t, result.Examples[0].Error, "staged missing")
@@ -226,7 +226,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				assert.Equal(t, 3, result.Checked)
 				assert.Equal(t, 1, result.MissingOrig)
 				assert.Equal(t, 1, result.MissingStaged)
-				assert.Equal(t, 2, result.Updated)
+				assert.Equal(t, 0, result.Updated) // Dry-run does not update
 				assert.True(t, result.DryRun)
 			},
 		},
@@ -266,7 +266,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			validate: func(t *testing.T, result *ReconcileResult) {
 				assert.Equal(t, 1, result.Checked)
 				assert.Equal(t, 1, result.MissingOrig)
-				assert.Equal(t, 1, result.Updated)
+				assert.Equal(t, 0, result.Updated) // Dry-run does not update
 			},
 		},
 		{
@@ -290,7 +290,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				assert.Equal(t, 1, result.Checked)
 				assert.Equal(t, 0, result.MissingOrig)
 				assert.Equal(t, 1, result.MissingStaged)
-				assert.Equal(t, 1, result.Updated)
+				assert.Equal(t, 0, result.Updated) // Dry-run does not update
 			},
 		},
 		{
