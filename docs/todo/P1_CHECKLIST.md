@@ -14,23 +14,34 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 - [x] Storage Reconciliation: Operations runbook (`docs/operations/reconciliation.md`)
 - [x] Storage Reconciliation: Makefile target `reconcile-images`
 - [x] CI matrix for api/worker (test and lint jobs)
-
 ## In Progress
 
 ## Next
 
-- [ ] Storage Reconciliation: Add integration tests with mocked S3 and DB
-- [ ] Storage Reconciliation: Add unit tests for extractS3Key and parseUUID helpers
 - API Docs publishing:
   - [x] Add link to README
   - [x] Update repo description with docs link (manual action: add https://jasonkradams.github.io/virtual-staging-ai/ to GitHub repo settings)
-- [ ] Frontend bootstrap (Next.js + Auth0):
-  - [ ] App scaffold under `apps/web`
-  - [ ] Auth0 login flow and token storage
-  - [ ] Pages: Dashboard, Projects, Upload, Images (with SSE client)
-- [ ] Security polish:
-  - [ ] Document `STRIPE_WEBHOOK_SECRET` rotation steps (added)
-  - [ ] Review auth scopes for protected routes
+- Frontend bootstrap (Phase 1):
+  - [x] App scaffold under `apps/web` (Next.js 15 + TypeScript + Tailwind)
+  - [x] Pages: Dashboard (`/`), Upload (`/upload`), Images (`/images`)
+  - [x] Project creation and selection UI
+  - [x] Image upload flow (presign → S3 → create image record)
+  - [x] SSE client for real-time job updates
+  - [x] Image listing with status badges and presigned URL viewing
+  - [x] Rudimentary auth (manual token paste via localStorage)
+  - [x] API client library with bearer token auth (`lib/api.ts`)
 - [x] CI enhancements:
   - [x] Lint and unit tests matrix for api/worker
-  - [x] Optional integration tests on labels or nightly (workflow_dispatch + schedule)
+  - [x] Optional integration tests on labels or nightly
+
+## Phase 2 (Future)
+
+- [ ] Auth0 SDK integration for proper OAuth flow
+  - [ ] Login/logout with Auth0 Universal Login
+  - [ ] Protected routes and session management
+  - [ ] Token refresh and automatic re-authentication
+- [ ] Storage Reconciliation: Add integration tests with mocked S3 and DB
+- [ ] Security polish:
+  - [ ] Document `STRIPE_WEBHOOK_SECRET` rotation steps
+  - [ ] Review auth scopes for protected routes
+  - [ ] Add CSRF protection
