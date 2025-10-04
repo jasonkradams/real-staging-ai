@@ -73,9 +73,9 @@ Required variables:
 
 Optional variables:
 
-| Variable               | Description                                       | Default                              |
-| ---------------------- | ------------------------------------------------- | ------------------------------------ |
-| `AUTH0_SCOPE`          | OAuth scopes                                      | `openid profile email offline_access` |
+| Variable      | Description  | Default                               |
+| ------------- | ------------ | ------------------------------------- |
+| `AUTH0_SCOPE` | OAuth scopes | `openid profile email offline_access` |
 
 ### Auth0 Application Settings
 

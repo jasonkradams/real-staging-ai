@@ -144,6 +144,45 @@ func TestJWTMiddleware(t *testing.T) {
 			wantCode:    http.StatusUnauthorized,
 			errContains: "Invalid or missing JWT token",
 		},
+		{
+			name: "fail: expired token",
+			jwk:  goodJWK,
+			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+				token := createToken(privateKey, "test-kid", time.Now().Add(-time.Hour), cfg.Audience)
+				req.Header.Set("Authorization", "Bearer "+token)
+			},
+			wantCode:    http.StatusUnauthorized,
+			errContains: "Invalid or missing JWT token",
+		},
+		{
+			name: "fail: wrong audience",
+			jwk:  goodJWK,
+			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), "wrong-audience")
+				req.Header.Set("Authorization", "Bearer "+token)
+			},
+			wantCode:    http.StatusUnauthorized,
+			errContains: "Invalid or missing JWT token",
+		},
+		{
+			name: "success: token in query parameter",
+			jwk:  goodJWK,
+			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
+				req.URL.RawQuery = "access_token=" + token
+			},
+			wantCode: http.StatusOK,
+		},
+		{
+			name: "fail: malformed bearer prefix",
+			jwk:  goodJWK,
+			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
+				req.Header.Set("Authorization", "Basic "+token)
+			},
+			wantCode:    http.StatusUnauthorized,
+			errContains: "Invalid or missing JWT token",
+		},
 	}
 
 	for _, tc := range cases {
@@ -297,6 +336,14 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 			},
 			wantCode: http.StatusUnauthorized,
 			wantErr:  true,
+		},
+		{
+			name: "success: token in query parameter",
+			setup: func(req *http.Request) {
+				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), config.Audience)
+				req.URL.RawQuery = "access_token=" + token
+			},
+			wantCode: http.StatusOK,
 		},
 	}
 

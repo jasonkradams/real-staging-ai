@@ -16,6 +16,8 @@ test: ## Run unit tests
 	cd apps/api && go test -timeout 30s ./...
 	@echo "--> Running worker tests"
 	cd apps/worker && go test -timeout 60s -v ./internal/repository ./internal/events ./...
+	@echo "--> Running web tests"
+	cd apps/web && npm run test
 
 test-cover: ## Run unit tests with coverage
 	@echo "Running unit tests with coverage..."
@@ -23,6 +25,8 @@ test-cover: ## Run unit tests with coverage
 	cd apps/api && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 	@echo "--> Running worker tests"
 	cd apps/worker && go test -coverprofile=coverage.out ./internal/repository ./internal/events ./... && go tool cover -html=coverage.out -o coverage.html
+	@echo "--> Running web tests"
+	cd apps/web && npm run test:coverage
 
 migrate-test: migrate-down-all ## Run database migrations on the test database
 	@echo "Running database migrations on the test database..."
@@ -149,6 +153,7 @@ clean: ## Remove unused and unnecessary files
 	find . -type f -name "cover*.out" -exec rm -rf {} + &
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
+	find . -type d -name coverage -exec rm -rf {} + &
 
 clean-mock: ## Remove all mock files
 	find . -type f -name "*_mock.go" -exec rm -rf {} + &
@@ -157,6 +162,8 @@ clean-all: clean ## Remove all mock files and clean databases/storage
 	$(MAKE) migrate-down-dev
 	@echo "Cleaning MinIO buckets..."
 	docker compose exec minio sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc rm --recursive --force local/virtual-staging/uploads/ || true"
+	@echo "Removing node_modules..."
+	find . -type d -name node_modules -exec rm -rf {} + &
 	$(MAKE) tidy
 
 token: ## Generate a Auth0 Token

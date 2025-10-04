@@ -6,9 +6,13 @@
 - **Deleted**: `components/TokenBar.tsx` (manual token entry)
 - **Updated**: `components/AuthButton.tsx` to use `/auth/login` and `/auth/logout`
 
-### ✅ Created Auth0 API Routes
-- **Created**: `/app/auth/access-token/route.ts` - Provides access token for client-side API calls
-- Auth routes (`/auth/login`, `/auth/logout`, `/auth/callback`) are handled automatically by middleware
+### ✅ Auth0 SDK Endpoints (Automatic)
+- All auth routes are automatically provided by Auth0 SDK v4 middleware:
+  - `/auth/login` - Redirects to Auth0 Universal Login
+  - `/auth/logout` - Clears session and logs out
+  - `/auth/callback` - Handles OAuth callback
+  - `/auth/access-token` - Provides JWT for API calls (requires `enableAccessTokenEndpoint: true`)
+- No manual route creation needed!
 
 ### ✅ Existing Auth0 Integration (Already Working)
 - `lib/api.ts` - `apiFetch()` function fetches token from `/auth/access-token`

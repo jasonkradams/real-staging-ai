@@ -1,7 +1,11 @@
-
+# Go coverage files
 coverage.html
 coverage.*.out
 coverage.out
+
+# NPM Test Coverage
+coverage/
+
 .localstack/
 .env*
 

@@ -60,6 +60,41 @@ func JWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 				return nil, fmt.Errorf("kid not found in token header")
 			}
 
+			// Validate audience and issuer claims
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				return nil, fmt.Errorf("invalid token claims")
+			}
+
+			// Check audience
+			aud, ok := claims["aud"].(string)
+			if !ok {
+				// audience might be an array
+				audList, ok := claims["aud"].([]interface{})
+				if !ok || len(audList) == 0 {
+					return nil, fmt.Errorf("invalid or missing audience")
+				}
+				// Check if our audience is in the list
+				found := false
+				for _, a := range audList {
+					if audStr, ok := a.(string); ok && audStr == config.Audience {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return nil, fmt.Errorf("invalid audience")
+				}
+			} else if aud != config.Audience {
+				return nil, fmt.Errorf("invalid audience")
+			}
+
+			// Check issuer
+			iss, ok := claims["iss"].(string)
+			if !ok || iss != config.Issuer {
+				return nil, fmt.Errorf("invalid issuer")
+			}
+
 			// Get the public key from Auth0's JWKS endpoint
 			return getPublicKey(config.Domain, kid)
 		},
