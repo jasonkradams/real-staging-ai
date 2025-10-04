@@ -1,10 +1,58 @@
 openapi: 3.1.0
 info:
   title: Virtual Staging AI API
-  description: API for the Virtual Staging AI application.
+  description: |
+    API for the Virtual Staging AI application.
+    
+    ## Authentication
+    
+    This API uses **OAuth 2.0 / OpenID Connect** via Auth0 for authentication.
+    All protected endpoints require a valid JWT access token in the `Authorization` header.
+    
+    ### Obtaining an Access Token
+    
+    **For Web Applications:**
+    - Use the Auth0 Next.js SDK (`@auth0/nextjs-auth0`)
+    - Tokens are automatically managed via encrypted session cookies
+    - Access tokens obtained from `/auth/access-token` endpoint
+    
+    **For Testing:**
+    - Use the `make token` command to generate a test token
+    - Or authenticate via Auth0 Universal Login in the web UI
+    
+    ### Token Format
+    
+    Access tokens are JWTs signed by Auth0 with the following claims:
+    - `iss`: Auth0 domain (e.g., `https://dev-sleeping-pandas.us.auth0.com/`)
+    - `sub`: User ID (e.g., `auth0|123456789`)
+    - `aud`: API audience (e.g., `https://api.virtualstaging.local`)
+    - `exp`: Expiration timestamp
+    - `iat`: Issued at timestamp
+    - `scope`: OAuth scopes (e.g., `openid profile email`)
+    
+    ### Using the Access Token
+    
+    Include the token in the `Authorization` header:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+    
+    **Note:** The `/api/v1/events` SSE endpoint also accepts tokens via the `access_token` query parameter
+    since EventSource doesn't support custom headers.
+    
+    ## Rate Limiting
+    
+    Rate limits may apply to prevent abuse. Check response headers for limit information.
+    
+    ## Versioning
+    
+    This API is versioned via the URL path (`/api/v1/`). Breaking changes will result in a new version.
   version: 0.1.0
 servers:
   - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.virtualstaging.ai
+    description: Production server
 paths:
   /api/v1/projects:
     get:
@@ -313,16 +361,54 @@ paths:
   /api/v1/events:
     get:
       summary: Server-Sent Events for real-time updates
-      description: Stream job and image status updates for the authenticated user.
+      description: |
+        Stream job and image status updates for the authenticated user via Server-Sent Events (SSE).
+        
+        **Authentication:** This endpoint supports two authentication methods:
+        1. Standard `Authorization: Bearer <token>` header (recommended)
+        2. Query parameter `access_token=<token>` (for EventSource compatibility)
+        
+        The query parameter method exists because the browser EventSource API doesn't support
+        custom headers. Web applications should fetch the access token from `/auth/access-token`
+        and append it to the URL.
+        
+        **Event Types:**
+        - `connected`: Initial connection confirmation
+        - `heartbeat`: Keep-alive ping (every 30 seconds)
+        - `job_update`: Image processing status update
+        
+        **Example Usage:**
+        ```javascript
+        const response = await fetch('/auth/access-token');
+        const { accessToken } = await response.json();
+        const url = `/api/v1/events?image_id=${imageId}&access_token=${accessToken}`;
+        const eventSource = new EventSource(url);
+        
+        eventSource.addEventListener('job_update', (event) => {
+          const data = JSON.parse(event.data);
+          console.log('Status:', data.status);
+        });
+        ```
       tags:
         - Events
       security:
         - bearerAuth: []
+        - queryToken: []
       parameters:
         - name: image_id
           in: query
           required: true
           description: The image identifier to subscribe to
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        - name: access_token
+          in: query
+          required: false
+          description: |
+            Access token for authentication (alternative to Authorization header).
+            Use this when the client (e.g., EventSource) cannot set custom headers.
           schema:
             type: string
       responses:
@@ -545,13 +631,60 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: |
+        JWT access token issued by Auth0.
+        
+        **How to obtain:**
+        - Web app: Use Auth0 SDK, fetch from `/auth/access-token` endpoint
+        - Testing: Run `make token` command
+        - Direct: Authenticate via Auth0 Universal Login
+        
+        **Token claims:**
+        - `sub`: User ID (used to identify the authenticated user)
+        - `aud`: Must match `https://api.virtualstaging.local`
+        - `iss`: Auth0 domain
+        - `exp`: Expiration (tokens typically valid for 1 hour)
+        
+        **Usage:**
+        ```
+        Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+        ```
+    queryToken:
+      type: apiKey
+      in: query
+      name: access_token
+      description: |
+        Alternative authentication method using query parameter.
+        Only supported for `/api/v1/events` SSE endpoint due to EventSource limitations.
+        
+        **Usage:**
+        ```
+        GET /api/v1/events?image_id=<uuid>&access_token=<token>
+        ```
   responses:
     UnauthorizedError:
-      description: Authentication is required to access this resource
+      description: |
+        Authentication is required to access this resource.
+        
+        **Common causes:**
+        - Missing `Authorization` header
+        - Invalid or expired JWT token
+        - Token not signed by Auth0
+        - Token audience doesn't match API audience
+        - User doesn't have permission to access resource
+        
+        **Resolution:**
+        - Ensure you're sending `Authorization: Bearer <token>` header
+        - Verify token is not expired (check `exp` claim)
+        - Obtain a fresh token if needed
+        - For SSE endpoint: check `access_token` query parameter
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            error: unauthorized
+            message: "Authentication required"
     BadRequestError:
       description: The request could not be understood due to malformed syntax
       content:

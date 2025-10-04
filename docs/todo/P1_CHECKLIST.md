@@ -34,16 +34,22 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
   - [x] Lint and unit tests matrix for api/worker
   - [x] Optional integration tests on labels or nightly
 
-## Phase 2 (In Progress)
+## Phase 2 (Complete) / Phase 3 (In Progress)
 
 - [x] Storage Reconciliation: Add integration tests with mocked S3 and DB
 - [x] Fix dry-run bug in reconciliation service (Updated counter was incorrectly incremented)
 - [x] Security polish:
   - [x] Document `STRIPE_WEBHOOK_SECRET` rotation steps (`docs/security/STRIPE_WEBHOOK_ROTATION.md`)
-- [ ] Auth0 SDK integration for proper OAuth flow (Deferred to Phase 3)
-  - [ ] Login/logout with Auth0 Universal Login
-  - [ ] Protected routes and session management
-  - [ ] Token refresh and automatic re-authentication
+- [x] Auth0 SDK integration for proper OAuth flow
+  - [x] Install `@auth0/nextjs-auth0` SDK
+  - [x] Configure Auth0 client and middleware
+  - [x] Login/logout with Auth0 Universal Login
+  - [x] Protected routes with automatic redirect
+  - [x] Session management with encrypted cookies
+  - [x] Token refresh via SDK
+  - [x] Update API client to use Auth0 access tokens
+  - [x] Update SSE viewer to use Auth0 access tokens
+  - [x] Documentation (`docs/frontend/AUTH0_INTEGRATION.md`)
 - [ ] Additional security improvements:
   - [ ] Review auth scopes for protected routes
   - [ ] Add CSRF protection

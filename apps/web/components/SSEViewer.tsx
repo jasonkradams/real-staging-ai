@@ -28,7 +28,7 @@ export default function SSEViewer({ initialImageId, onStatus }: SSEViewerProps =
     }
   }, [initialImageId, imageId]);
 
-  const connect = () => {
+  const connect = async () => {
     if (!imageId) return;
     if (esRef.current) {
       esRef.current.close();
@@ -36,13 +36,22 @@ export default function SSEViewer({ initialImageId, onStatus }: SSEViewerProps =
     }
     const base = process.env.NEXT_PUBLIC_API_BASE || "/api";
     let url = `${base}/v1/events?image_id=${encodeURIComponent(imageId)}`;
-    // Append access_token from localStorage for auth (EventSource can't set headers)
+    
+    // Fetch access token from Auth0 session (EventSource can't set headers)
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        url += `&access_token=${encodeURIComponent(token)}`;
+      try {
+        const response = await fetch('/auth/access-token');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.accessToken) {
+            url += `&access_token=${encodeURIComponent(data.accessToken)}`;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get access token for SSE:', error);
       }
     }
+    
     const es = new EventSource(url);
     esRef.current = es;
 
