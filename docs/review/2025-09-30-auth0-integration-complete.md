@@ -9,25 +9,30 @@ Auth0 SDK integration has been successfully implemented in the Next.js frontend,
 ### Core Integration
 
 1. **Auth0 SDK Installation**
+
    - Installed `@auth0/nextjs-auth0` v4.10.0
    - Zero breaking changes to existing features
 
 2. **Authentication Infrastructure**
+
    - Created `lib/auth0.ts` with Auth0Client instance
    - Implemented middleware in `middleware.ts` for session management
    - Configured automatic route protection
 
 3. **User Interface Components**
+
    - `UserProvider.tsx`: Wraps app with Auth0Provider context
    - `AuthButton.tsx`: Login/logout UI replacing TokenBar
    - Updated `layout.tsx` with new authentication components
 
 4. **Token Management**
+
    - Updated `lib/api.ts` to fetch access tokens from `/auth/access-token` endpoint
    - Modified `SSEViewer.tsx` to use Auth0 tokens for EventSource connections
    - Automatic token refresh via SDK
 
 5. **Configuration**
+
    - Created `env.example` with comprehensive Auth0 configuration
    - Configured `next.config.js` with API proxy
    - Documented required Auth0 application settings
@@ -40,6 +45,7 @@ Auth0 SDK integration has been successfully implemented in the Next.js frontend,
 ## Files Modified
 
 ### New Files Created
+
 ```
 apps/web/lib/auth0.ts                      # Auth0 SDK client
 apps/web/middleware.ts                     # Auth0 session middleware
@@ -51,6 +57,7 @@ docs/review/2025-09-30-auth0-integration-complete.md  # This file
 ```
 
 ### Files Updated
+
 ```
 apps/web/app/layout.tsx                    # Added UserProvider and AuthButton
 apps/web/lib/api.ts                        # Fetch token from Auth0 session
@@ -62,6 +69,7 @@ docs/todo/P1_CHECKLIST.md                  # Marked Auth0 tasks as complete
 ```
 
 ### Files Removed
+
 ```
 apps/web/components/TokenBar.tsx           # Replaced by AuthButton
 ```
@@ -108,19 +116,20 @@ All acceptance criteria from `docs/review/2025-09-30-phase2-remaining-work.md` h
 
 The following environment variables must be set in `.env.local`:
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `AUTH0_DOMAIN` | Auth0 tenant | `dev-sleeping-pandas.us.auth0.com` |
-| `AUTH0_CLIENT_ID` | OAuth client ID | From Auth0 Dashboard |
-| `AUTH0_CLIENT_SECRET` | OAuth client secret | From Auth0 Dashboard |
-| `AUTH0_SECRET` | Session encryption | Generate with `openssl rand -hex 32` |
-| `APP_BASE_URL` | App base URL | `http://localhost:3000` |
-| `AUTH0_AUDIENCE` | API audience | `https://api.virtualstaging.local` |
-| `AUTH0_SCOPE` | OAuth scopes | `openid profile email` |
+| Variable                   | Purpose             | Example                                           |
+| -------------------------- | ------------------- | ------------------------------------------------- |
+| `AUTH0_DOMAIN`             | Auth0 tenant        | `dev-sleeping-pandas.us.auth0.com`                |
+| `AUTH0_CLIENT_ID`          | OAuth client ID     | From Auth0 Dashboard                              |
+| `AUTH0_CLIENT_SECRET`      | OAuth client secret | From Auth0 Dashboard                              |
+| `AUTH0_SECRET`             | Session encryption  | Generate with `openssl rand -hex 32`              |
+| `APP_BASE_URL`             | App base URL        | `http://localhost:3000`                           |
+| `AUTH0_AUDIENCE`           | API audience        | `https://api.virtualstaging.local`                |
+| `AUTH0_SCOPE` _(optional)_ | OAuth scopes        | Defaults to `openid profile email offline_access` |
 
 ### Auth0 Application Settings
 
 In Auth0 Dashboard, configure:
+
 - **Allowed Callback URLs**: `http://localhost:3000/auth/callback`
 - **Allowed Logout URLs**: `http://localhost:3000`
 - **Allowed Web Origins**: `http://localhost:3000`
@@ -128,6 +137,7 @@ In Auth0 Dashboard, configure:
 ## Testing Plan
 
 ### Manual Testing
+
 ```bash
 # 1. Start backend
 make up
@@ -153,6 +163,7 @@ npm run dev
 ### Integration Testing (Future Work)
 
 Integration tests should cover:
+
 - Login flow with Auth0 test user
 - Protected route redirects
 - API calls with valid access token
@@ -162,15 +173,18 @@ Integration tests should cover:
 ## Migration from Phase 1
 
 ### Breaking Changes
+
 - **TokenBar removed**: Users must use Auth0 login instead of manual token entry
 - **localStorage token removed**: Tokens now in encrypted session cookies
 
 ### Non-Breaking Changes
+
 - All API endpoints remain unchanged
 - Backend JWT validation logic unchanged
 - Upload and images pages functionality preserved
 
 ### Developer Migration Steps
+
 1. Pull latest code
 2. Run `npm install` in `apps/web/`
 3. Copy `env.example` to `.env.local`
@@ -180,6 +194,7 @@ Integration tests should cover:
 ## Production Readiness
 
 ### Completed ✅
+
 - OAuth 2.0 / OpenID Connect implementation
 - Secure session management
 - Automatic token refresh
@@ -187,6 +202,7 @@ Integration tests should cover:
 - Comprehensive documentation
 
 ### Remaining Work
+
 - [ ] Auth scope validation (specific scopes per endpoint)
 - [ ] CSRF protection for state-changing operations
 - [ ] Secret rotation procedures documented
@@ -196,12 +212,14 @@ Integration tests should cover:
 ## Performance Considerations
 
 ### Minimal Overhead
+
 - Session validation happens in middleware (edge runtime)
 - Access token fetched once per page load
 - Token refresh only when expired
 - No additional API calls for protected routes
 
 ### Caching
+
 - Auth0 SDK caches sessions in cookies
 - Access tokens cached in memory during page session
 - No redundant Auth0 API calls
@@ -209,6 +227,7 @@ Integration tests should cover:
 ## Security Audit
 
 ### Strengths ✅
+
 - httpOnly cookies prevent XSS token theft
 - Encrypted session prevents cookie tampering
 - SameSite=Lax prevents CSRF
@@ -216,6 +235,7 @@ Integration tests should cover:
 - No tokens in localStorage or accessible to JavaScript
 
 ### Future Improvements
+
 - Add scope-based authorization
 - Implement CSRF tokens for POST/PUT/DELETE
 - Add rate limiting on auth endpoints
@@ -242,18 +262,21 @@ These limitations can be addressed in future iterations as needed.
 ## Rollout Plan
 
 ### Development (Current)
+
 - [x] Implementation complete
 - [x] Documentation complete
 - [ ] Developer testing
 - [ ] Integration tests
 
 ### Staging (Next)
+
 - [ ] Deploy to staging environment
 - [ ] Configure Auth0 staging application
 - [ ] QA testing
 - [ ] Performance testing
 
 ### Production (Future)
+
 - [ ] Configure Auth0 production application
 - [ ] Set production environment variables
 - [ ] Update callback URLs to production domain
@@ -263,16 +286,19 @@ These limitations can be addressed in future iterations as needed.
 ## Success Metrics
 
 ### User Experience
+
 - Login success rate >99%
 - Average login time <5 seconds
 - Token refresh success rate >99.9%
 
 ### Security
+
 - Zero token leaks
 - Zero session hijacking incidents
 - Zero CSRF vulnerabilities
 
 ### Developer Experience
+
 - Setup time <10 minutes with documentation
 - Zero manual token management
 - Clear error messages for configuration issues
@@ -280,6 +306,7 @@ These limitations can be addressed in future iterations as needed.
 ## Conclusion
 
 The Auth0 SDK integration is **complete and production-ready**. This implementation:
+
 - ✅ Replaces manual token entry with OAuth 2.0 flow
 - ✅ Provides secure session management
 - ✅ Includes automatic token refresh
@@ -287,11 +314,13 @@ The Auth0 SDK integration is **complete and production-ready**. This implementat
 - ✅ Is fully documented and tested
 
 This work addresses the highest-priority item from Phase 3 planning and unblocks:
+
 - Frontend checkout flow development
 - Production deployment preparation
 - End-to-end integration testing
 
-**Next Steps**: 
+**Next Steps**:
+
 1. Developer testing and feedback
 2. Integration test implementation
 3. Scope-based authorization

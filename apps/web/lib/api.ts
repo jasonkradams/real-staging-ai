@@ -12,8 +12,10 @@ async function getAccessToken(): Promise<string | null> {
   try {
     const response = await fetch('/auth/access-token');
     if (!response.ok) return null;
+    
     const data = await response.json();
-    return data.accessToken || null;
+    // Auth0 SDK returns the token under the 'token' property
+    return data.token || data.accessToken || data.access_token || null;
   } catch (error) {
     console.error('Failed to get access token:', error);
     return null;

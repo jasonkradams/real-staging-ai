@@ -23,7 +23,7 @@ export default function AuthButton() {
           {user.email || user.name || 'User'}
         </div>
         <a
-          href="/api/auth/logout"
+          href="/auth/logout"
           className="text-sm text-gray-600 hover:text-gray-900 underline"
         >
           Logout
@@ -34,7 +34,7 @@ export default function AuthButton() {
 
   return (
     <a
-      href="/api/auth/login"
+      href="/auth/login"
       className="text-sm text-blue-600 hover:text-blue-800 underline"
     >
       Login

@@ -69,8 +69,13 @@ Required variables:
 | `AUTH0_SECRET`         | Secret for encrypting session cookies (≥32 chars) | Generate with `openssl rand -hex 32` |
 | `APP_BASE_URL`         | Application base URL                              | `http://localhost:3000`              |
 | `AUTH0_AUDIENCE`       | Auth0 API audience (must match backend)           | `https://api.virtualstaging.local`   |
-| `AUTH0_SCOPE`          | OAuth scopes                                      | `openid profile email`               |
 | `NEXT_PUBLIC_API_BASE` | Backend API base URL                              | `/api`                               |
+
+Optional variables:
+
+| Variable               | Description                                       | Default                              |
+| ---------------------- | ------------------------------------------------- | ------------------------------------ |
+| `AUTH0_SCOPE`          | OAuth scopes                                      | `openid profile email offline_access` |
 
 ### Auth0 Application Settings
 
