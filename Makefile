@@ -13,18 +13,18 @@ help:
 test: ## Run unit tests
 	@echo "Running unit tests..."
 	@echo "--> Running api tests"
-	cd apps/api && go test -timeout 30s ./...
+	cd apps/api && APP_ENV=../../config go test -timeout 30s ./...
 	@echo "--> Running worker tests"
-	cd apps/worker && go test -timeout 60s -v ./internal/repository ./internal/events ./...
+	cd apps/worker && APP_ENV=../../config go test -timeout 60s -v ./internal/repository ./internal/events ./...
 	@echo "--> Running web tests"
 	cd apps/web && npm run test
 
 test-cover: ## Run unit tests with coverage
 	@echo "Running unit tests with coverage..."
 	@echo "--> Running api tests"
-	cd apps/api && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
+	cd apps/api && APP_ENV=../../config go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 	@echo "--> Running worker tests"
-	cd apps/worker && go test -coverprofile=coverage.out ./internal/repository ./internal/events ./... && go tool cover -html=coverage.out -o coverage.html
+	cd apps/worker && APP_ENV=../../config go test -coverprofile=coverage.out ./internal/repository ./internal/events ./... && go tool cover -html=coverage.out -o coverage.html
 	@echo "--> Running web tests"
 	cd apps/web && npm run test:coverage
 
@@ -68,8 +68,8 @@ test-integration: migrate-test ## Run integration tests
 	@echo "Starting test infrastructure..."
 	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test redis-test localstack
 	@echo "Running integration tests..."
-	cd apps/api && PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
-	cd apps/worker && PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
+	cd apps/api && CONFIG_DIR=../../config APP_ENV=test PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
+	cd apps/worker && CONFIG_DIR=../../config APP_ENV=test PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
 	@echo "Stopping test infrastructure..."
 	docker compose -f docker-compose.test.yml down
 

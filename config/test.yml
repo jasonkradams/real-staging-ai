@@ -1,0 +1,31 @@
+# Test environment configuration
+# Used when APP_ENV=test
+
+app:
+  env: test
+
+db:
+  pghost: localhost
+  pgport: 5433
+  pgdatabase: testdb
+  pguser: testuser
+  pgpassword: testpassword
+  pgsslmode: disable
+
+redis:
+  addr: localhost:6379
+
+s3:
+  access_key: test
+  bucket_name: test-bucket
+  endpoint: http://localhost:4566
+  public_endpoint: http://localhost:4566
+  region: us-east-1
+  secret_key: test
+  use_path_style: true
+
+otel:
+  exporter_otlp_endpoint: ""
+
+replicate:
+  model_version: qwen/qwen-image-edit

@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/job"
@@ -16,22 +16,23 @@ import (
 func main() {
 	log := logging.Default()
 	ctx := context.Background()
+
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("failed to load configuration: %v", err))
+		return
+	}
+	log.Info(ctx, fmt.Sprintf("Loaded configuration for environment: %s", cfg.App.Env))
+
 	db, err := storage.NewDefaultDatabase()
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("failed to connect to database: %v", err))
 	}
 	defer db.Close()
 
-	// Create S3 service
-	// Prefer S3_BUCKET (docker-compose) and fall back to S3_BUCKET_NAME or a sane default.
-	bucketName := os.Getenv("S3_BUCKET")
-	if bucketName == "" {
-		bucketName = os.Getenv("S3_BUCKET_NAME")
-	}
-	if bucketName == "" {
-		bucketName = "virtual-staging"
-	}
-
+	// Create S3 service using config
+	bucketName := cfg.S3Bucket()
 	s3Service, err := storage.NewDefaultS3Service(ctx, bucketName)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("failed to create S3 service: %v", err))
@@ -45,7 +46,7 @@ func main() {
 	// Create repositories
 	imageRepo := image.NewDefaultRepository(db)
 	jobRepo := job.NewDefaultRepository(db)
-	log.Info(ctx, "Setting up image service with job enqueuer (REDIS_ADDR, JOB_QUEUE_NAME)")
+	log.Info(ctx, fmt.Sprintf("Setting up image service (queue: %s)", cfg.Job.QueueName))
 	imageService := image.NewDefaultService(imageRepo, jobRepo)
 
 	s := http.NewServer(db, s3Service, imageService)

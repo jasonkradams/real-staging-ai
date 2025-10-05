@@ -1,0 +1,47 @@
+# Production environment configuration
+# Used when APP_ENV=prod or production
+# Sensitive values should be overridden with environment variables in production
+
+app:
+  env: prod
+
+auth0:
+  # These should be set via environment variables in production
+  audience: ${AUTH0_AUDIENCE}
+  domain: ${AUTH0_DOMAIN}
+
+db:
+  # Database connection should use DATABASE_URL in production
+  # or override these individual settings
+  pghost: ${PGHOST}
+  pgport: ${PGPORT:5432}
+  pgdatabase: ${PGDATABASE}
+  pguser: ${PGUSER}
+  pgpassword: ${PGPASSWORD}
+  pgsslmode: require
+
+job:
+  queue_name: ${JOB_QUEUE_NAME:default}
+  worker_concurrency: ${WORKER_CONCURRENCY:10}
+
+logging:
+  level: ${LOG_LEVEL:info}
+
+otel:
+  exporter_otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+
+redis:
+  addr: ${REDIS_ADDR}
+
+replicate:
+  model_version: ${REPLICATE_MODEL_VERSION:qwen/qwen-image-edit}
+
+s3:
+  # Production S3 should use IAM roles or environment variables
+  access_key: ${S3_ACCESS_KEY}
+  bucket_name: ${S3_BUCKET_NAME}
+  endpoint: ${S3_ENDPOINT}
+  public_endpoint: ${S3_PUBLIC_ENDPOINT}
+  region: ${S3_REGION:us-east-1}
+  secret_key: ${S3_SECRET_KEY}
+  use_path_style: false

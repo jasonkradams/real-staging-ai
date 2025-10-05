@@ -12,3 +12,7 @@ coverage/
 # Local secrets (do not commit)
 secrets.yml
 .secrets/
+
+# Local config overrides (do not commit)
+config/local-override.yml
+config/*.local.yml

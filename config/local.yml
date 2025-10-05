@@ -1,0 +1,19 @@
+# Local development configuration
+# Used when APP_ENV=local
+
+app:
+  env: local
+
+db:
+  pghost: localhost
+  pgport: 5432
+
+otel:
+  exporter_otlp_endpoint: http://localhost:4318
+
+redis:
+  addr: localhost:6379
+
+s3:
+  endpoint: http://localhost:9000
+  public_endpoint: http://localhost:9000

@@ -33,23 +33,9 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       - APP_ENV=dev
-      - AUTH0_AUDIENCE=https://api.virtualstaging.local
-      - AUTH0_DOMAIN=dev-sleeping-pandas.us.auth0.com
-      - JOB_QUEUE_NAME=default
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel:4318
-      - PGDATABASE=virtualstaging
-      - PGHOST=postgres
-      - PGPASSWORD=postgres
-      - PGPORT=5432
-      - PGUSER=postgres
-      - REDIS_ADDR=redis:6379
-      - S3_ACCESS_KEY=minioadmin
-      - S3_BUCKET=virtual-staging
-      - S3_ENDPOINT=http://minio:9000
-      - S3_PUBLIC_ENDPOINT=http://localhost:9000
-      - S3_REGION=us-west-1
-      - S3_SECRET_KEY=minioadmin
-      - S3_USE_PATH_STYLE=true
+    volumes:
+      - ./config:/config:ro
+      - ./apps/api/secrets.yml:/app/secrets.yml:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,23 +50,9 @@ services:
       dockerfile: apps/worker/Dockerfile
     environment:
       - APP_ENV=dev
-      - JOB_QUEUE_NAME=default
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel:4318
-      - PGDATABASE=virtualstaging
-      - PGHOST=postgres
-      - PGPASSWORD=postgres
-      - PGPORT=5432
-      - PGUSER=postgres
-      - REDIS_ADDR=redis:6379
-      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
-      - REPLICATE_MODEL_VERSION=qwen/qwen-image-edit
-      - S3_ACCESS_KEY=minioadmin
-      - S3_BUCKET_NAME=virtual-staging
-      - S3_ENDPOINT=http://minio:9000
-      - S3_PUBLIC_ENDPOINT=http://localhost:9000
-      - S3_REGION=us-west-1
-      - S3_SECRET_KEY=minioadmin
-      - S3_USE_PATH_STYLE=true
+    volumes:
+      - ./config:/config:ro
+      - ./apps/worker/secrets.yml:/app/secrets.yml:ro
     depends_on:
       postgres:
         condition: service_healthy

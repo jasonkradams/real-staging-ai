@@ -1,0 +1,43 @@
+# Shared configuration for all environments
+# These values are defaults and can be overridden in environment-specific files
+
+app:
+  env: dev
+
+auth0:
+  audience: https://api.virtualstaging.local
+  domain: dev-sleeping-pandas.us.auth0.com
+
+db:
+  pgdatabase: virtualstaging
+  pghost: localhost
+  pgpassword: postgres
+  pgport: 5432
+  pguser: postgres
+  pgsslmode: disable
+
+job:
+  queue_name: default
+  worker_concurrency: 5
+
+logging:
+  level: info
+
+otel:
+  exporter_otlp_endpoint: http://localhost:4318
+
+redis:
+  addr: localhost:6379
+
+replicate:
+  # API token should be set via environment variable: REPLICATE_API_TOKEN
+  model_version: qwen/qwen-image-edit
+
+s3:
+  access_key: minioadmin
+  bucket_name: virtual-staging
+  endpoint: http://localhost:9000
+  public_endpoint: http://localhost:9000
+  region: us-west-1
+  secret_key: minioadmin
+  use_path_style: true  # Default to true for MinIO/LocalStack compatibility

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/virtual-staging-ai/worker/internal/config"
 	"github.com/virtual-staging-ai/worker/internal/events"
 	"github.com/virtual-staging-ai/worker/internal/logging"
 	"github.com/virtual-staging-ai/worker/internal/processor"
@@ -23,6 +24,14 @@ func main() {
 	log := logging.Default()
 	ctx := context.Background()
 
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("Failed to load configuration: %v", err))
+		os.Exit(1)
+	}
+	log.Info(ctx, fmt.Sprintf("Loaded configuration for environment: %s", cfg.App.Env))
+
 	// Initialize OpenTelemetry
 	shutdown, err := telemetry.InitTracing(ctx, "virtual-staging-worker")
 	if err != nil {
@@ -34,33 +43,8 @@ func main() {
 		}
 	}()
 
-	// Initialize database connection
-	host := os.Getenv("PGHOST")
-	if host == "" {
-		host = "localhost"
-	}
-	port := os.Getenv("PGPORT")
-	if port == "" {
-		port = "5432"
-	}
-	user := os.Getenv("PGUSER")
-	if user == "" {
-		user = "postgres"
-	}
-	pass := os.Getenv("PGPASSWORD")
-	if pass == "" {
-		pass = "postgres"
-	}
-	dbname := os.Getenv("PGDATABASE")
-	if dbname == "" {
-		dbname = "virtualstaging"
-	}
-	sslmode := os.Getenv("PGSSLMODE")
-	if sslmode == "" {
-		sslmode = "disable"
-	}
-
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, dbname, sslmode)
+	// Initialize database connection using config
+	dsn := cfg.DatabaseURL()
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to open database: %v", err))
@@ -105,13 +89,10 @@ func main() {
 	// Initialize the queue client (Redis/asynq in production)
 	var queueClient queue.QueueClient
 	// Log queue-related configuration for clarity
-	redisAddr := os.Getenv("REDIS_ADDR")
-	queueName := os.Getenv("JOB_QUEUE_NAME")
-	if queueName == "" {
-		queueName = "default"
-	}
-	concStr := os.Getenv("WORKER_CONCURRENCY")
-	log.Info(ctx, "Queue configuration", "redis_addr", redisAddr, "queue", queueName, "concurrency", concStr)
+	redisAddr := cfg.Redis.Addr
+	queueName := cfg.Job.QueueName
+	concurrency := cfg.Job.WorkerConcurrency
+	log.Info(ctx, "Queue configuration", "redis_addr", redisAddr, "queue", queueName, "concurrency", concurrency)
 	if qc, err := queue.NewAsynqQueueClientFromEnv(); err == nil {
 		queueClient = qc
 		log.Info(ctx, "Using Asynq queue backend")
