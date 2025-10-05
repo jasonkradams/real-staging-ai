@@ -1,40 +1,48 @@
 ### Overview
-A DIY virtual staging SaaS for real-estate photos. Upload a room photo → receive a *mocked* staged image in Phase 1 (no GPU yet). We’ll validate flows, pricing, and UX while keeping the image pipeline simple.
+A DIY virtual staging SaaS for real-estate photos. Upload a room photo → receive an AI-staged image using Replicate's SDXL-Lightning model. Fast time-to-market with production-ready AI staging.
 
 ### Tech Summary
 - **Backend/API**: Go (Echo), Postgres (pgx), Redis (asynq), S3, Stripe, Auth0 (OIDC/JWT), OpenTelemetry
 - **Frontend**: Next.js + Tailwind + shadcn/ui
+- **AI Staging**: Replicate API (qwen/qwen-image-edit) - ~9s per image, ~$0.011/image
 - **Infra**: Docker Compose (dev), GitHub Actions (CI), Fly.io/Render/Neon/Supabase/Cloudflare R2 (later)
 
-### Phase 1 Goals
-- End-to-end flow working: auth → upload → job → result placeholder → billing → usage tracking
-- **Test-driven** from the start (unit + integration)
-- Image generation is **stubbed**: returns a watermarked placeholder based on the uploaded image to exercise data flow, S3, and queueing.
-
+### How It Works
 1. User logs in via Auth0 → frontend gets JWT
 2. Upload original image via **S3 presigned PUT** from API
 3. Create an **image job** → enqueued to Redis (asynq)
-4. Worker processes job (Phase 1: copy original to a `-staged.jpg` variant + watermark)
-5. API marks image **ready** → client fetches results / receives event updates
+4. Worker processes job: downloads original from S3, sends to Replicate AI for staging, uploads result back to S3
+5. API marks image **ready** → client fetches results / receives event updates via SSE
 
 ---
 
 ## Quickstart
 
-1. Install dependencies: Docker, Docker Compose, Go 1.22+.
-2. Start dev stack (API, Worker, Postgres, Redis, MinIO):
+1. Install dependencies: Docker, Docker Compose, Go 1.22+, Node.js 18+.
+
+2. Get a Replicate API token:
+   - Sign up at [replicate.com](https://replicate.com)
+   - Get your token from [account settings](https://replicate.com/account/api-tokens)
+   - Export it: `export REPLICATE_API_TOKEN=r8_your_token_here`
+
+3. Start dev stack (API, Worker, Postgres, Redis, MinIO):
 
 ```bash
+export REPLICATE_API_TOKEN=r8_your_token_here
 make up
 ```
 
-3. Open API docs at: http://localhost:8080/api/v1/docs/
+4. Open the web app at: http://localhost:3000
 
-4. Basic health check:
+5. Open API docs at: http://localhost:8080/api/v1/docs/
+
+6. Basic health check:
 
 ```bash
 curl -s http://localhost:8080/health
 ```
+
+> **Note**: See `docs/REPLICATE_SETUP.md` for detailed configuration and troubleshooting.
 
 ## Development
 
@@ -71,16 +79,22 @@ go test -tags=integration -v ./tests/integration -run TestE2E_Presign_Upload_Cre
 
 See `docs/configuration.md` for all environment variables. Highlights:
 
-- Queue
+- **Replicate AI** (Required for staging)
+  - `REPLICATE_API_TOKEN`: Your Replicate API token (required)
+  - `REPLICATE_MODEL_VERSION`: Model to use (default: `qwen/qwen-image-edit`)
+
+- **Queue**
   - `REDIS_ADDR`: Redis address (required for job queue and SSE).
   - `JOB_QUEUE_NAME`: Asynq queue name (default `default`).
   - `WORKER_CONCURRENCY`: Worker concurrency (default `5`).
 
-- Stripe Webhooks
-  - `STRIPE_WEBHOOK_SECRET` (required in non-dev): verified with HMAC-SHA256 and timestamp tolerance.
+- **S3**
+  - `S3_BUCKET_NAME`: S3 bucket name (required)
+  - `S3_ENDPOINT`: Custom S3 endpoint (e.g., MinIO for local dev)
+  - Local dev uses MinIO via `docker-compose.yml`
 
-- S3
-  - Local dev uses LocalStack (MinIO alternative) via `docker-compose.test.yml`.
+- **Stripe Webhooks**
+  - `STRIPE_WEBHOOK_SECRET` (required in non-dev): verified with HMAC-SHA256 and timestamp tolerance.
 
 ## API Docs
 

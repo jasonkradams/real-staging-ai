@@ -21,3 +21,11 @@ type Publisher interface {
 	// PublishJobUpdate publishes a minimal status-only payload for a given image.
 	PublishJobUpdate(ctx context.Context, ev JobUpdateEvent) error
 }
+
+// NoopPublisher is a no-op implementation of Publisher for when Redis is not configured.
+type NoopPublisher struct{}
+
+// PublishJobUpdate does nothing and returns no error.
+func (n *NoopPublisher) PublishJobUpdate(_ context.Context, _ JobUpdateEvent) error {
+	return nil
+}

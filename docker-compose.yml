@@ -72,9 +72,12 @@ services:
       - PGPORT=5432
       - PGUSER=postgres
       - REDIS_ADDR=redis:6379
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - REPLICATE_MODEL_VERSION=qwen/qwen-image-edit
       - S3_ACCESS_KEY=minioadmin
-      - S3_BUCKET=virtual-staging
+      - S3_BUCKET_NAME=virtual-staging
       - S3_ENDPOINT=http://minio:9000
+      - S3_PUBLIC_ENDPOINT=http://localhost:9000
       - S3_REGION=us-west-1
       - S3_SECRET_KEY=minioadmin
       - S3_USE_PATH_STYLE=true

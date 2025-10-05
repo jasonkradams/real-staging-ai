@@ -4,22 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/virtual-staging-ai/worker/internal/events"
 	"github.com/virtual-staging-ai/worker/internal/logging"
 	"github.com/virtual-staging-ai/worker/internal/queue"
+	"github.com/virtual-staging-ai/worker/internal/repository"
+	"github.com/virtual-staging-ai/worker/internal/staging"
 )
 
 // ImageProcessor handles image processing jobs.
-type ImageProcessor struct{}
+type ImageProcessor struct {
+	imageRepo      repository.ImageRepository
+	stagingService staging.Service
+	publisher      events.Publisher
+}
 
 // NewImageProcessor creates a new image processor.
-func NewImageProcessor() *ImageProcessor {
-	return &ImageProcessor{}
+func NewImageProcessor(imageRepo repository.ImageRepository, stagingService staging.Service, publisher events.Publisher) *ImageProcessor {
+	return &ImageProcessor{
+		imageRepo:      imageRepo,
+		stagingService: stagingService,
+		publisher:      publisher,
+	}
 }
 
 // JobPayload represents the payload for an image processing job.
@@ -89,47 +99,74 @@ func (p *ImageProcessor) processStageJob(ctx context.Context, job *queue.Job) er
 
 	log.Info(ctx, fmt.Sprintf("Processing stage job for image %s", payload.ImageID))
 
-	// Simulate image processing work
-	// In Phase 1, we create a placeholder staged image
-	stagedURL, err := p.createPlaceholderStagedImage(ctx, &payload)
-	if err != nil {
+	// Mark image as processing
+	if err := p.imageRepo.SetProcessing(ctx, payload.ImageID); err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "create staged image")
-		return fmt.Errorf("failed to create staged image: %w", err)
+		span.SetStatus(codes.Error, "set processing failed")
+		log.Error(ctx, "Failed to mark image as processing", "image_id", payload.ImageID, "error", err)
+		return fmt.Errorf("failed to mark image as processing: %w", err)
 	}
 
-	log.Info(ctx, fmt.Sprintf("Created staged image: %s", stagedURL))
+	// Publish processing status
+	if err := p.publisher.PublishJobUpdate(ctx, events.JobUpdateEvent{
+		ImageID: payload.ImageID,
+		Status:  "processing",
+	}); err != nil {
+		log.Error(ctx, "Failed to publish processing status", "image_id", payload.ImageID, "error", err)
+		// Don't fail the job if SSE publish fails
+	}
 
-	// In a real implementation, this would:
-	// 1. Update the image record in the database with the staged URL
-	// 2. Mark the image status as "ready"
-	// 3. Broadcast an SSE event to notify clients
+	// Stage the image with AI
+	stagedURL, err := p.stagingService.StageImage(ctx, &staging.StagingRequest{
+		ImageID:     payload.ImageID,
+		OriginalURL: payload.OriginalURL,
+		RoomType:    payload.RoomType,
+		Style:       payload.Style,
+		Seed:        payload.Seed,
+	})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "staging failed")
+		log.Error(ctx, "Failed to stage image", "image_id", payload.ImageID, "error", err)
+
+		// Mark image as error
+		if setErr := p.imageRepo.SetError(ctx, payload.ImageID, err.Error()); setErr != nil {
+			log.Error(ctx, "Failed to mark image as error", "image_id", payload.ImageID, "error", setErr)
+		}
+
+		// Publish error status
+		if pubErr := p.publisher.PublishJobUpdate(ctx, events.JobUpdateEvent{
+			ImageID: payload.ImageID,
+			Status:  "error",
+			Error:   err.Error(),
+		}); pubErr != nil {
+			log.Error(ctx, "Failed to publish error status", "image_id", payload.ImageID, "error", pubErr)
+		}
+
+		return fmt.Errorf("failed to stage image: %w", err)
+	}
+
+	log.Info(ctx, fmt.Sprintf("Successfully staged image: %s", stagedURL))
+
+	// Mark image as ready with staged URL
+	if err := p.imageRepo.SetReady(ctx, payload.ImageID, stagedURL); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "set ready failed")
+		log.Error(ctx, "Failed to mark image as ready", "image_id", payload.ImageID, "error", err)
+		return fmt.Errorf("failed to mark image as ready: %w", err)
+	}
+
+	// Publish ready status
+	if err := p.publisher.PublishJobUpdate(ctx, events.JobUpdateEvent{
+		ImageID: payload.ImageID,
+		Status:  "ready",
+	}); err != nil {
+		log.Error(ctx, "Failed to publish ready status", "image_id", payload.ImageID, "error", err)
+		// Don't fail the job if SSE publish fails
+	}
+
+	log.Info(ctx, fmt.Sprintf("Image %s processing complete", payload.ImageID))
+	span.SetStatus(codes.Ok, "processing complete")
 
 	return nil
-}
-
-// createPlaceholderStagedImage creates a placeholder staged image.
-// In Phase 1, this generates a mock staged URL based on the original image.
-func (p *ImageProcessor) createPlaceholderStagedImage(ctx context.Context, payload *JobPayload) (string, error) {
-	tracer := otel.Tracer("virtual-staging-worker/processor")
-	_, span := tracer.Start(ctx, "processor.createPlaceholderStagedImage")
-	span.SetAttributes(
-		attribute.String("image.id", payload.ImageID),
-		attribute.String("image.original_url", payload.OriginalURL),
-	)
-	defer span.End()
-
-	// Simulate processing time
-	time.Sleep(2 * time.Second)
-
-	// Generate a mock staged URL
-	// In a real implementation, this would:
-	// 1. Download the original image from S3
-	// 2. Apply AI staging transformations
-	// 3. Upload the staged image to S3
-	// 4. Return the S3 URL
-
-	stagedURL := fmt.Sprintf("%s-staged.jpg", payload.OriginalURL)
-
-	return stagedURL, nil
 }

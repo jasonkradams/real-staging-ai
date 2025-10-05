@@ -7,6 +7,7 @@ type Project = {
   id: string
   name: string
 }
+
 type ProjectListResponse = {
   projects: Project[]
 }
@@ -14,6 +15,8 @@ type ProjectListResponse = {
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [projectId, setProjectId] = useState("")
+  const [roomType, setRoomType] = useState("")
+  const [style, setStyle] = useState("")
   const [status, setStatus] = useState<string>("")
   const [imageId, setImageId] = useState<string>("")
   const [projects, setProjects] = useState<Project[]>([])
@@ -108,9 +111,16 @@ export default function UploadPage() {
       const originalUrl = `${u.origin}${u.pathname}`
 
       setStatus("Creating image job...")
+      const body: { project_id: string; original_url: string; room_type?: string; style?: string } = {
+        project_id: projectId,
+        original_url: originalUrl,
+      }
+      if (roomType) body.room_type = roomType
+      if (style) body.style = style
+
       const created = await apiFetch<{ id: string }>("/v1/images", {
         method: "POST",
-        body: JSON.stringify({ project_id: projectId, original_url: originalUrl }),
+        body: JSON.stringify(body),
       })
 
       setImageId(created.id)
@@ -175,11 +185,52 @@ export default function UploadPage() {
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="block w-full"
+              accept="image/jpeg,image/png,image/webp"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm mb-1">Room Type (optional)</label>
+              <select
+                className="input w-full"
+                value={roomType}
+                onChange={(e) => setRoomType(e.target.value)}
+              >
+                <option value="">Auto-detect</option>
+                <option value="living room">Living Room</option>
+                <option value="bedroom">Bedroom</option>
+                <option value="kitchen">Kitchen</option>
+                <option value="dining room">Dining Room</option>
+                <option value="bathroom">Bathroom</option>
+                <option value="office">Office</option>
+                <option value="entryway">Entryway</option>
+                <option value="outdoor">Outdoor/Patio</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Style (optional)</label>
+              <select
+                className="input w-full"
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+              >
+                <option value="">Default</option>
+                <option value="modern">Modern</option>
+                <option value="contemporary">Contemporary</option>
+                <option value="minimalist">Minimalist</option>
+                <option value="scandinavian">Scandinavian</option>
+                <option value="industrial">Industrial</option>
+                <option value="mid-century modern">Mid-Century Modern</option>
+                <option value="traditional">Traditional</option>
+                <option value="rustic">Rustic</option>
+                <option value="coastal">Coastal</option>
+                <option value="bohemian">Bohemian</option>
+              </select>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button className="btn" type="submit">
-              Upload & Create Image
+              Upload & Stage Image
             </button>
             {status && <span className="text-sm text-gray-600">{status}</span>}
           </div>
