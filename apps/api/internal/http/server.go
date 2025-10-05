@@ -31,7 +31,7 @@ type Server struct {
 }
 
 // NewServer creates and configures a new Echo server.
-func NewServer(db storage.Database, s3Service storage.S3Service, imageService image.Service) *Server {
+func NewServer(db storage.Database, s3Service storage.S3Service, imageService image.Service, auth0Domain, auth0Audience string) *Server {
 	e := echo.New()
 
 	// Add OpenTelemetry middleware
@@ -52,7 +52,7 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	}))
 
 	// Initialize Auth0 config
-	authConfig := auth.NewAuth0Config()
+	authConfig := auth.NewAuth0Config(auth0Domain, auth0Audience)
 
 	imgHandler := image.NewDefaultHandler(imageService)
 

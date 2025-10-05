@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -36,12 +35,12 @@ type Auth0Config struct {
 	Issuer   string
 }
 
-// NewAuth0Config creates Auth0 configuration from environment variables
-func NewAuth0Config() *Auth0Config {
+// NewAuth0Config creates Auth0 configuration from provided values
+func NewAuth0Config(domain, audience string) *Auth0Config {
 	return &Auth0Config{
-		Domain:   os.Getenv("AUTH0_DOMAIN"),
-		Audience: os.Getenv("AUTH0_AUDIENCE"),
-		Issuer:   fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN")),
+		Domain:   domain,
+		Audience: audience,
+		Issuer:   fmt.Sprintf("https://%s/", domain),
 	}
 }
 

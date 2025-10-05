@@ -19,10 +19,7 @@ import (
 )
 
 func TestNewAuth0Config(t *testing.T) {
-	t.Setenv("AUTH0_DOMAIN", "test-domain.auth0.com")
-	t.Setenv("AUTH0_AUDIENCE", "test-audience")
-
-	config := NewAuth0Config()
+	config := NewAuth0Config("test-domain.auth0.com", "test-audience")
 
 	assert.Equal(t, "test-domain.auth0.com", config.Domain)
 	assert.Equal(t, "test-audience", config.Audience)

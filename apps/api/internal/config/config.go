@@ -15,8 +15,11 @@ type Config struct {
 	} `yaml:"app"`
 
 	Auth0 struct {
-		Audience string `yaml:"audience" env:"AUTH0_AUDIENCE"`
-		Domain   string `yaml:"domain" env:"AUTH0_DOMAIN"`
+		Audience     string `yaml:"audience" env:"AUTH0_AUDIENCE"`
+		ClientID     string `yaml:"client_id" env:"AUTH0_CLIENT_ID"`
+		ClientSecret string `yaml:"client_secret" env:"AUTH0_CLIENT_SECRET"`
+		Domain       string `yaml:"domain" env:"AUTH0_DOMAIN"`
+		GrantType    string `yaml:"grant_type" env:"AUTH0_GRANT_TYPE" env-default:"client_credentials"`
 	} `yaml:"auth0"`
 
 	DB struct {

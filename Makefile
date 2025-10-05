@@ -34,20 +34,20 @@ migrate-test: migrate-down-all ## Run database migrations on the test database
 
 migrate-up-all: ## Apply all database migrations on the test database
 	@echo "Applying all database migrations on the test database..."
-	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up
+	docker compose -f docker-compose.test.yml run --remove-orphans --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up
 
 migrate-up: ## Apply one database migration on the test database
 	@echo "Applying one database migration on the test database..."
-	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up $(N)
+	docker compose -f docker-compose.test.yml run --remove-orphans --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable up $(N)
 
 migrate-down-all: ## Rollback all database migrations on the test database.
 	@echo "Rolling back all database migrations on the test database..."
-	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down -all
+	docker compose -f docker-compose.test.yml run --remove-orphans --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down -all
 
 migrate-down: ## Rollback database migrations on the test database. Optional N=x to rollback x migrations.
 	@echo "Rolling back database migrations on the test database..."
 ifdef N
-	docker compose -f docker-compose.test.yml run --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down $(N)
+	docker compose -f docker-compose.test.yml run --remove-orphans --rm -T migrate -path . -database postgres://testuser:testpassword@postgres-test:5432/testdb?sslmode=disable down $(N)
 else
 	$(MAKE) migrate-down-all
 endif
