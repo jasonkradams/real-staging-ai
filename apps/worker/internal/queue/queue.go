@@ -117,7 +117,11 @@ func NewAsynqQueueClient(cfg *config.Config) (*AsynqQueueClient, error) {
 	mux := asynq.NewServeMux()
 	// Register exact task type used by the API enqueuer.
 	// Wildcards are not supported by asynq mux.
+	logger.Info(context.Background(), "Registering asynq handler", "task_type", "stage:run")
+
 	mux.HandleFunc("stage:run", func(ctx context.Context, t *asynq.Task) error {
+		logger.Info(ctx, "=== ASYNQ HANDLER CALLED ===", "task_type", t.Type())
+
 		// Create a local job id to correlate completion/failure.
 		jobID := fmt.Sprintf("%d", time.Now().UnixNano())
 		jb := &Job{
@@ -132,8 +136,7 @@ func NewAsynqQueueClient(cfg *config.Config) (*AsynqQueueClient, error) {
 		c.mu.Unlock()
 
 		// Deliver job to consumer
-		logger := logging.Default()
-		logger.Info(ctx, "asynq task received", "task_type", t.Type(), "job_id", jobID)
+		logger.Info(ctx, "asynq task received, delivering to job channel", "task_type", t.Type(), "job_id", jobID, "channel_len", len(c.jobs))
 		select {
 		case c.jobs <- jb:
 		case <-ctx.Done():

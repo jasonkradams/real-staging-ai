@@ -90,7 +90,7 @@ func TestEndToEnd_ImageLifecycle_SSE_Error(t *testing.T) {
 		wctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		qc, err := workerQueue.NewAsynqQueueClientFromEnv()
+		qc, err := workerQueue.NewAsynqQueueClient(&cfg)
 		if err != nil {
 			return
 		}
@@ -273,7 +273,7 @@ func TestEndToEnd_ImageLifecycle_SSE(t *testing.T) {
 		defer cancel()
 
 		// Queue client (asynq-backed)
-		qc, err := workerQueue.NewAsynqQueueClientFromEnv()
+		qc, err := workerQueue.NewAsynqQueueClient(&cfg)
 		if err != nil {
 			return
 		}

@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/virtual-staging-ai/worker/internal/config"
 	"github.com/virtual-staging-ai/worker/internal/logging"
 )
 
@@ -25,11 +26,19 @@ type Options struct {
 	MaxDelay    time.Duration
 }
 
-// NewDefaultPublisherFromEnv returns a Redis-backed publisher if REDIS_ADDR is set.
-func NewDefaultPublisherFromEnv() (Publisher, error) {
+// NewDefaultPublisher returns a Redis-backed publisher if REDIS_ADDR is set.
+func NewDefaultPublisher(cfg *config.Config) (Publisher, error) {
+	if cfg == nil {
+		return nil, errors.New("config is nil")
+	}
+
+	// Pull from config if env is not available
 	addr := os.Getenv("REDIS_ADDR")
+	if addr == "" && cfg.Redis.Addr != "" {
+		addr = cfg.Redis.Addr
+	}
 	if addr == "" {
-		return nil, errors.New("REDIS_ADDR not set")
+		return nil, errors.New("redis address is not set. Please set REDIS_ADDR or configure Redis in config file")
 	}
 	rdb := redis.NewClient(&redis.Options{Addr: addr})
 	return NewDefaultPublisherWithClient(rdb, Options{}), nil

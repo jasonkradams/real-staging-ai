@@ -9,17 +9,23 @@ import (
 	redis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/virtual-staging-ai/worker/internal/config"
 )
 
-func TestNewDefaultPublisherFromEnv_MissingEnv(t *testing.T) {
+func TestNewDefaultPublisher_MissingEnv(t *testing.T) {
 	// Ensure REDIS_ADDR is unset
 	t.Setenv("REDIS_ADDR", "")
 
-	_, err := NewDefaultPublisherFromEnv()
+	_, err := NewDefaultPublisher(&config.Config{})
 	require.Error(t, err, "expected error when REDIS_ADDR is not set")
 }
 
 func TestRedisPublisher_PublishJobUpdate_SendsStatusOnly(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	require.NoError(t, err)
+
 	// Start in-memory Redis
 	mr := miniredis.RunT(t)
 	defer mr.Close()
@@ -28,7 +34,7 @@ func TestRedisPublisher_PublishJobUpdate_SendsStatusOnly(t *testing.T) {
 	t.Setenv("REDIS_ADDR", mr.Addr())
 
 	// Build publisher from env
-	pub, err := NewDefaultPublisherFromEnv()
+	pub, err := NewDefaultPublisher(cfg)
 	require.NoError(t, err)
 
 	// Create a Redis client for subscribing
@@ -80,11 +86,15 @@ func TestRedisPublisher_PublishJobUpdate_SendsStatusOnly(t *testing.T) {
 }
 
 func TestRedisPublisher_PublishJobUpdate_DifferentImageChannel(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	require.NoError(t, err)
+
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
 	t.Setenv("REDIS_ADDR", mr.Addr())
-	pub, err := NewDefaultPublisherFromEnv()
+	pub, err := NewDefaultPublisher(cfg)
 	require.NoError(t, err)
 
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})

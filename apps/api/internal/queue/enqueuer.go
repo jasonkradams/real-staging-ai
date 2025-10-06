@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -64,37 +65,32 @@ type AsynqEnqueuer struct {
 	defaultQueue string
 }
 
-// NewAsynqEnqueuer constructs an AsynqEnqueuer with the provided Redis address
-// and default queue name.
-//
-// Example addr: "localhost:6379"
-func NewAsynqEnqueuer(addr string, defaultQueue string) (*AsynqEnqueuer, error) {
-	if addr == "" {
-		return nil, errors.New("redis addr is required")
-	}
-	if defaultQueue == "" {
-		defaultQueue = "default"
-	}
-	client := asynq.NewClient(asynq.RedisClientOpt{Addr: addr})
-	return &AsynqEnqueuer{
-		client:       client,
-		defaultQueue: defaultQueue,
-	}, nil
-}
-
 // NewAsynqEnqueuerFromEnv creates an enqueuer using environment variables.
 // - REDIS_ADDR: required (e.g., "localhost:6379")
 // - JOB_QUEUE_NAME: optional (defaults to "default")
-func NewAsynqEnqueuerFromEnv() (*AsynqEnqueuer, error) {
+func NewAsynqEnqueuerFromEnv(cfg *config.Config) (*AsynqEnqueuer, error) {
+	if cfg == nil {
+		return nil, errors.New("config is nil")
+	}
+
 	addr := os.Getenv("REDIS_ADDR")
 	if addr == "" {
-		return nil, errors.New("REDIS_ADDR not set")
+		addr = cfg.Redis.Addr
 	}
+	if addr == "" {
+		return nil, errors.New("redis address is not configured. Please set REDIS_ADDR environment variable or configure in config file")
+	}
+
 	q := os.Getenv("JOB_QUEUE_NAME")
 	if q == "" {
-		q = "default"
+		q = cfg.Job.QueueName
 	}
-	return NewAsynqEnqueuer(addr, q)
+
+	client := asynq.NewClient(asynq.RedisClientOpt{Addr: addr})
+	return &AsynqEnqueuer{
+		client:       client,
+		defaultQueue: q,
+	}, nil
 }
 
 // EnqueueStageRun enqueues a stage:run task with the provided payload.

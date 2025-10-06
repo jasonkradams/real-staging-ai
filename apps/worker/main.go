@@ -88,7 +88,7 @@ func main() {
 
 	// Initialize events publisher (Redis) if configured
 	var pub events.Publisher
-	if p, err := events.NewDefaultPublisherFromEnv(); err == nil {
+	if p, err := events.NewDefaultPublisher(cfg); err == nil {
 		pub = p
 		log.Info(ctx, "Events publisher enabled")
 	} else {
@@ -116,6 +116,8 @@ func main() {
 
 	// Start processing jobs
 	go func() {
+		log.Info(ctx, "Job polling loop started")
+		pollCount := 0
 		for {
 			select {
 			case <-ctx.Done():
@@ -132,9 +134,16 @@ func main() {
 
 				if job == nil {
 					// No jobs available, wait a bit
+					pollCount++
+					if pollCount%30 == 0 {
+						log.Info(ctx, "Still polling for jobs...", "poll_count", pollCount)
+					}
 					time.Sleep(2 * time.Second)
 					continue
 				}
+
+				// Reset counter when job is found
+				pollCount = 0
 
 				// Process the job
 				log.Info(ctx, fmt.Sprintf("Processing job %s of type %s", job.ID, job.Type))

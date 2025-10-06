@@ -95,6 +95,8 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	}
 
 	var response ProjectListResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, len(response.Projects), 1)
 	found := false
 	for _, p := range response.Projects {

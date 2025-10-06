@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/job"
 	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/queue"
@@ -21,10 +22,10 @@ type DefaultService struct {
 }
 
 // NewDefaultService creates a new DefaultService instance.
-func NewDefaultService(imageRepo Repository, jobRepo job.Repository) *DefaultService {
-	// Best-effort build an enqueuer from env; fall back to Noop if not configured.
+func NewDefaultService(cfg *config.Config, imageRepo Repository, jobRepo job.Repository) *DefaultService {
+	// Best-effort build an enqueuer from env or config; fall back to Noop if not configured.
 	var enq queue.Enqueuer
-	if e, err := queue.NewAsynqEnqueuerFromEnv(); err == nil {
+	if e, err := queue.NewAsynqEnqueuerFromEnv(cfg); err == nil {
 		enq = e
 	} else {
 		enq = queue.NoopEnqueuer{}

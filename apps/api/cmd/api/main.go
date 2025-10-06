@@ -46,7 +46,7 @@ func main() {
 	imageRepo := image.NewDefaultRepository(db)
 	jobRepo := job.NewDefaultRepository(db)
 	log.Info(ctx, fmt.Sprintf("Setting up image service (queue: %s)", cfg.Job.QueueName))
-	imageService := image.NewDefaultService(imageRepo, jobRepo)
+	imageService := image.NewDefaultService(cfg, imageRepo, jobRepo)
 
 	s := http.NewServer(db, s3Service, imageService, cfg.Auth0.Domain, cfg.Auth0.Audience)
 	if err := s.Start(":8080"); err != nil {

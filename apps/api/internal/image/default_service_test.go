@@ -10,20 +10,32 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/job"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
 func TestNewDefaultService(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Run("success: create new default service", func(t *testing.T) {
 		imageRepo := &RepositoryMock{}
 		jobRepo := &job.RepositoryMock{}
-		service := NewDefaultService(imageRepo, jobRepo)
+		service := NewDefaultService(cfg, imageRepo, jobRepo)
 		assert.NotNil(t, service)
 	})
 }
 
 func TestDefaultService_CreateImage(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	projectID := uuid.New()
 	imageID := uuid.New()
 
@@ -136,7 +148,7 @@ func TestDefaultService_CreateImage(t *testing.T) {
 			jobRepo := &job.RepositoryMock{}
 			tc.setupMocks(imageRepo, jobRepo)
 
-			service := NewDefaultService(imageRepo, jobRepo)
+			service := NewDefaultService(cfg, imageRepo, jobRepo)
 
 			if tc.name == "fail: json marshal error" {
 				jsonMarshal = func(v interface{}) ([]byte, error) {
@@ -165,6 +177,12 @@ func TestDefaultService_CreateImage(t *testing.T) {
 }
 
 func TestDefaultService_GetImageByID(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	imageID := uuid.New()
 
 	testCases := []struct {
@@ -246,7 +264,7 @@ func TestDefaultService_GetImageByID(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			image, err := service.GetImageByID(context.Background(), tc.imageID)
 
 			if tc.expectedErr != nil {
@@ -277,6 +295,12 @@ func TestDefaultService_GetImageByID(t *testing.T) {
 }
 
 func TestDefaultService_GetImagesByProjectID(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -325,7 +349,7 @@ func TestDefaultService_GetImagesByProjectID(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			images, err := service.GetImagesByProjectID(context.Background(), tc.projectID)
 
 			if tc.expectedErr != nil {
@@ -340,6 +364,12 @@ func TestDefaultService_GetImagesByProjectID(t *testing.T) {
 }
 
 func TestDefaultService_UpdateImageStatus(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	imageID := uuid.New()
 
 	testCases := []struct {
@@ -388,7 +418,7 @@ func TestDefaultService_UpdateImageStatus(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			image, err := service.UpdateImageStatus(context.Background(), tc.imageID, tc.status)
 
 			if tc.expectedErr != nil {
@@ -403,6 +433,12 @@ func TestDefaultService_UpdateImageStatus(t *testing.T) {
 }
 
 func TestDefaultService_UpdateImageWithStagedURL(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	imageID := uuid.New()
 
 	testCases := []struct {
@@ -458,7 +494,7 @@ func TestDefaultService_UpdateImageWithStagedURL(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			image, err := service.UpdateImageWithStagedURL(context.Background(), tc.imageID, tc.stagedURL)
 
 			if tc.expectedErr != nil {
@@ -473,6 +509,12 @@ func TestDefaultService_UpdateImageWithStagedURL(t *testing.T) {
 }
 
 func TestDefaultService_UpdateImageWithError(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	imageID := uuid.New()
 
 	testCases := []struct {
@@ -528,7 +570,7 @@ func TestDefaultService_UpdateImageWithError(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			image, err := service.UpdateImageWithError(context.Background(), tc.imageID, tc.errorMsg)
 
 			if tc.expectedErr != nil {
@@ -543,6 +585,12 @@ func TestDefaultService_UpdateImageWithError(t *testing.T) {
 }
 
 func TestDefaultService_DeleteImage(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	imageID := uuid.New()
 
 	testCases := []struct {
@@ -584,7 +632,7 @@ func TestDefaultService_DeleteImage(t *testing.T) {
 			imageRepo := &RepositoryMock{}
 			tc.setupMocks(imageRepo)
 
-			service := NewDefaultService(imageRepo, nil)
+			service := NewDefaultService(cfg, imageRepo, nil)
 			err := service.DeleteImage(context.Background(), tc.imageID)
 
 			if tc.expectedErr != nil {

@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/virtual-staging-ai/api/internal/config"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/job"
@@ -80,13 +81,15 @@ func startAsynqWorker(t *testing.T, db storage.Database, emitError bool) (stop f
 func text(s string) pgtype.Text { return pgtype.Text{String: s, Valid: true} }
 
 func newAPITestServer(t *testing.T, db *storage.DefaultDatabase) (*httptest.Server, storage.S3Service) {
+	cfg, err := config.Load()
+	require.NoError(t, err)
 	ctx := context.Background()
 	s3 := SetupTestS3Service(t, ctx)
 	s3.Cfg.BucketName = "vsa-it-bucket"
 
 	imgRepo := image.NewDefaultRepository(db)
 	jobRepo := job.NewDefaultRepository(db)
-	imgSvc := image.NewDefaultService(imgRepo, jobRepo)
+	imgSvc := image.NewDefaultService(cfg, imgRepo, jobRepo)
 
 	srv := httpLib.NewTestServer(db, s3, imgSvc)
 	return httptest.NewServer(srv), s3

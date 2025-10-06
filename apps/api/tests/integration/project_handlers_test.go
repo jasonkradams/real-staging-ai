@@ -147,7 +147,6 @@ func TestCreateProject_Handlers(t *testing.T) {
 			// Setup clean database state
 			TruncateAllTables(ctx, db.Pool())
 			SeedDatabase(ctx, db.Pool())
-
 			s3ServiceMock := SetupTestS3Service(t, context.Background())
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
@@ -157,7 +156,8 @@ func TestCreateProject_Handlers(t *testing.T) {
 			if str, ok := tc.requestBody.(string); ok {
 				body = []byte(str)
 			} else {
-				_, err := json.Marshal(tc.requestBody)
+				var err error
+				body, err = json.Marshal(tc.requestBody)
 				require.NoError(t, err)
 			}
 
