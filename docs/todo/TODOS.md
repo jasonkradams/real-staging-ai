@@ -90,12 +90,17 @@ This document outlines the systematic plan and checklist to implement the Virtua
 
 ## Milestone 4: Frontend Implementation (Next.js)
 
-- [ ] Set up a new Next.js application in `/apps/web`
-- [ ] Implement user authentication with Auth0
-- [ ] Implement the image upload flow
+- [x] Set up a new Next.js application in `/apps/web`
+- [x] Implement user authentication with Auth0
+- [x] Implement the image upload flow
 - [ ] Implement a dashboard to view projects and images
 - [ ] Implement the checkout flow with Stripe
 - [ ] Implement real-time updates for image status
+- [ ] **Prompt Tuning UI**: Expose image generation prompt properties (room_type, style, guidance, etc.) in the UI for testing and tuning Replicate model parameters
+  - [ ] Add form controls for room type, style, and other staging parameters
+  - [ ] Display current prompt configuration before submitting
+  - [ ] Allow users to save/load prompt presets
+  - [ ] Show prompt property explanations/tooltips for discoverability
 
 ## Milestone 5: Testing
 
