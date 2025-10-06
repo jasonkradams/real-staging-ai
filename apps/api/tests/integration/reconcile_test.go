@@ -12,23 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/virtual-staging-ai/api/internal/reconcile"
-	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestReconcileImages_Integration(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup database
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
 	// Setup S3 service (LocalStack)
-	s3Service, err := storage.NewDefaultS3Service(ctx, "virtual-staging")
-	require.NoError(t, err)
+	s3Service := SetupTestS3Service(t, ctx)
 
 	// Create service
 	svc := reconcile.NewDefaultService(db, s3Service)
@@ -39,21 +36,18 @@ func TestReconcileImages_Integration(t *testing.T) {
 		projectID := uuid.New()
 		imageID := uuid.New()
 
-		_, err := db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
 			userID, "auth0|test-reconcile-1")
-		require.NoError(t, err)
 
-		_, err = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3)`,
 			projectID, userID, "Test Project Reconcile")
-		require.NoError(t, err)
 
 		// Insert image with original_url that doesn't exist in S3
 		originalURL := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", imageID)
-		_, err = db.Pool().Exec(ctx, `
+		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)
 			VALUES ($1, $2, $3, 'queued', NOW(), NOW())`,
 			imageID, projectID, originalURL)
-		require.NoError(t, err)
 
 		// Run reconciliation
 		result, err := svc.ReconcileImages(ctx, reconcile.ReconcileOptions{
@@ -85,21 +79,18 @@ func TestReconcileImages_Integration(t *testing.T) {
 		projectID := uuid.New()
 		imageID := uuid.New()
 
-		_, err := db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
 			userID, "auth0|test-reconcile-2")
-		require.NoError(t, err)
 
-		_, err = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3)`,
 			projectID, userID, "Test Project Reconcile 2")
-		require.NoError(t, err)
 
 		// Insert image with original_url that doesn't exist
 		originalURL := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", imageID)
-		_, err = db.Pool().Exec(ctx, `
+		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)
 			VALUES ($1, $2, $3, 'queued', NOW(), NOW())`,
 			imageID, projectID, originalURL)
-		require.NoError(t, err)
 
 		// Run reconciliation in dry-run mode
 		result, err := svc.ReconcileImages(ctx, reconcile.ReconcileOptions{
@@ -135,23 +126,20 @@ func TestReconcileImages_Integration(t *testing.T) {
 		image1 := uuid.New()
 		image2 := uuid.New()
 
-		_, err := db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO users (id, auth0_sub) VALUES ($1, $2)`,
 			userID, "auth0|test-reconcile-3")
-		require.NoError(t, err)
 
-		_, err = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3), ($4, $2, $5)`,
+		_, _ = db.Pool().Exec(ctx, `INSERT INTO projects (id, user_id, name) VALUES ($1, $2, $3), ($4, $2, $5)`,
 			project1, userID, "Project 1", project2, "Project 2")
-		require.NoError(t, err)
 
 		// Insert images for both projects
 		originalURL1 := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", image1)
 		originalURL2 := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", image2)
 
-		_, err = db.Pool().Exec(ctx, `
+		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)
 			VALUES ($1, $2, $3, 'queued', NOW(), NOW()), ($4, $5, $6, 'queued', NOW(), NOW())`,
 			image1, project1, originalURL1, image2, project2, originalURL2)
-		require.NoError(t, err)
 
 		// Run reconciliation filtered by project1
 		projectIDStr := project1.String()

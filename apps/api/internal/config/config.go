@@ -9,54 +9,65 @@ import (
 )
 
 // Config represents the application configuration.
+
 type Config struct {
-	App struct {
-		Env string `yaml:"env" env:"APP_ENV" env-default:"dev"`
-	} `yaml:"app"`
+	App     App     `yaml:"app"`
+	Auth0   Auth0   `yaml:"auth0"`
+	DB      DB      `yaml:"db"`
+	Job     Job     `yaml:"job"`
+	Logging Logging `yaml:"logging"`
+	OTEL    OTEL    `yaml:"otel"`
+	Redis   Redis   `yaml:"redis"`
+	S3      S3      `yaml:"s3"`
+}
 
-	Auth0 struct {
-		Audience     string `yaml:"audience" env:"AUTH0_AUDIENCE"`
-		ClientID     string `yaml:"client_id" env:"AUTH0_CLIENT_ID"`
-		ClientSecret string `yaml:"client_secret" env:"AUTH0_CLIENT_SECRET"`
-		Domain       string `yaml:"domain" env:"AUTH0_DOMAIN"`
-		GrantType    string `yaml:"grant_type" env:"AUTH0_GRANT_TYPE" env-default:"client_credentials"`
-	} `yaml:"auth0"`
+type App struct {
+	Env string `yaml:"env" env:"APP_ENV" env-default:"dev"`
+}
 
-	DB struct {
-		PGDatabase string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
-		PGHost     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
-		PGPassword string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
-		PGPort     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
-		PGUser     string `yaml:"pguser" env:"PGUSER" env-default:"postgres"`
-		PGSSLMode  string `yaml:"pgsslmode" env:"PGSSLMODE" env-default:"disable"`
-	} `yaml:"db"`
+type Auth0 struct {
+	Audience     string `yaml:"audience" env:"AUTH0_AUDIENCE"`
+	ClientID     string `yaml:"client_id" env:"AUTH0_CLIENT_ID"`
+	ClientSecret string `yaml:"client_secret" env:"AUTH0_CLIENT_SECRET"`
+	Domain       string `yaml:"domain" env:"AUTH0_DOMAIN"`
+	GrantType    string `yaml:"grant_type" env:"AUTH0_GRANT_TYPE" env-default:"client_credentials"`
+}
 
-	Job struct {
-		QueueName         string `yaml:"queue_name" env:"JOB_QUEUE_NAME" env-default:"default"`
-		WorkerConcurrency int    `yaml:"worker_concurrency" env:"WORKER_CONCURRENCY" env-default:"5"`
-	} `yaml:"job"`
+type DB struct {
+	URL      string `yaml:"url" env:"DATABASE_URL"` // Full connection URL (takes precedence)
+	Database string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
+	Host     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
+	Password string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
+	Port     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
+	User     string `yaml:"pguser" env:"PGUSER" env-default:"postgres"`
+	SSLMode  string `yaml:"pgsslmode" env:"PGSSLMODE" env-default:"disable"`
+}
 
-	Logging struct {
-		Level string `yaml:"level" env:"LOG_LEVEL" env-default:"info"`
-	} `yaml:"logging"`
+type Job struct {
+	QueueName         string `yaml:"queue_name" env:"JOB_QUEUE_NAME" env-default:"default"`
+	WorkerConcurrency int    `yaml:"worker_concurrency" env:"WORKER_CONCURRENCY" env-default:"5"`
+}
 
-	OTEL struct {
-		ExporterOTLPEndpoint string `yaml:"exporter_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	} `yaml:"otel"`
+type Logging struct {
+	Level string `yaml:"level" env:"LOG_LEVEL" env-default:"info"`
+}
 
-	Redis struct {
-		Addr string `yaml:"addr" env:"REDIS_ADDR"`
-	} `yaml:"redis"`
+type OTEL struct {
+	ExporterOTLPEndpoint string `yaml:"exporter_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+}
 
-	S3 struct {
-		AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
-		BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
-		Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
-		PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
-		Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`
-		SecretKey      string `yaml:"secret_key" env:"S3_SECRET_KEY"`
-		UsePathStyle   bool   `yaml:"use_path_style" env:"S3_USE_PATH_STYLE"`
-	} `yaml:"s3"`
+type Redis struct {
+	Addr string `yaml:"addr" env:"REDIS_ADDR"`
+}
+
+type S3 struct {
+	AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
+	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
+	Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
+	PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
+	Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`
+	SecretKey      string `yaml:"secret_key" env:"S3_SECRET_KEY"`
+	UsePathStyle   bool   `yaml:"use_path_style" env:"S3_USE_PATH_STYLE"`
 }
 
 // Load loads configuration from YAML files based on APP_ENV.
@@ -113,21 +124,12 @@ func Load() (*Config, error) {
 
 // DatabaseURL constructs and returns the full PostgreSQL connection URL.
 func (c *Config) DatabaseURL() string {
-	// Check if DATABASE_URL is set in environment
-	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		return dbURL
+	// Use URL if set, otherwise construct from individual components
+	if c.DB.URL != "" {
+		return c.DB.URL
 	}
 
 	// Construct from individual components
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.DB.PGUser, c.DB.PGPassword, c.DB.PGHost, c.DB.PGPort, c.DB.PGDatabase, c.DB.PGSSLMode)
-}
-
-// S3Bucket returns the S3 bucket name, supporting legacy S3_BUCKET env var.
-func (c *Config) S3Bucket() string {
-	// Support legacy S3_BUCKET environment variable
-	if bucket := os.Getenv("S3_BUCKET"); bucket != "" {
-		return bucket
-	}
-	return c.S3.BucketName
+		c.DB.User, c.DB.Password, c.DB.Host, c.DB.Port, c.DB.Database, c.DB.SSLMode)
 }

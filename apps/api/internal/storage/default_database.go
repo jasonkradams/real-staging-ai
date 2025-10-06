@@ -11,6 +11,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/virtual-staging-ai/api/internal/config"
 )
 
 // DefaultDatabase wraps the pgx connection pool with tracing
@@ -19,23 +21,21 @@ type DefaultDatabase struct {
 	tracer trace.Tracer
 }
 
-// NewDefaultDatabase creates a new database connection with OpenTelemetry instrumentation
-func NewDefaultDatabase() (*DefaultDatabase, error) {
+// NewDefaultDatabase creates a new database connection with OpenTelemetry instrumentation.
+func NewDefaultDatabase(cfg *config.DB) (*DefaultDatabase, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("database config is required")
+	}
+
 	ctx := context.Background()
 
-	// Get database URL from environment
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		// Construct from individual components
-		host := getEnvOrDefault("PGHOST", "localhost")
-		port := getEnvOrDefault("PGPORT", "5432")
-		user := getEnvOrDefault("PGUSER", "postgres")
-		password := getEnvOrDefault("PGPASSWORD", "postgres")
-		dbname := getEnvOrDefault("PGDATABASE", "virtualstaging")
-		sslmode := getEnvOrDefault("PGSSLMODE", "disable")
-
-		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-			user, password, host, port, dbname, sslmode)
+	// Use URL if provided, otherwise construct from components
+	var dbURL string
+	if cfg.URL != "" {
+		dbURL = cfg.URL
+	} else {
+		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database, cfg.SSLMode)
 	}
 
 	// Create connection pool

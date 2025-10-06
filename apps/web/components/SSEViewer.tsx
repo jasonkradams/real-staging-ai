@@ -34,8 +34,9 @@ export default function SSEViewer({ initialImageId, onStatus }: SSEViewerProps =
       esRef.current.close();
       esRef.current = null;
     }
-    const base = process.env.NEXT_PUBLIC_API_BASE || "/api";
-    let url = `${base}/v1/events?image_id=${encodeURIComponent(imageId)}`;
+    // EventSource doesn't work with Next.js rewrites, so use direct API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    let url = `${apiUrl}/api/v1/events?image_id=${encodeURIComponent(imageId)}`;
     
     // Fetch access token from Auth0 session (EventSource can't set headers)
     if (typeof window !== "undefined") {

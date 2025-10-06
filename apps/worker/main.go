@@ -48,9 +48,11 @@ func main() {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to open database: %v", err))
+		os.Exit(1)
 	}
 	if err := db.PingContext(ctx); err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to connect to database: %v", err))
+		os.Exit(1)
 	}
 
 	defer func() {
@@ -61,8 +63,19 @@ func main() {
 
 	imgRepo := repository.NewImageRepository(db)
 
-	// Initialize the staging service
-	stagingService, err := staging.NewDefaultService(ctx)
+	// Initialize the staging service with config
+	stagingCfg := &staging.ServiceConfig{
+		BucketName:     cfg.S3Bucket(),
+		ReplicateToken: cfg.Replicate.APIToken,
+		ModelVersion:   cfg.Replicate.ModelVersion,
+		S3Endpoint:     cfg.S3.Endpoint,
+		S3Region:       cfg.S3.Region,
+		S3AccessKey:    cfg.S3.AccessKey,
+		S3SecretKey:    cfg.S3.SecretKey,
+		S3UsePathStyle: cfg.S3.UsePathStyle,
+		AppEnv:         cfg.App.Env,
+	}
+	stagingService, err := staging.NewDefaultService(ctx, stagingCfg)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to initialize staging service: %v", err))
 		os.Exit(1)
@@ -93,12 +106,12 @@ func main() {
 	queueName := cfg.Job.QueueName
 	concurrency := cfg.Job.WorkerConcurrency
 	log.Info(ctx, "Queue configuration", "redis_addr", redisAddr, "queue", queueName, "concurrency", concurrency)
-	if qc, err := queue.NewAsynqQueueClientFromEnv(); err == nil {
+	if qc, err := queue.NewAsynqQueueClient(cfg); err == nil {
 		queueClient = qc
 		log.Info(ctx, "Using Asynq queue backend")
 	} else {
 		queueClient = queue.NewMockQueueClient()
-		log.Info(ctx, "Using mock queue backend (no REDIS_ADDR configured)")
+		log.Info(ctx, "Using mock queue backend (no Redis Address configured)")
 	}
 
 	// Start processing jobs

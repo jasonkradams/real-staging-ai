@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/reconcile"
 	"github.com/virtual-staging-ai/api/internal/storage"
@@ -27,8 +28,15 @@ func main() {
 
 	logger.Info(ctx, "starting reconciliation CLI")
 
-	// Initialize database
-	db, err := storage.NewDefaultDatabase()
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Error(ctx, "failed to load configuration", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to load configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	db, err := storage.NewDefaultDatabase(&cfg.DB)
 	if err != nil {
 		logger.Error(ctx, "failed to connect to database", "error", err)
 		fmt.Fprintf(os.Stderr, "Error: failed to connect to database: %v\n", err)
@@ -38,15 +46,10 @@ func main() {
 
 	logger.Debug(ctx, "database connection established")
 
-	// Initialize S3 service
-	bucketName := os.Getenv("S3_BUCKET")
-	if bucketName == "" {
-		bucketName = "virtual-staging"
-	}
-	logger.Debug(ctx, "initializing S3 service", "bucket", bucketName)
-	s3Service, err := storage.NewDefaultS3Service(ctx, bucketName)
+	logger.Debug(ctx, "initializing S3 service", "bucket", cfg.S3.BucketName)
+	s3Service, err := storage.NewDefaultS3Service(ctx, &cfg.S3)
 	if err != nil {
-		logger.Error(ctx, "failed to initialize S3 service", "error", err, "bucket", bucketName)
+		logger.Error(ctx, "failed to initialize S3 service", "error", err, "bucket", cfg.S3.BucketName)
 		fmt.Fprintf(os.Stderr, "Error: failed to initialize S3 service: %v\n", err)
 		os.Exit(1)
 	}
@@ -74,7 +77,7 @@ func main() {
 		"project_id", opts.ProjectID,
 		"status", opts.Status,
 	)
-	
+
 	fmt.Printf("Starting reconciliation (dry_run=%v, batch_size=%d, concurrency=%d)\n", *dryRun, *batchSize, *concurrency)
 	if opts.ProjectID != nil {
 		fmt.Printf("  Filtering by project_id: %s\n", *opts.ProjectID)

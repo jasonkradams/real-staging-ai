@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/virtual-staging-ai/api/internal/config"
 )
 
 func TestGetEnvOrDefault(t *testing.T) {
@@ -110,7 +112,11 @@ func TestNewDefaultDatabase_EnvironmentVariables(t *testing.T) {
 				t.Setenv("DATABASE_URL", "")
 			}
 
-			db, err := NewDefaultDatabase()
+			// Load config which reads from environment
+			cfg, cfgErr := config.Load()
+			require.NoError(t, cfgErr)
+
+			db, err := NewDefaultDatabase(&cfg.DB)
 
 			// Be resilient: environments may or may not have a reachable Postgres.
 			// Accept either outcome and assert accordingly.

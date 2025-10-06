@@ -33,6 +33,7 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       - APP_ENV=dev
+      - CONFIG_DIR=/config
     volumes:
       - ./config:/config:ro
       - ./apps/api/secrets.yml:/app/secrets.yml:ro
@@ -50,6 +51,7 @@ services:
       dockerfile: apps/worker/Dockerfile
     environment:
       - APP_ENV=dev
+      - CONFIG_DIR=/config
     volumes:
       - ./config:/config:ro
       - ./apps/worker/secrets.yml:/app/secrets.yml:ro

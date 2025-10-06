@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/virtual-staging-ai/api/internal/config"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/logging"
@@ -27,16 +28,20 @@ func TestMain(m *testing.M) {
 	// Set APP_ENV to test to ensure the correct S3 configuration is used.
 	os.Setenv("APP_ENV", "test")
 	if os.Getenv("RUN_S3_INTEGRATION_TESTS") == "1" {
-		if err := setupS3(); err != nil {
+		// Setup S3 for integration tests - can't use SetupTestS3Service here as we don't have *testing.T
+		if err := setupS3ForTestMain(ctx); err != nil {
 			log.Error(ctx, fmt.Sprintf("Failed to set up S3: %v", err))
 		}
 	}
 	os.Exit(m.Run())
 }
 
-func setupS3() error {
-	ctx := context.Background()
-	s3Service, err := storage.NewDefaultS3Service(ctx, "test-bucket")
+func setupS3ForTestMain(ctx context.Context) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	s3Service, err := storage.NewDefaultS3Service(ctx, &cfg.S3)
 	if err != nil {
 		return fmt.Errorf("failed to create s3 service: %w", err)
 	}
@@ -56,8 +61,7 @@ type PresignUploadResponse struct {
 }
 
 func TestPresignUpload(t *testing.T) {
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	testCases := []struct {
@@ -287,8 +291,7 @@ func TestPresignUpload(t *testing.T) {
 			TruncateAllTables(context.Background(), db.Pool())
 			SeedDatabase(context.Background(), db.Pool())
 
-			s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
-			require.NoError(t, err)
+			s3ServiceMock := SetupTestS3Service(t, context.Background())
 			imageServiceMock := &image.ServiceMock{}
 			server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
@@ -297,6 +300,7 @@ func TestPresignUpload(t *testing.T) {
 			if str, ok := tc.requestBody.(string); ok {
 				body = []byte(str)
 			} else {
+				var err error
 				body, err = json.Marshal(tc.requestBody)
 				require.NoError(t, err)
 			}
@@ -332,15 +336,13 @@ func TestPresignUpload(t *testing.T) {
 
 func TestPresignUpload_ValidationErrorDetails(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	s3ServiceMock, err := storage.NewDefaultS3Service(ctx, "test-bucket")
-	require.NoError(t, err)
+	s3ServiceMock := SetupTestS3Service(t, context.Background())
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
@@ -436,15 +438,13 @@ func TestPresignUpload_Integration(t *testing.T) {
 	t.Skip("Integration test requires AWS S3 setup")
 
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(ctx, db.Pool())
 	SeedDatabase(ctx, db.Pool())
 
-	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
-	require.NoError(t, err)
+	s3ServiceMock := SetupTestS3Service(t, context.Background())
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 

@@ -20,11 +20,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /worker-server ./
 # ---- Runner ----
 FROM alpine:latest
 
+# Set working directory
+WORKDIR /app
+
 # Copy the compiled binary from the builder stage
-COPY --from=builder /worker-server /worker-server
+COPY --from=builder /worker-server /app/worker-server
 
 # Expose the port the application runs on
 EXPOSE 8080
 
 # Set the entrypoint for the container
-ENTRYPOINT ["/worker-server"]
+ENTRYPOINT ["/app/worker-server"]

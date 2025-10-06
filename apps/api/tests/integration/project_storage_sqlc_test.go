@@ -15,8 +15,7 @@ import (
 
 func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -71,8 +70,7 @@ func TestProjectStorageSQLc_CreateProject(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -91,8 +89,7 @@ func TestProjectStorageSQLc_GetProjects(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -150,8 +147,7 @@ func TestProjectStorageSQLc_GetProjectsByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -203,8 +199,7 @@ func TestProjectStorageSQLc_GetProjectByID(t *testing.T) {
 
 func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -258,8 +253,7 @@ func TestProjectStorageSQLc_UpdateProject(t *testing.T) {
 
 func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -326,8 +320,7 @@ func TestProjectStorageSQLc_UpdateProjectByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	testCases := []struct {
@@ -380,8 +373,7 @@ func TestProjectStorageSQLc_DeleteProject(t *testing.T) {
 
 func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	userID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
@@ -451,8 +443,7 @@ func TestProjectStorageSQLc_DeleteProjectByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())
@@ -503,8 +494,7 @@ func TestProjectStorageSQLc_CountProjectsByUserID(t *testing.T) {
 
 func TestProjectStorageSQLc_Integration(t *testing.T) {
 	ctx := context.Background()
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	truncateTables(t, db.Pool())

@@ -16,6 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
+
+	configLib "github.com/virtual-staging-ai/api/internal/config"
 )
 
 // PresignedUploadResult contains the result of generating a presigned upload URL.
@@ -29,24 +31,22 @@ type PresignedUploadResult struct {
 func (s *DefaultS3Service) GeneratePresignedGetURL(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error) {
 	// Choose a client for presigning that uses the public endpoint if set.
 	presignBase := s.client
-	if public := os.Getenv("S3_PUBLIC_ENDPOINT"); public != "" {
-		region := os.Getenv("S3_REGION")
-		if region == "" {
-			region = "us-west-1"
-		}
-		accessKey := os.Getenv("S3_ACCESS_KEY")
-		secretKey := os.Getenv("S3_SECRET_KEY")
+
+	// Use stored config for presign operations
+	if s.Cfg != nil && s.Cfg.PublicEndpoint != "" {
+		publicEndpoint := s.Cfg.PublicEndpoint
+		region := s.Cfg.Region
+		accessKey := s.Cfg.AccessKey
+		secretKey := s.Cfg.SecretKey
+		usePathStyle := s.Cfg.UsePathStyle
 		presignCfg, cfgErr := awsConfigLoader(ctx,
 			config.WithRegion(region),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
 		)
 		if cfgErr == nil {
 			presignBase = s3.NewFromConfig(presignCfg, func(o *s3.Options) {
-				o.BaseEndpoint = aws.String(public)
-				usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
-				if usePath == "" || usePath == "true" || usePath == "1" {
-					o.UsePathStyle = true
-				}
+				o.BaseEndpoint = aws.String(publicEndpoint)
+				o.UsePathStyle = usePathStyle
 			})
 		}
 	}
@@ -58,7 +58,7 @@ func (s *DefaultS3Service) GeneratePresignedGetURL(ctx context.Context, fileKey 
 	}
 
 	input := &s3.GetObjectInput{
-		Bucket: aws.String(s.bucketName),
+		Bucket: aws.String(s.Cfg.BucketName),
 		Key:    aws.String(fileKey),
 	}
 	if contentDisposition != "" {
@@ -77,8 +77,8 @@ func (s *DefaultS3Service) GeneratePresignedGetURL(ctx context.Context, fileKey 
 
 // DefaultS3Service handles S3 operations for file storage.
 type DefaultS3Service struct {
-	client     *s3.Client
-	bucketName string
+	client *s3.Client
+	Cfg    *configLib.S3 // Store config for presign operations
 }
 
 // Ensure DefaultS3Service implements S3Service interface.
@@ -90,9 +90,21 @@ var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptio
 }
 
 // NewDefaultS3Service creates a new DefaultS3Service instance.
-func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Service, error) {
+// s3Cfg must not be nil.
+func NewDefaultS3Service(ctx context.Context, s3Cfg *configLib.S3) (*DefaultS3Service, error) {
+	if s3Cfg == nil {
+		return nil, fmt.Errorf("S3 config is required")
+	}
+
 	var cfg aws.Config
 	var err error
+
+	// Use config values
+	region := s3Cfg.Region
+	endpoint := s3Cfg.Endpoint
+	accessKey := s3Cfg.AccessKey
+	secretKey := s3Cfg.SecretKey
+	usePathStyle := s3Cfg.UsePathStyle
 
 	if os.Getenv("APP_ENV") == "test" {
 		cfg, err = awsConfigLoader(ctx,
@@ -109,20 +121,14 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 		})
 
 		return &DefaultS3Service{
-			client:     client,
-			bucketName: bucketName,
+			client: client,
+			Cfg:    s3Cfg,
 		}, nil
 
 	}
 
 	// If a custom S3 endpoint is provided (e.g., MinIO), configure client for dev/local
-	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
-		region := os.Getenv("S3_REGION")
-		if region == "" {
-			region = "us-west-1"
-		}
-		accessKey := os.Getenv("S3_ACCESS_KEY")
-		secretKey := os.Getenv("S3_SECRET_KEY")
+	if endpoint != "" {
 		cfg, err = awsConfigLoader(ctx,
 			config.WithRegion(region),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -133,16 +139,12 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 
 		client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(endpoint)
-			// default to true if unset
-			usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
-			if usePath == "" || usePath == "true" || usePath == "1" {
-				o.UsePathStyle = true
-			}
+			o.UsePathStyle = usePathStyle
 		})
 
 		return &DefaultS3Service{
-			client:     client,
-			bucketName: bucketName,
+			client: client,
+			Cfg:    s3Cfg,
 		}, nil
 	}
 
@@ -155,8 +157,8 @@ func NewDefaultS3Service(ctx context.Context, bucketName string) (*DefaultS3Serv
 	client := s3.NewFromConfig(cfg)
 
 	return &DefaultS3Service{
-		client:     client,
-		bucketName: bucketName,
+		client: client,
+		Cfg:    s3Cfg,
 	}, nil
 }
 
@@ -168,28 +170,26 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 	uniqueID := uuid.New().String()
 	fileKey := fmt.Sprintf("uploads/%s/%s-%s%s", userID, baseName, uniqueID, fileExt)
 
-	// Choose a client for presigning. If S3_PUBLIC_ENDPOINT is set, use a client
+	// Choose a client for presigning. If public endpoint is set, use a client
 	// with that base endpoint so the URL host is browser-accessible. Provide
 	// static credentials to avoid IMDS.
 	presignBase := s.client
-	if public := os.Getenv("S3_PUBLIC_ENDPOINT"); public != "" {
-		region := os.Getenv("S3_REGION")
-		if region == "" {
-			region = "us-west-1"
-		}
-		accessKey := os.Getenv("S3_ACCESS_KEY")
-		secretKey := os.Getenv("S3_SECRET_KEY")
+
+	// Use stored config for presign operations
+	if s.Cfg != nil && s.Cfg.PublicEndpoint != "" {
+		publicEndpoint := s.Cfg.PublicEndpoint
+		region := s.Cfg.Region
+		accessKey := s.Cfg.AccessKey
+		secretKey := s.Cfg.SecretKey
+		usePathStyle := s.Cfg.UsePathStyle
 		presignCfg, cfgErr := awsConfigLoader(ctx,
 			config.WithRegion(region),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
 		)
 		if cfgErr == nil {
 			presignBase = s3.NewFromConfig(presignCfg, func(o *s3.Options) {
-				o.BaseEndpoint = aws.String(public)
-				usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
-				if usePath == "" || usePath == "true" || usePath == "1" {
-					o.UsePathStyle = true
-				}
+				o.BaseEndpoint = aws.String(publicEndpoint)
+				o.UsePathStyle = usePathStyle
 			})
 		}
 	}
@@ -201,7 +201,7 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 
 	// Create the presign request
 	request, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(s.bucketName),
+		Bucket:      aws.String(s.Cfg.BucketName),
 		Key:         aws.String(fileKey),
 		ContentType: aws.String(contentType),
 	}, func(opts *s3.PresignOptions) {
@@ -220,13 +220,13 @@ func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userI
 
 // GetFileURL returns the public URL for a file in S3.
 func (s *DefaultS3Service) GetFileURL(fileKey string) string {
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.bucketName, fileKey)
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.Cfg.BucketName, fileKey)
 }
 
 // DeleteFile deletes a file from S3.
 func (s *DefaultS3Service) DeleteFile(ctx context.Context, fileKey string) error {
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.bucketName),
+		Bucket: aws.String(s.Cfg.BucketName),
 		Key:    aws.String(fileKey),
 	})
 	if err != nil {
@@ -239,7 +239,7 @@ func (s *DefaultS3Service) DeleteFile(ctx context.Context, fileKey string) error
 // HeadFile checks if a file exists in S3 and returns its metadata.
 func (s *DefaultS3Service) HeadFile(ctx context.Context, fileKey string) (interface{}, error) {
 	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.bucketName),
+		Bucket: aws.String(s.Cfg.BucketName),
 		Key:    aws.String(fileKey),
 	})
 	if err != nil {
@@ -282,7 +282,7 @@ func ValidateFilename(filename string) bool {
 // CreateBucket creates the S3 bucket if it doesn't exist.
 func (s *DefaultS3Service) CreateBucket(ctx context.Context) error {
 	_, err := s.client.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: &s.bucketName,
+		Bucket: &s.Cfg.BucketName,
 	})
 	if err != nil {
 		// If the bucket already exists, we can ignore the error.

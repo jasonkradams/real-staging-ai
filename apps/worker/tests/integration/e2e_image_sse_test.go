@@ -15,12 +15,13 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/virtual-staging-ai/api/internal/config"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/job"
@@ -32,134 +33,137 @@ import (
 )
 
 func setupTestDB(t *testing.T) *storage.DefaultDatabase {
-	db, err := storage.NewDefaultDatabase()
+	cfg, err := config.Load()
+	require.NoError(t, err)
+
+	db, err := storage.NewDefaultDatabase(&cfg.DB)
 	require.NoError(t, err)
 	return db
 }
 
 func TestEndToEnd_ImageLifecycle_SSE_Error(t *testing.T) {
-    t.Setenv("APP_ENV", "test")
-    if os.Getenv("REDIS_ADDR") == "" {
-        t.Skip("REDIS_ADDR not set; integration infra must start redis-test")
-    }
+	t.Setenv("APP_ENV", "test")
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("REDIS_ADDR not set; integration infra must start redis-test")
+	}
 
-    db := setupTestDB(t)
-    t.Cleanup(func() { db.Close() })
-    truncateAndSeed(t, db.Pool())
+	db := setupTestDB(t)
+	t.Cleanup(func() { db.Close() })
+	truncateAndSeed(t, db.Pool())
 
-    ctx := context.Background()
+	ctx := context.Background()
 
-    s3Svc, err := storage.NewDefaultS3Service(ctx, "vsa-it-bucket")
-    require.NoError(t, err)
-    require.NoError(t, s3Svc.CreateBucket(ctx))
+	s3Svc, err := storage.NewDefaultS3Service(ctx, "vsa-it-bucket")
+	require.NoError(t, err)
+	require.NoError(t, s3Svc.CreateBucket(ctx))
 
-    imgRepo := image.NewDefaultRepository(db)
-    jobRepo := job.NewDefaultRepository(db)
-    imgSvc := image.NewDefaultService(imgRepo, jobRepo)
+	imgRepo := image.NewDefaultRepository(db)
+	jobRepo := job.NewDefaultRepository(db)
+	imgSvc := image.NewDefaultService(imgRepo, jobRepo)
 
-    apiServer := httpLib.NewTestServer(db, s3Svc, imgSvc)
-    ts := httptest.NewServer(apiServer)
-    defer ts.Close()
+	apiServer := httpLib.NewTestServer(db, s3Svc, imgSvc)
+	ts := httptest.NewServer(apiServer)
+	defer ts.Close()
 
-    reqBody := createImageReq{
-        ProjectID:   "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-        OriginalURL: "http://example.com/original2.jpg",
-    }
-    b, err := json.Marshal(reqBody)
-    require.NoError(t, err)
+	reqBody := createImageReq{
+		ProjectID:   "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+		OriginalURL: "http://example.com/original2.jpg",
+	}
+	b, err := json.Marshal(reqBody)
+	require.NoError(t, err)
 
-    req, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/images", strings.NewReader(string(b)))
-    req.Header.Set("Content-Type", "application/json")
-    res, err := http.DefaultClient.Do(req)
-    require.NoError(t, err)
-    require.Equal(t, http.StatusCreated, res.StatusCode)
-    var created image.Image
-    require.NoError(t, json.NewDecoder(res.Body).Decode(&created))
-    _ = res.Body.Close()
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/images", strings.NewReader(string(b)))
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, res.StatusCode)
+	var created image.Image
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&created))
+	_ = res.Body.Close()
 
-    sseReq, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/events?image_id="+created.ID.String(), nil)
-    sseRes, err := http.DefaultClient.Do(sseReq)
-    require.NoError(t, err)
-    require.Equal(t, http.StatusOK, sseRes.StatusCode)
+	sseReq, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/events?image_id="+created.ID.String(), nil)
+	sseRes, err := http.DefaultClient.Do(sseReq)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, sseRes.StatusCode)
 
-    go func() {
-        wctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-        defer cancel()
+	go func() {
+		wctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-        qc, err := workerQueue.NewAsynqQueueClientFromEnv()
-        if err != nil {
-            return
-        }
-        pub, _ := workerEvents.NewDefaultPublisherFromEnv()
-        sqldb := openSQLDBFromEnv(t)
-        defer sqldb.Close()
-        imgWrite := workerRepo.NewImageRepository(sqldb)
+		qc, err := workerQueue.NewAsynqQueueClientFromEnv()
+		if err != nil {
+			return
+		}
+		pub, _ := workerEvents.NewDefaultPublisherFromEnv()
+		sqldb := openSQLDBFromEnv(t)
+		defer sqldb.Close()
+		imgWrite := workerRepo.NewImageRepository(sqldb)
 
-        deadline := time.Now().Add(8 * time.Second)
-        for time.Now().Before(deadline) {
-            job, _ := qc.GetNextJob(wctx)
-            if job == nil {
-                time.Sleep(100 * time.Millisecond)
-                continue
-            }
-            var payload struct{
-                ImageID string `json:"image_id"`
-                OriginalURL string `json:"original_url"`
-            }
-            _ = json.Unmarshal(job.Payload, &payload)
-            _ = imgWrite.SetProcessing(wctx, payload.ImageID)
-            if pub != nil {
-                _ = pub.PublishJobUpdate(wctx, workerEvents.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "processing"})
-            }
-            // Simulate failure
-            errMsg := "processor failed"
-            _ = imgWrite.SetError(wctx, payload.ImageID, errMsg)
-            if pub != nil {
-                _ = pub.PublishJobUpdate(wctx, workerEvents.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "error", Error: errMsg})
-            }
-            _ = qc.MarkJobFailed(wctx, job.ID, errMsg)
-            return
-        }
-    }()
+		deadline := time.Now().Add(8 * time.Second)
+		for time.Now().Before(deadline) {
+			job, _ := qc.GetNextJob(wctx)
+			if job == nil {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			var payload struct {
+				ImageID     string `json:"image_id"`
+				OriginalURL string `json:"original_url"`
+			}
+			_ = json.Unmarshal(job.Payload, &payload)
+			_ = imgWrite.SetProcessing(wctx, payload.ImageID)
+			if pub != nil {
+				_ = pub.PublishJobUpdate(wctx, workerEvents.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "processing"})
+			}
+			// Simulate failure
+			errMsg := "processor failed"
+			_ = imgWrite.SetError(wctx, payload.ImageID, errMsg)
+			if pub != nil {
+				_ = pub.PublishJobUpdate(wctx, workerEvents.JobUpdateEvent{JobID: job.ID, ImageID: payload.ImageID, Status: "error", Error: errMsg})
+			}
+			_ = qc.MarkJobFailed(wctx, job.ID, errMsg)
+			return
+		}
+	}()
 
-    r := bufio.NewReader(sseRes.Body)
-    defer sseRes.Body.Close()
-    var gotConnected, gotProcessing, gotError bool
-    deadline := time.Now().Add(5 * time.Second)
-    for time.Now().Before(deadline) {
-        line, err := r.ReadString('\n')
-        if err != nil {
-            break
-        }
-        if strings.HasPrefix(line, "event: ") {
-            if strings.Contains(line, "connected") {
-                gotConnected = true
-            }
-            if strings.Contains(line, "job_update") {
-                dataLine, _ := r.ReadString('\n')
-                if strings.Contains(dataLine, `"status":"processing"`) {
-                    gotProcessing = true
-                }
-                if strings.Contains(dataLine, `"status":"error"`) {
-                    gotError = true
-                    break
-                }
-            }
-        }
-    }
+	r := bufio.NewReader(sseRes.Body)
+	defer sseRes.Body.Close()
+	var gotConnected, gotProcessing, gotError bool
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break
+		}
+		if strings.HasPrefix(line, "event: ") {
+			if strings.Contains(line, "connected") {
+				gotConnected = true
+			}
+			if strings.Contains(line, "job_update") {
+				dataLine, _ := r.ReadString('\n')
+				if strings.Contains(dataLine, `"status":"processing"`) {
+					gotProcessing = true
+				}
+				if strings.Contains(dataLine, `"status":"error"`) {
+					gotError = true
+					break
+				}
+			}
+		}
+	}
 
-    assert.True(t, gotConnected, "expected connected event")
-    assert.True(t, gotProcessing, "expected processing status event")
-    assert.True(t, gotError, "expected error status event")
+	assert.True(t, gotConnected, "expected connected event")
+	assert.True(t, gotProcessing, "expected processing status event")
+	assert.True(t, gotError, "expected error status event")
 
-    q := queries.New(db)
-    parsedID, err := uuid.Parse(created.ID.String())
-    require.NoError(t, err)
-    dbImg, err := q.GetImageByID(ctx, pgtype.UUID{Bytes: parsedID, Valid: true})
-    require.NoError(t, err)
-    assert.Equal(t, "error", string(dbImg.Status))
-    // error text should be set
-    assert.True(t, dbImg.Error.Valid)
+	q := queries.New(db)
+	parsedID, err := uuid.Parse(created.ID.String())
+	require.NoError(t, err)
+	dbImg, err := q.GetImageByID(ctx, pgtype.UUID{Bytes: parsedID, Valid: true})
+	require.NoError(t, err)
+	assert.Equal(t, "error", string(dbImg.Status))
+	// error text should be set
+	assert.True(t, dbImg.Error.Valid)
 }
 
 func truncateAndSeed(t *testing.T, pool storage.PgxPool) {
@@ -288,8 +292,8 @@ func TestEndToEnd_ImageLifecycle_SSE(t *testing.T) {
 				continue
 			}
 			// Decode payload
-			var payload struct{
-				ImageID string `json:"image_id"`
+			var payload struct {
+				ImageID     string `json:"image_id"`
 				OriginalURL string `json:"original_url"`
 			}
 			_ = json.Unmarshal(job.Payload, &payload)

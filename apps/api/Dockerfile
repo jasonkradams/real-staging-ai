@@ -20,12 +20,15 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /reconcile ./cmd/
 # ---- Runner ----
 FROM alpine:latest
 
+# Set working directory
+WORKDIR /app
+
 # Copy the compiled binary from the builder stage
-COPY --from=builder /api-server /api-server
-COPY --from=builder /reconcile /reconcile
+COPY --from=builder /api-server /app/api-server
+COPY --from=builder /reconcile /app/reconcile
 
 # Expose the port the application runs on
 EXPOSE 8080
 
 # Set the entrypoint for the container
-ENTRYPOINT ["/api-server"]
+ENTRYPOINT ["/app/api-server"]

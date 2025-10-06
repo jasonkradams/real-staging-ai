@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/storage/queries"
 )
 
@@ -47,8 +46,7 @@ func TestE2E_Presign_Upload_CreateImage_ReadyViaSSE(t *testing.T) {
 
 	ctx := context.Background()
 	// DB setup
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 	require.NoError(t, ResetDatabase(ctx, db.Pool()))
 

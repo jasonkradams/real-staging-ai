@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+	"github.com/virtual-staging-ai/worker/internal/config"
 	"github.com/virtual-staging-ai/worker/internal/logging"
 )
 
@@ -69,19 +70,25 @@ type AsynqQueueClient struct {
 	results map[string]chan error
 }
 
-// NewAsynqQueueClientFromEnv initializes an Asynq-backed queue client.
+// NewAsynqQueueClient initializes an Asynq-backed queue client.
 // Required env: REDIS_ADDR
 // Optional env: JOB_QUEUE_NAME (default: "default"), WORKER_CONCURRENCY (default: 5)
-func NewAsynqQueueClientFromEnv() (*AsynqQueueClient, error) {
+func NewAsynqQueueClient(cfg *config.Config) (*AsynqQueueClient, error) {
+	// check if REDIS_ADDR is set or cfg.Redis.Addr
 	addr := os.Getenv("REDIS_ADDR")
 	if addr == "" {
-		return nil, errors.New("REDIS_ADDR not set")
+		addr = cfg.Redis.Addr
 	}
+	if addr == "" {
+		return nil, errors.New("unable to determine redis address. REDIS_ADDR env var is not set and cfg.Redis.Addr is empty")
+	}
+
 	queueName := os.Getenv("JOB_QUEUE_NAME")
 	if queueName == "" {
-		queueName = "default"
+		queueName = cfg.Job.QueueName
 	}
-	concurrency := 5
+
+	concurrency := cfg.Job.WorkerConcurrency
 	if v := os.Getenv("WORKER_CONCURRENCY"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			concurrency = n

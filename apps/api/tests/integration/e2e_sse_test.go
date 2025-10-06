@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hibiken/asynq"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgtype"
 	redis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
@@ -81,9 +81,8 @@ func text(s string) pgtype.Text { return pgtype.Text{String: s, Valid: true} }
 
 func newAPITestServer(t *testing.T, db *storage.DefaultDatabase) (*httptest.Server, storage.S3Service) {
 	ctx := context.Background()
-	s3, err := storage.NewDefaultS3Service(ctx, "vsa-it-bucket")
-	require.NoError(t, err)
-	require.NoError(t, s3.CreateBucket(ctx))
+	s3 := SetupTestS3Service(t, ctx)
+	s3.Cfg.BucketName = "vsa-it-bucket"
 
 	imgRepo := image.NewDefaultRepository(db)
 	jobRepo := job.NewDefaultRepository(db)
@@ -98,8 +97,7 @@ func TestE2E_SSE_ProcessingReady(t *testing.T) {
 		t.Skip("REDIS_ADDR not set; integration infra must start redis-test")
 	}
 	// DB setup
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 	require.NoError(t, ResetDatabase(context.Background(), db.Pool()))
 
@@ -134,13 +132,22 @@ func TestE2E_SSE_ProcessingReady(t *testing.T) {
 	var gotConnected, gotProcessing, gotReady bool
 	for time.Now().Before(deadline) {
 		line, err := r.ReadString('\n')
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 		if strings.HasPrefix(line, "event: ") {
-			if strings.Contains(line, "connected") { gotConnected = true }
+			if strings.Contains(line, "connected") {
+				gotConnected = true
+			}
 			if strings.Contains(line, "job_update") {
 				data, _ := r.ReadString('\n')
-				if strings.Contains(data, `"status":"processing"`) { gotProcessing = true }
-				if strings.Contains(data, `"status":"ready"`) { gotReady = true; break }
+				if strings.Contains(data, `"status":"processing"`) {
+					gotProcessing = true
+				}
+				if strings.Contains(data, `"status":"ready"`) {
+					gotReady = true
+					break
+				}
 			}
 		}
 	}
@@ -154,8 +161,7 @@ func TestE2E_SSE_ProcessingError(t *testing.T) {
 		t.Skip("REDIS_ADDR not set; integration infra must start redis-test")
 	}
 	// DB setup
-	db, err := storage.NewDefaultDatabase()
-	require.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 	require.NoError(t, ResetDatabase(context.Background(), db.Pool()))
 
@@ -190,13 +196,22 @@ func TestE2E_SSE_ProcessingError(t *testing.T) {
 	var gotConnected, gotProcessing, gotError bool
 	for time.Now().Before(deadline) {
 		line, err := r.ReadString('\n')
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 		if strings.HasPrefix(line, "event: ") {
-			if strings.Contains(line, "connected") { gotConnected = true }
+			if strings.Contains(line, "connected") {
+				gotConnected = true
+			}
 			if strings.Contains(line, "job_update") {
 				data, _ := r.ReadString('\n')
-				if strings.Contains(data, `"status":"processing"`) { gotProcessing = true }
-				if strings.Contains(data, `"status":"error"`) { gotError = true; break }
+				if strings.Contains(data, `"status":"processing"`) {
+					gotProcessing = true
+				}
+				if strings.Contains(data, `"status":"error"`) {
+					gotError = true
+					break
+				}
 			}
 		}
 	}

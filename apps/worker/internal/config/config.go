@@ -10,50 +10,59 @@ import (
 
 // Config represents the application configuration.
 type Config struct {
-	App struct {
-		Env string `yaml:"env" env:"APP_ENV" env-default:"dev"`
-	} `yaml:"app"`
+	App       App       `yaml:"app"`
+	DB        DB        `yaml:"db"`
+	Job       Job       `yaml:"job"`
+	Logging   Logging   `yaml:"logging"`
+	OTEL      OTEL      `yaml:"otel"`
+	Redis     Redis     `yaml:"redis"`
+	Replicate Replicate `yaml:"replicate"`
+	S3        S3        `yaml:"s3"`
+}
 
-	DB struct {
-		PGDatabase string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
-		PGHost     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
-		PGPassword string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
-		PGPort     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
-		PGUser     string `yaml:"pguser" env:"PGUSER" env-default:"postgres"`
-		PGSSLMode  string `yaml:"pgsslmode" env:"PGSSLMODE" env-default:"disable"`
-	} `yaml:"db"`
+type App struct {
+	Env string `yaml:"env" env:"APP_ENV" env-default:"dev"`
+}
 
-	Job struct {
-		QueueName         string `yaml:"queue_name" env:"JOB_QUEUE_NAME" env-default:"default"`
-		WorkerConcurrency int    `yaml:"worker_concurrency" env:"WORKER_CONCURRENCY" env-default:"5"`
-	} `yaml:"job"`
+type DB struct {
+	PGDatabase string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
+	PGHost     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
+	PGPassword string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
+	PGPort     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
+	PGUser     string `yaml:"pguser" env:"PGUSER" env-default:"postgres"`
+	PGSSLMode  string `yaml:"pgsslmode" env:"PGSSLMODE" env-default:"disable"`
+}
 
-	Logging struct {
-		Level string `yaml:"level" env:"LOG_LEVEL" env-default:"info"`
-	} `yaml:"logging"`
+type Job struct {
+	QueueName         string `yaml:"queue_name" env:"JOB_QUEUE_NAME" env-default:"default"`
+	WorkerConcurrency int    `yaml:"worker_concurrency" env:"WORKER_CONCURRENCY" env-default:"5"`
+}
 
-	OTEL struct {
-		ExporterOTLPEndpoint string `yaml:"exporter_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	} `yaml:"otel"`
+type Logging struct {
+	Level string `yaml:"level" env:"LOG_LEVEL" env-default:"info"`
+}
 
-	Redis struct {
-		Addr string `yaml:"addr" env:"REDIS_ADDR"`
-	} `yaml:"redis"`
+type OTEL struct {
+	ExporterOTLPEndpoint string `yaml:"exporter_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+}
 
-	Replicate struct {
-		APIToken     string `yaml:"api_token" env:"REPLICATE_API_TOKEN"`
-		ModelVersion string `yaml:"model_version" env:"REPLICATE_MODEL_VERSION" env-default:"qwen/qwen-image-edit"`
-	} `yaml:"replicate"`
+type Redis struct {
+	Addr string `yaml:"addr" env:"REDIS_ADDR"`
+}
 
-	S3 struct {
-		AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
-		BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
-		Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
-		PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
-		Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`
-		SecretKey      string `yaml:"secret_key" env:"S3_SECRET_KEY"`
-		UsePathStyle   bool   `yaml:"use_path_style" env:"S3_USE_PATH_STYLE"`
-	} `yaml:"s3"`
+type Replicate struct {
+	APIToken     string `yaml:"api_token" env:"REPLICATE_API_TOKEN"`
+	ModelVersion string `yaml:"model_version" env:"REPLICATE_MODEL_VERSION" env-default:"qwen/qwen-image-edit"`
+}
+
+type S3 struct {
+	AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
+	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
+	Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
+	PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
+	Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`
+	SecretKey      string `yaml:"secret_key" env:"S3_SECRET_KEY"`
+	UsePathStyle   bool   `yaml:"use_path_style" env:"S3_USE_PATH_STYLE"`
 }
 
 // Load loads configuration from YAML files based on APP_ENV.

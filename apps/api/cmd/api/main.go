@@ -25,15 +25,14 @@ func main() {
 	}
 	log.Info(ctx, fmt.Sprintf("Loaded configuration for environment: %s", cfg.App.Env))
 
-	db, err := storage.NewDefaultDatabase()
+	db, err := storage.NewDefaultDatabase(&cfg.DB)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("failed to connect to database: %v", err))
+		return
 	}
 	defer db.Close()
 
-	// Create S3 service using config
-	bucketName := cfg.S3Bucket()
-	s3Service, err := storage.NewDefaultS3Service(ctx, bucketName)
+	s3Service, err := storage.NewDefaultS3Service(ctx, &cfg.S3)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("failed to create S3 service: %v", err))
 	} else {

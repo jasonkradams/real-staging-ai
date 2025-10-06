@@ -1,5 +1,3 @@
-//go:build integration
-
 package integration
 
 import (
@@ -15,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/virtual-staging-ai/api/internal/config"
 	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
@@ -40,9 +39,10 @@ func TestS3Integration_UploadHeadDelete(t *testing.T) {
 	fileBytes, err := os.ReadFile(dataPath)
 	require.NoError(t, err, "failed to read test image: %s", dataPath)
 
-	svc, err := storage.NewDefaultS3Service(ctx, bucket)
+	svc, err := storage.NewDefaultS3Service(ctx, &config.S3{
+		BucketName: bucket,
+	})
 	require.NoError(t, err)
-	require.NotNil(t, svc)
 
 	// Create bucket (idempotent)
 	err = svc.CreateBucket(ctx)
@@ -63,7 +63,9 @@ func TestS3Integration_UploadHeadDelete(t *testing.T) {
 	httpClient := &http.Client{Timeout: 20 * time.Second}
 	resp, err := httpClient.Do(req)
 	require.NoError(t, err)
-	defer func() { io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+	// apps/api/tests/integration/storage_s3_service.go:66:24: Error return value of `io.Copy` is not checked (errcheck)
+	_, _ = io.Copy(io.Discard, resp.Body)
+	defer func() { _ = resp.Body.Close() }()
 
 	// Localstack typically returns 200 for successful PUT
 	require.Truef(t, resp.StatusCode >= 200 && resp.StatusCode < 300, "unexpected status from PUT: %d", resp.StatusCode)

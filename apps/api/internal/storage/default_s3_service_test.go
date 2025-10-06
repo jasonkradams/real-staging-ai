@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	configLib "github.com/virtual-staging-ai/api/internal/config"
 )
 
 func TestValidateContentType(t *testing.T) {
@@ -118,7 +120,7 @@ func TestDefaultS3Service_GetFileURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := &DefaultS3Service{bucketName: tt.bucketName}
+			svc := &DefaultS3Service{Cfg: &configLib.S3{BucketName: tt.bucketName}}
 			got := svc.GetFileURL(tt.fileKey)
 			assert.Equal(t, tt.expected, got)
 		})
@@ -192,7 +194,7 @@ func TestDefaultS3Service_GeneratePresignedUploadURL(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			svc, err := NewDefaultS3Service(ctx, tt.bucket)
+			svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: tt.bucket})
 			require.NoError(t, err)
 			require.NotNil(t, svc)
 
@@ -242,7 +244,7 @@ func TestDefaultS3Service_Integration_S3Operations(t *testing.T) {
 	ctx := context.Background()
 
 	// Reuse a single service instance for speed
-	svc, err := NewDefaultS3Service(ctx, "it-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "it-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -300,7 +302,7 @@ func TestNewDefaultS3Service_Production(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	t.Setenv("AWS_REGION", "us-west-1")
 	ctx := context.Background()
-	svc, err := NewDefaultS3Service(ctx, "unit-prod-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "unit-prod-bucket"})
 	if err != nil {
 		t.Fatalf("unexpected error constructing DefaultS3Service in production branch: %v", err)
 	}
@@ -320,7 +322,7 @@ func TestDefaultS3Service_CreateBucket_Idempotent(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 
 	ctx := context.Background()
-	svc, err := NewDefaultS3Service(ctx, "it-bucket-idempotent")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "it-bucket-idempotent"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -338,7 +340,7 @@ func TestNewDefaultS3Service_ContextCanceled_TestEnv(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	svc, err := NewDefaultS3Service(ctx, "any-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "any-bucket"})
 	assert.NoError(t, err)
 	assert.NotNil(t, svc)
 }
@@ -349,7 +351,7 @@ func TestNewDefaultS3Service_ContextCanceled_ProdEnv(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	svc, err := NewDefaultS3Service(ctx, "any-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "any-bucket"})
 	assert.NoError(t, err)
 	assert.NotNil(t, svc)
 }
@@ -357,7 +359,7 @@ func TestNewDefaultS3Service_ContextCanceled_ProdEnv(t *testing.T) {
 func TestDefaultS3Service_GeneratePresignedUploadURL_ContextCanceled(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 	ctx := context.Background()
-	svc, err := NewDefaultS3Service(ctx, "ctx-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "ctx-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -372,7 +374,7 @@ func TestDefaultS3Service_GeneratePresignedUploadURL_ContextCanceled(t *testing.
 func TestDefaultS3Service_S3Ops_ContextCanceled(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 	ctx := context.Background()
-	svc, err := NewDefaultS3Service(ctx, "ctx-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "ctx-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -402,7 +404,8 @@ func TestNewDefaultS3Service_LoadDefaultConfig_Error_TestEnv_WithOverride(t *tes
 		return aws.Config{}, errors.New("forced load error")
 	}
 
-	svc, err := NewDefaultS3Service(context.Background(), "bucket")
+	// Use NewDefaultS3Service since awsConfigLoader override will cause error
+	svc, err := NewDefaultS3Service(context.Background(), &configLib.S3{BucketName: "bucket"})
 	assert.Error(t, err)
 	assert.Nil(t, svc)
 }
@@ -417,7 +420,8 @@ func TestNewDefaultS3Service_LoadDefaultConfig_Error_ProdEnv_WithOverride(t *tes
 		return aws.Config{}, errors.New("forced load error")
 	}
 
-	svc, err := NewDefaultS3Service(context.Background(), "bucket")
+	// Use NewDefaultS3Service since awsConfigLoader override will cause error
+	svc, err := NewDefaultS3Service(context.Background(), &configLib.S3{BucketName: "bucket"})
 	assert.Error(t, err)
 	assert.Nil(t, svc)
 }
@@ -426,7 +430,7 @@ func TestDefaultS3Service_DeleteFile(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 	ctx := context.Background()
 
-	svc, err := NewDefaultS3Service(ctx, "unit-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "unit-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -441,7 +445,7 @@ func TestDefaultS3Service_HeadFile(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 	ctx := context.Background()
 
-	svc, err := NewDefaultS3Service(ctx, "unit-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "unit-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
@@ -456,7 +460,7 @@ func TestDefaultS3Service_CreateBucket(t *testing.T) {
 	t.Setenv("APP_ENV", "test")
 	ctx := context.Background()
 
-	svc, err := NewDefaultS3Service(ctx, "unit-bucket")
+	svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: "unit-bucket"})
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 

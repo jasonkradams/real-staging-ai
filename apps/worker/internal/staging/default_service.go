@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -40,25 +39,37 @@ var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptio
 	return config.LoadDefaultConfig(ctx, optFns...)
 }
 
-// NewDefaultService creates a new DefaultService instance.
-func NewDefaultService(ctx context.Context) (*DefaultService, error) {
-	// Get S3 configuration
-	bucketName := os.Getenv("S3_BUCKET_NAME")
-	if bucketName == "" {
-		return nil, fmt.Errorf("S3_BUCKET_NAME environment variable is required")
+// ServiceConfig holds configuration for the staging service.
+type ServiceConfig struct {
+	BucketName      string
+	ReplicateToken  string
+	ModelVersion    string
+	S3Endpoint      string
+	S3Region        string
+	S3AccessKey     string
+	S3SecretKey     string
+	S3UsePathStyle  bool
+	AppEnv          string
+}
+
+// NewDefaultService creates a new DefaultService instance using provided configuration.
+func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService, error) {
+	// Validate required configuration
+	if cfg.BucketName == "" {
+		return nil, fmt.Errorf("bucket name is required")
+	}
+	if cfg.ReplicateToken == "" {
+		return nil, fmt.Errorf("replicate API token is required")
 	}
 
-	// Get Replicate configuration
-	replicateToken := os.Getenv("REPLICATE_API_TOKEN")
-	if replicateToken == "" {
-		return nil, fmt.Errorf("REPLICATE_API_TOKEN environment variable is required")
-	}
-
-	// Default to the lightning-fast model
-	modelVersion := os.Getenv("REPLICATE_MODEL_VERSION")
+	// Use default model version if not specified
+	modelVersion := cfg.ModelVersion
 	if modelVersion == "" {
 		modelVersion = "qwen/qwen-image-edit"
 	}
+
+	bucketName := cfg.BucketName
+	replicateToken := cfg.ReplicateToken
 
 	// Create Replicate client
 	replicateClient, err := replicate.NewClient(replicate.WithToken(replicateToken))
@@ -67,10 +78,10 @@ func NewDefaultService(ctx context.Context) (*DefaultService, error) {
 	}
 
 	// Initialize S3 client
-	var cfg aws.Config
+	var awsCfg aws.Config
 
-	if os.Getenv("APP_ENV") == "test" {
-		cfg, err = awsConfigLoader(ctx,
+	if cfg.AppEnv == "test" {
+		awsCfg, err = awsConfigLoader(ctx,
 			config.WithRegion("us-east-1"),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "test")),
 		)
@@ -78,7 +89,7 @@ func NewDefaultService(ctx context.Context) (*DefaultService, error) {
 			return nil, fmt.Errorf("failed to load AWS config for test: %w", err)
 		}
 
-		s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String("http://localhost:4566")
 			o.UsePathStyle = true
 		})
@@ -92,25 +103,22 @@ func NewDefaultService(ctx context.Context) (*DefaultService, error) {
 	}
 
 	// If a custom S3 endpoint is provided (e.g., MinIO), configure client for dev/local
-	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
-		region := os.Getenv("S3_REGION")
+	if cfg.S3Endpoint != "" {
+		region := cfg.S3Region
 		if region == "" {
 			region = "us-west-1"
 		}
-		accessKey := os.Getenv("S3_ACCESS_KEY")
-		secretKey := os.Getenv("S3_SECRET_KEY")
-		cfg, err = awsConfigLoader(ctx,
+		awsCfg, err = awsConfigLoader(ctx,
 			config.WithRegion(region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.S3AccessKey, cfg.S3SecretKey, "")),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load AWS config for dev: %w", err)
 		}
 
-		s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-			o.BaseEndpoint = aws.String(endpoint)
-			usePath := strings.ToLower(os.Getenv("S3_USE_PATH_STYLE"))
-			if usePath == "" || usePath == "true" || usePath == "1" {
+		s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(cfg.S3Endpoint)
+			if cfg.S3UsePathStyle {
 				o.UsePathStyle = true
 			}
 		})
@@ -124,12 +132,12 @@ func NewDefaultService(ctx context.Context) (*DefaultService, error) {
 	}
 
 	// Use default AWS config for production
-	cfg, err = awsConfigLoader(ctx)
+	awsCfg, err = awsConfigLoader(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg)
+	s3Client := s3.NewFromConfig(awsCfg)
 
 	return &DefaultService{
 		s3Client:        s3Client,
@@ -478,7 +486,7 @@ func extractS3KeyFromURL(rawURL string) (string, error) {
 	parts := strings.SplitN(path, "/", 2)
 	if len(parts) == 2 {
 		// Check if first part looks like a bucket name
-		if strings.Contains(parts[0], "virtual-staging") || parts[0] == os.Getenv("S3_BUCKET_NAME") {
+		if strings.Contains(parts[0], "virtual-staging") {
 			return parts[1], nil
 		}
 	}

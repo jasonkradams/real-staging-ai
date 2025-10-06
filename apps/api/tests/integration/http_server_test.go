@@ -11,24 +11,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	httpLib "github.com/virtual-staging-ai/api/internal/http"
 	"github.com/virtual-staging-ai/api/internal/image"
 	"github.com/virtual-staging-ai/api/internal/project"
-	"github.com/virtual-staging-ai/api/internal/storage"
 )
 
 func TestCreateProjectRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDefaultDatabase()
-	assert.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
-	require.NoError(t, err)
+	s3ServiceMock := SetupTestS3Service(t, context.Background())
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
@@ -75,15 +71,13 @@ func TestCreateProjectRoute_HTTP(t *testing.T) {
 
 func TestGetProjectsRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDefaultDatabase()
-	assert.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
-	require.NoError(t, err)
+	s3ServiceMock := SetupTestS3Service(t, context.Background())
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects", nil)
@@ -101,8 +95,6 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 	}
 
 	var response ProjectListResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, len(response.Projects), 1)
 	found := false
 	for _, p := range response.Projects {
@@ -116,15 +108,13 @@ func TestGetProjectsRoute_HTTP(t *testing.T) {
 
 func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 	// Setup
-	db, err := storage.NewDefaultDatabase()
-	assert.NoError(t, err)
+	db := SetupTestDatabase(t)
 	defer db.Close()
 
 	TruncateAllTables(context.Background(), db.Pool())
 	SeedDatabase(context.Background(), db.Pool())
 
-	s3ServiceMock, err := storage.NewDefaultS3Service(context.Background(), "test-bucket")
-	require.NoError(t, err)
+	s3ServiceMock := SetupTestS3Service(t, context.Background())
 	imageServiceMock := &image.ServiceMock{}
 	server := httpLib.NewTestServer(db, s3ServiceMock, imageServiceMock)
 
@@ -138,7 +128,7 @@ func TestGetProjectByIDRoute_HTTP(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var p project.Project
-		err = json.Unmarshal(rec.Body.Bytes(), &p)
+		err := json.Unmarshal(rec.Body.Bytes(), &p)
 		assert.NoError(t, err)
 		assert.Equal(t, "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12", p.ID)
 		assert.Equal(t, "Test Project 1", p.Name)
