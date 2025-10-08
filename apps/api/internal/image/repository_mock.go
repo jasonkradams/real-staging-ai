@@ -34,6 +34,12 @@ var _ Repository = &RepositoryMock{}
 //			GetImagesByProjectIDFunc: func(ctx context.Context, projectID string) ([]*queries.Image, error) {
 //				panic("mock out the GetImagesByProjectID method")
 //			},
+//			GetProjectCostSummaryFunc: func(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+//				panic("mock out the GetProjectCostSummary method")
+//			},
+//			UpdateImageCostFunc: func(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error {
+//				panic("mock out the UpdateImageCost method")
+//			},
 //			UpdateImageStatusFunc: func(ctx context.Context, imageID string, status string) (*queries.Image, error) {
 //				panic("mock out the UpdateImageStatus method")
 //			},
@@ -64,6 +70,12 @@ type RepositoryMock struct {
 
 	// GetImagesByProjectIDFunc mocks the GetImagesByProjectID method.
 	GetImagesByProjectIDFunc func(ctx context.Context, projectID string) ([]*queries.Image, error)
+
+	// GetProjectCostSummaryFunc mocks the GetProjectCostSummary method.
+	GetProjectCostSummaryFunc func(ctx context.Context, projectID string) (*ProjectCostSummary, error)
+
+	// UpdateImageCostFunc mocks the UpdateImageCost method.
+	UpdateImageCostFunc func(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error
 
 	// UpdateImageStatusFunc mocks the UpdateImageStatus method.
 	UpdateImageStatusFunc func(ctx context.Context, imageID string, status string) (*queries.Image, error)
@@ -119,6 +131,28 @@ type RepositoryMock struct {
 			// ProjectID is the projectID argument value.
 			ProjectID string
 		}
+		// GetProjectCostSummary holds details about calls to the GetProjectCostSummary method.
+		GetProjectCostSummary []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ProjectID is the projectID argument value.
+			ProjectID string
+		}
+		// UpdateImageCost holds details about calls to the UpdateImageCost method.
+		UpdateImageCost []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ImageID is the imageID argument value.
+			ImageID string
+			// CostUSD is the costUSD argument value.
+			CostUSD float64
+			// ModelUsed is the modelUsed argument value.
+			ModelUsed string
+			// ProcessingTimeMs is the processingTimeMs argument value.
+			ProcessingTimeMs int
+			// PredictionID is the predictionID argument value.
+			PredictionID string
+		}
 		// UpdateImageStatus holds details about calls to the UpdateImageStatus method.
 		UpdateImageStatus []struct {
 			// Ctx is the ctx argument value.
@@ -154,6 +188,8 @@ type RepositoryMock struct {
 	lockDeleteImagesByProjectID  sync.RWMutex
 	lockGetImageByID             sync.RWMutex
 	lockGetImagesByProjectID     sync.RWMutex
+	lockGetProjectCostSummary    sync.RWMutex
+	lockUpdateImageCost          sync.RWMutex
 	lockUpdateImageStatus        sync.RWMutex
 	lockUpdateImageWithError     sync.RWMutex
 	lockUpdateImageWithStagedURL sync.RWMutex
@@ -352,6 +388,94 @@ func (mock *RepositoryMock) GetImagesByProjectIDCalls() []struct {
 	mock.lockGetImagesByProjectID.RLock()
 	calls = mock.calls.GetImagesByProjectID
 	mock.lockGetImagesByProjectID.RUnlock()
+	return calls
+}
+
+// GetProjectCostSummary calls GetProjectCostSummaryFunc.
+func (mock *RepositoryMock) GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+	if mock.GetProjectCostSummaryFunc == nil {
+		panic("RepositoryMock.GetProjectCostSummaryFunc: method is nil but Repository.GetProjectCostSummary was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		ProjectID string
+	}{
+		Ctx:       ctx,
+		ProjectID: projectID,
+	}
+	mock.lockGetProjectCostSummary.Lock()
+	mock.calls.GetProjectCostSummary = append(mock.calls.GetProjectCostSummary, callInfo)
+	mock.lockGetProjectCostSummary.Unlock()
+	return mock.GetProjectCostSummaryFunc(ctx, projectID)
+}
+
+// GetProjectCostSummaryCalls gets all the calls that were made to GetProjectCostSummary.
+// Check the length with:
+//
+//	len(mockedRepository.GetProjectCostSummaryCalls())
+func (mock *RepositoryMock) GetProjectCostSummaryCalls() []struct {
+	Ctx       context.Context
+	ProjectID string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		ProjectID string
+	}
+	mock.lockGetProjectCostSummary.RLock()
+	calls = mock.calls.GetProjectCostSummary
+	mock.lockGetProjectCostSummary.RUnlock()
+	return calls
+}
+
+// UpdateImageCost calls UpdateImageCostFunc.
+func (mock *RepositoryMock) UpdateImageCost(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error {
+	if mock.UpdateImageCostFunc == nil {
+		panic("RepositoryMock.UpdateImageCostFunc: method is nil but Repository.UpdateImageCost was just called")
+	}
+	callInfo := struct {
+		Ctx              context.Context
+		ImageID          string
+		CostUSD          float64
+		ModelUsed        string
+		ProcessingTimeMs int
+		PredictionID     string
+	}{
+		Ctx:              ctx,
+		ImageID:          imageID,
+		CostUSD:          costUSD,
+		ModelUsed:        modelUsed,
+		ProcessingTimeMs: processingTimeMs,
+		PredictionID:     predictionID,
+	}
+	mock.lockUpdateImageCost.Lock()
+	mock.calls.UpdateImageCost = append(mock.calls.UpdateImageCost, callInfo)
+	mock.lockUpdateImageCost.Unlock()
+	return mock.UpdateImageCostFunc(ctx, imageID, costUSD, modelUsed, processingTimeMs, predictionID)
+}
+
+// UpdateImageCostCalls gets all the calls that were made to UpdateImageCost.
+// Check the length with:
+//
+//	len(mockedRepository.UpdateImageCostCalls())
+func (mock *RepositoryMock) UpdateImageCostCalls() []struct {
+	Ctx              context.Context
+	ImageID          string
+	CostUSD          float64
+	ModelUsed        string
+	ProcessingTimeMs int
+	PredictionID     string
+} {
+	var calls []struct {
+		Ctx              context.Context
+		ImageID          string
+		CostUSD          float64
+		ModelUsed        string
+		ProcessingTimeMs int
+		PredictionID     string
+	}
+	mock.lockUpdateImageCost.RLock()
+	calls = mock.calls.UpdateImageCost
+	mock.lockUpdateImageCost.RUnlock()
 	return calls
 }
 

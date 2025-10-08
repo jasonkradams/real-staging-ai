@@ -31,6 +31,9 @@ var _ Service = &ServiceMock{}
 //			GetImagesByProjectIDFunc: func(ctx context.Context, projectID string) ([]*Image, error) {
 //				panic("mock out the GetImagesByProjectID method")
 //			},
+//			GetProjectCostSummaryFunc: func(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+//				panic("mock out the GetProjectCostSummary method")
+//			},
 //			UpdateImageStatusFunc: func(ctx context.Context, imageID string, status Status) (*Image, error) {
 //				panic("mock out the UpdateImageStatus method")
 //			},
@@ -61,6 +64,9 @@ type ServiceMock struct {
 
 	// GetImagesByProjectIDFunc mocks the GetImagesByProjectID method.
 	GetImagesByProjectIDFunc func(ctx context.Context, projectID string) ([]*Image, error)
+
+	// GetProjectCostSummaryFunc mocks the GetProjectCostSummary method.
+	GetProjectCostSummaryFunc func(ctx context.Context, projectID string) (*ProjectCostSummary, error)
 
 	// UpdateImageStatusFunc mocks the UpdateImageStatus method.
 	UpdateImageStatusFunc func(ctx context.Context, imageID string, status Status) (*Image, error)
@@ -104,6 +110,13 @@ type ServiceMock struct {
 			// ProjectID is the projectID argument value.
 			ProjectID string
 		}
+		// GetProjectCostSummary holds details about calls to the GetProjectCostSummary method.
+		GetProjectCostSummary []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ProjectID is the projectID argument value.
+			ProjectID string
+		}
 		// UpdateImageStatus holds details about calls to the UpdateImageStatus method.
 		UpdateImageStatus []struct {
 			// Ctx is the ctx argument value.
@@ -141,6 +154,7 @@ type ServiceMock struct {
 	lockDeleteImage              sync.RWMutex
 	lockGetImageByID             sync.RWMutex
 	lockGetImagesByProjectID     sync.RWMutex
+	lockGetProjectCostSummary    sync.RWMutex
 	lockUpdateImageStatus        sync.RWMutex
 	lockUpdateImageWithError     sync.RWMutex
 	lockUpdateImageWithStagedURL sync.RWMutex
@@ -288,6 +302,42 @@ func (mock *ServiceMock) GetImagesByProjectIDCalls() []struct {
 	mock.lockGetImagesByProjectID.RLock()
 	calls = mock.calls.GetImagesByProjectID
 	mock.lockGetImagesByProjectID.RUnlock()
+	return calls
+}
+
+// GetProjectCostSummary calls GetProjectCostSummaryFunc.
+func (mock *ServiceMock) GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+	if mock.GetProjectCostSummaryFunc == nil {
+		panic("ServiceMock.GetProjectCostSummaryFunc: method is nil but Service.GetProjectCostSummary was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		ProjectID string
+	}{
+		Ctx:       ctx,
+		ProjectID: projectID,
+	}
+	mock.lockGetProjectCostSummary.Lock()
+	mock.calls.GetProjectCostSummary = append(mock.calls.GetProjectCostSummary, callInfo)
+	mock.lockGetProjectCostSummary.Unlock()
+	return mock.GetProjectCostSummaryFunc(ctx, projectID)
+}
+
+// GetProjectCostSummaryCalls gets all the calls that were made to GetProjectCostSummary.
+// Check the length with:
+//
+//	len(mockedService.GetProjectCostSummaryCalls())
+func (mock *ServiceMock) GetProjectCostSummaryCalls() []struct {
+	Ctx       context.Context
+	ProjectID string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		ProjectID string
+	}
+	mock.lockGetProjectCostSummary.RLock()
+	calls = mock.calls.GetProjectCostSummary
+	mock.lockGetProjectCostSummary.RUnlock()
 	return calls
 }
 

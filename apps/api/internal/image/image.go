@@ -28,17 +28,21 @@ func (s Status) String() string {
 
 // Image represents a staging image in the system.
 type Image struct {
-	ID          uuid.UUID `json:"id"`
-	ProjectID   uuid.UUID `json:"project_id"`
-	OriginalURL string    `json:"original_url"`
-	StagedURL   *string   `json:"staged_url,omitempty"`
-	RoomType    *string   `json:"room_type,omitempty"`
-	Style       *string   `json:"style,omitempty"`
-	Seed        *int64    `json:"seed,omitempty"`
-	Status      Status    `json:"status"`
-	Error       *string   `json:"error,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID                    uuid.UUID `json:"id"`
+	ProjectID             uuid.UUID `json:"project_id"`
+	OriginalURL           string    `json:"original_url"`
+	StagedURL             *string   `json:"staged_url,omitempty"`
+	RoomType              *string   `json:"room_type,omitempty"`
+	Style                 *string   `json:"style,omitempty"`
+	Seed                  *int64    `json:"seed,omitempty"`
+	Status                Status    `json:"status"`
+	Error                 *string   `json:"error,omitempty"`
+	CostUSD               *float64  `json:"cost_usd,omitempty"`
+	ModelUsed             *string   `json:"model_used,omitempty"`
+	ProcessingTimeMs      *int      `json:"processing_time_ms,omitempty"`
+	ReplicatePredictionID *string   `json:"replicate_prediction_id,omitempty"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 // CreateImageRequest represents the request to create a new staging image.
@@ -57,4 +61,20 @@ type JobPayload struct {
 	RoomType    *string   `json:"room_type,omitempty"`
 	Style       *string   `json:"style,omitempty"`
 	Seed        *int64    `json:"seed,omitempty"`
+}
+
+// ProjectCostSummary represents cost aggregation for a project.
+type ProjectCostSummary struct {
+	ProjectID    uuid.UUID `json:"project_id"`
+	TotalCostUSD float64   `json:"total_cost_usd"`
+	ImageCount   int       `json:"image_count"`
+	AvgCostUSD   float64   `json:"avg_cost_usd"`
+}
+
+// UpdateCostRequest represents a request to update image cost information.
+type UpdateCostRequest struct {
+	CostUSD               float64 `json:"cost_usd"`
+	ModelUsed             string  `json:"model_used"`
+	ProcessingTimeMs      int     `json:"processing_time_ms"`
+	ReplicatePredictionID string  `json:"replicate_prediction_id"`
 }

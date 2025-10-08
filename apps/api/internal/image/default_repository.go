@@ -189,3 +189,74 @@ func (r *DefaultRepository) DeleteImagesByProjectID(ctx context.Context, project
 
 	return nil
 }
+
+// UpdateImageCost updates cost tracking information for an image.
+func (r *DefaultRepository) UpdateImageCost(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error {
+	imageUUID, err := uuid.Parse(imageID)
+	if err != nil {
+		return fmt.Errorf("invalid image ID: %w", err)
+	}
+
+	query := `
+		UPDATE images
+		SET cost_usd = $1,
+		    model_used = $2,
+		    processing_time_ms = $3,
+		    replicate_prediction_id = $4,
+		    updated_at = NOW()
+		WHERE id = $5
+	`
+
+	_, err = r.db.Exec(ctx, query, costUSD, modelUsed, processingTimeMs, predictionID, imageUUID)
+	if err != nil {
+		return fmt.Errorf("failed to update image cost: %w", err)
+	}
+
+	return nil
+}
+
+// GetProjectCostSummary retrieves cost summary for a project.
+func (r *DefaultRepository) GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+	projectUUID, err := uuid.Parse(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid project ID: %w", err)
+	}
+
+	query := `
+		SELECT 
+			project_id,
+			COALESCE(SUM(cost_usd), 0) as total_cost_usd,
+			COUNT(*) as image_count,
+			COALESCE(AVG(cost_usd), 0) as avg_cost_usd
+		FROM images
+		WHERE project_id = $1
+		GROUP BY project_id
+	`
+
+	var summary ProjectCostSummary
+	var dbProjectID pgtype.UUID
+
+	err = r.db.QueryRow(ctx, query, projectUUID).Scan(
+		&dbProjectID,
+		&summary.TotalCostUSD,
+		&summary.ImageCount,
+		&summary.AvgCostUSD,
+	)
+
+	if err != nil {
+		// If no images found, return zero costs
+		if err.Error() == "no rows in result set" {
+			return &ProjectCostSummary{
+				ProjectID:    projectUUID,
+				TotalCostUSD: 0,
+				ImageCount:   0,
+				AvgCostUSD:   0,
+			}, nil
+		}
+		return nil, fmt.Errorf("failed to get project cost summary: %w", err)
+	}
+
+	summary.ProjectID = projectUUID
+
+	return &summary, nil
+}

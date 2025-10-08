@@ -210,3 +210,27 @@ func (h *DefaultHandler) validateCreateImageRequest(req *CreateImageRequest) []V
 
 	return errors
 }
+
+// GetProjectCost handles GET /api/v1/projects/:project_id/cost requests.
+func (h *DefaultHandler) GetProjectCost(c echo.Context) error {
+	projectID := c.Param("project_id")
+
+	// Validate project ID format
+	if _, err := uuid.Parse(projectID); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "bad_request",
+			Message: "Invalid project ID format",
+		})
+	}
+
+	// Get cost summary
+	summary, err := h.service.GetProjectCostSummary(c.Request().Context(), projectID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "Failed to retrieve cost summary",
+		})
+	}
+
+	return c.JSON(http.StatusOK, summary)
+}

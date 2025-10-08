@@ -98,6 +98,7 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	protected.GET("/images/:id/presign", s.presignImageDownloadHandler)
 	protected.DELETE("/images/:id", imgHandler.DeleteImage)
 	protected.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
+	protected.GET("/projects/:project_id/cost", imgHandler.GetProjectCost)
 
 	// SSE routes
 	protected.GET("/events", func(c echo.Context) error {
@@ -181,6 +182,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api.GET("/images/:id/presign", s.presignImageDownloadHandler)
 	api.DELETE("/images/:id", imgHandler.DeleteImage)
 	api.GET("/projects/:project_id/images", imgHandler.GetProjectImages)
+	api.GET("/projects/:project_id/cost", imgHandler.GetProjectCost)
 
 	// SSE routes
 	api.GET("/events", func(c echo.Context) error {

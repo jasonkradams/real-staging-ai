@@ -30,4 +30,5 @@ type Handler interface {
 	GetImage(c echo.Context) error
 	GetProjectImages(c echo.Context) error
 	DeleteImage(c echo.Context) error
+	GetProjectCost(c echo.Context) error
 }

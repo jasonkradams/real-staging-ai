@@ -27,6 +27,9 @@ var _ Handler = &HandlerMock{}
 //			GetImageFunc: func(c echo.Context) error {
 //				panic("mock out the GetImage method")
 //			},
+//			GetProjectCostFunc: func(c echo.Context) error {
+//				panic("mock out the GetProjectCost method")
+//			},
 //			GetProjectImagesFunc: func(c echo.Context) error {
 //				panic("mock out the GetProjectImages method")
 //			},
@@ -45,6 +48,9 @@ type HandlerMock struct {
 
 	// GetImageFunc mocks the GetImage method.
 	GetImageFunc func(c echo.Context) error
+
+	// GetProjectCostFunc mocks the GetProjectCost method.
+	GetProjectCostFunc func(c echo.Context) error
 
 	// GetProjectImagesFunc mocks the GetProjectImages method.
 	GetProjectImagesFunc func(c echo.Context) error
@@ -66,6 +72,11 @@ type HandlerMock struct {
 			// C is the c argument value.
 			C echo.Context
 		}
+		// GetProjectCost holds details about calls to the GetProjectCost method.
+		GetProjectCost []struct {
+			// C is the c argument value.
+			C echo.Context
+		}
 		// GetProjectImages holds details about calls to the GetProjectImages method.
 		GetProjectImages []struct {
 			// C is the c argument value.
@@ -75,6 +86,7 @@ type HandlerMock struct {
 	lockCreateImage      sync.RWMutex
 	lockDeleteImage      sync.RWMutex
 	lockGetImage         sync.RWMutex
+	lockGetProjectCost   sync.RWMutex
 	lockGetProjectImages sync.RWMutex
 }
 
@@ -171,6 +183,38 @@ func (mock *HandlerMock) GetImageCalls() []struct {
 	mock.lockGetImage.RLock()
 	calls = mock.calls.GetImage
 	mock.lockGetImage.RUnlock()
+	return calls
+}
+
+// GetProjectCost calls GetProjectCostFunc.
+func (mock *HandlerMock) GetProjectCost(c echo.Context) error {
+	if mock.GetProjectCostFunc == nil {
+		panic("HandlerMock.GetProjectCostFunc: method is nil but Handler.GetProjectCost was just called")
+	}
+	callInfo := struct {
+		C echo.Context
+	}{
+		C: c,
+	}
+	mock.lockGetProjectCost.Lock()
+	mock.calls.GetProjectCost = append(mock.calls.GetProjectCost, callInfo)
+	mock.lockGetProjectCost.Unlock()
+	return mock.GetProjectCostFunc(c)
+}
+
+// GetProjectCostCalls gets all the calls that were made to GetProjectCost.
+// Check the length with:
+//
+//	len(mockedHandler.GetProjectCostCalls())
+func (mock *HandlerMock) GetProjectCostCalls() []struct {
+	C echo.Context
+} {
+	var calls []struct {
+		C echo.Context
+	}
+	mock.lockGetProjectCost.RLock()
+	calls = mock.calls.GetProjectCost
+	mock.lockGetProjectCost.RUnlock()
 	return calls
 }
 

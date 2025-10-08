@@ -33,4 +33,10 @@ type Repository interface {
 
 	// DeleteImagesByProjectID deletes all images for a specific project.
 	DeleteImagesByProjectID(ctx context.Context, projectID string) error
+
+	// UpdateImageCost updates cost tracking information for an image.
+	UpdateImageCost(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error
+
+	// GetProjectCostSummary retrieves cost summary for a project.
+	GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error)
 }

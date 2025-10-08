@@ -17,5 +17,6 @@ type Service interface {
 	UpdateImageWithStagedURL(ctx context.Context, imageID string, stagedURL string) (*Image, error)
 	UpdateImageWithError(ctx context.Context, imageID string, errorMsg string) (*Image, error)
 	DeleteImage(ctx context.Context, imageID string) error
+	GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error)
 	convertToImage(dbImage *queries.Image) *Image
 }

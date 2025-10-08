@@ -228,3 +228,8 @@ func (s *DefaultService) convertToImage(dbImage *queries.Image) *Image {
 
 	return image
 }
+
+// GetProjectCostSummary retrieves cost summary for a project.
+func (s *DefaultService) GetProjectCostSummary(ctx context.Context, projectID string) (*ProjectCostSummary, error) {
+	return s.imageRepo.GetProjectCostSummary(ctx, projectID)
+}
