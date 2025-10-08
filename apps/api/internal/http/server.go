@@ -11,8 +11,10 @@ import (
 	"github.com/virtual-staging-ai/api/internal/auth"
 	"github.com/virtual-staging-ai/api/internal/billing"
 	"github.com/virtual-staging-ai/api/internal/image"
+	"github.com/virtual-staging-ai/api/internal/logging"
 	"github.com/virtual-staging-ai/api/internal/project"
 	"github.com/virtual-staging-ai/api/internal/reconcile"
+	"github.com/virtual-staging-ai/api/internal/settings"
 	"github.com/virtual-staging-ai/api/internal/sse"
 	"github.com/virtual-staging-ai/api/internal/storage"
 	"github.com/virtual-staging-ai/api/internal/stripe"
@@ -120,6 +122,17 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	reconcileHandler := reconcile.NewDefaultHandler(reconcileSvc)
 	admin.POST("/reconcile/images", reconcileHandler.ReconcileImages)
 
+	// Admin settings routes
+	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
+	settingsService := settings.NewDefaultService(settingsRepo)
+	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	admin.GET("/models", adminHandler.ListModels)
+	admin.GET("/models/active", adminHandler.GetActiveModel)
+	admin.PUT("/models/active", adminHandler.UpdateActiveModel)
+	admin.GET("/settings", adminHandler.ListSettings)
+	admin.GET("/settings/:key", adminHandler.GetSetting)
+	admin.PUT("/settings/:key", adminHandler.UpdateSetting)
+
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)
 
@@ -191,6 +204,17 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	reconcileSvc := reconcile.NewDefaultService(s.db, s.s3Service)
 	reconcileHandler := reconcile.NewDefaultHandler(reconcileSvc)
 	admin.POST("/reconcile/images", reconcileHandler.ReconcileImages)
+
+	// Admin settings routes (test server)
+	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
+	settingsService := settings.NewDefaultService(settingsRepo)
+	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	admin.GET("/models", withTestUser(adminHandler.ListModels))
+	admin.GET("/models/active", withTestUser(adminHandler.GetActiveModel))
+	admin.PUT("/models/active", withTestUser(adminHandler.UpdateActiveModel))
+	admin.GET("/settings", withTestUser(adminHandler.ListSettings))
+	admin.GET("/settings/:key", withTestUser(adminHandler.GetSetting))
+	admin.PUT("/settings/:key", withTestUser(adminHandler.UpdateSetting))
 
 	// Serve API documentation (embedded)
 	webdocs.RegisterRoutes(e)
