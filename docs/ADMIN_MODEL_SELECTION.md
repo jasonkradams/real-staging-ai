@@ -12,6 +12,7 @@ The Admin Model Selection feature allows administrators to dynamically configure
 ### Database Schema
 
 **Table**: `settings`
+
 ```sql
 CREATE TABLE settings (
     key VARCHAR(255) PRIMARY KEY,
@@ -23,14 +24,17 @@ CREATE TABLE settings (
 ```
 
 **Default Setting**:
+
 - `active_model` = `"black-forest-labs/flux-kontext-max"`
 
 ### Backend Components
 
 #### 1. Settings Domain Package
+
 Location: `apps/api/internal/settings/`
 
 **Files**:
+
 - `model.go` - Data models (Setting, ModelInfo, UpdateSettingRequest)
 - `repository.go` - Repository interface
 - `default_repository.go` - PostgreSQL implementation
@@ -39,15 +43,18 @@ Location: `apps/api/internal/settings/`
 - `*_mock.go` - Generated mocks for testing
 
 **Key Features**:
+
 - CRUD operations for settings
 - Model validation before updates
 - Hardcoded model registry (matches worker models)
 - User tracking for audit trail
 
 #### 2. Admin HTTP Handler
+
 Location: `apps/api/internal/http/admin_handler.go`
 
 **Endpoints**:
+
 ```
 GET    /api/v1/admin/models          - List all available models
 GET    /api/v1/admin/models/active   - Get currently active model
@@ -60,9 +67,11 @@ PUT    /api/v1/admin/settings/:key   - Update specific setting
 **Authentication**: Requires JWT token (Auth0)
 
 #### 3. Frontend Admin UI
+
 Location: `apps/web/app/admin/settings/page.tsx`
 
 **Features**:
+
 - Visual model cards showing name, description, version
 - Active model highlighted with badge
 - One-click model activation
@@ -75,12 +84,14 @@ Location: `apps/web/app/admin/settings/page.tsx`
 ### List Models
 
 **Request**:
+
 ```http
 GET /api/v1/admin/models
 Authorization: Bearer <token>
 ```
 
 **Response**:
+
 ```json
 {
   "models": [
@@ -105,12 +116,14 @@ Authorization: Bearer <token>
 ### Get Active Model
 
 **Request**:
+
 ```http
 GET /api/v1/admin/models/active
 Authorization: Bearer <token>
 ```
 
 **Response**:
+
 ```json
 {
   "id": "black-forest-labs/flux-kontext-max",
@@ -124,6 +137,7 @@ Authorization: Bearer <token>
 ### Update Active Model
 
 **Request**:
+
 ```http
 PUT /api/v1/admin/models/active
 Authorization: Bearer <token>
@@ -135,6 +149,7 @@ Content-Type: application/json
 ```
 
 **Response**:
+
 ```json
 {
   "message": "Active model updated successfully",
@@ -143,6 +158,7 @@ Content-Type: application/json
 ```
 
 **Validation**:
+
 - Model ID must exist in the available models list
 - Returns 400 if model ID is invalid
 
@@ -161,19 +177,19 @@ Content-Type: application/json
 ```typescript
 // Fetch available models
 const token = await getAccessTokenSilently();
-const response = await fetch('/api/v1/admin/models', {
-  headers: { Authorization: `Bearer ${token}` }
+const response = await fetch("/api/v1/admin/models", {
+  headers: { Authorization: `Bearer ${token}` },
 });
 const { models } = await response.json();
 
 // Update active model
-await fetch('/api/v1/admin/models/active', {
-  method: 'PUT',
+await fetch("/api/v1/admin/models/active", {
+  method: "PUT",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   },
-  body: JSON.stringify({ value: 'qwen/qwen-image-edit' }),
+  body: JSON.stringify({ value: "qwen/qwen-image-edit" }),
 });
 ```
 
@@ -182,6 +198,7 @@ await fetch('/api/v1/admin/models/active', {
 The worker service will need to be updated to read the active model from the database instead of using a hardcoded value:
 
 **Current** (Hardcoded):
+
 ```go
 stagingCfg := &staging.ServiceConfig{
     ModelID: model.ModelFluxKontextMax, // Hardcoded
@@ -190,6 +207,7 @@ stagingCfg := &staging.ServiceConfig{
 ```
 
 **Future** (Dynamic - Phase 2):
+
 ```go
 // Read from database
 activeModel, err := settingsRepo.GetByKey(ctx, "active_model")
@@ -207,6 +225,7 @@ stagingCfg := &staging.ServiceConfig{
 ## Testing
 
 ### Unit Tests
+
 ```bash
 cd apps/api
 go test -v ./internal/settings
@@ -215,6 +234,7 @@ go test -v ./internal/settings
 **Coverage**: All service methods tested with mocks
 
 ### Integration Tests
+
 ```bash
 # Start dev environment
 make up
@@ -235,6 +255,7 @@ curl -X PUT \
 ```
 
 ### UI Testing
+
 1. Start dev environment: `make up`
 2. Navigate to `http://localhost:3000/admin/settings`
 3. Login with Auth0
@@ -243,11 +264,13 @@ curl -X PUT \
 ## Security
 
 ### Authentication & Authorization
+
 - All admin endpoints require valid JWT token
 - JWT validated via Auth0 middleware
 - User ID extracted from token for audit trail
 
 ### Future Enhancements (Phase 2)
+
 - Role-based access control (RBAC)
 - Admin-only role requirement
 - Permission checks before allowing updates
@@ -258,16 +281,19 @@ curl -X PUT \
 ### Applying the Migration
 
 **Development**:
+
 ```bash
 make migrate
 ```
 
 **Test**:
+
 ```bash
 make migrate-test
 ```
 
 **Production**:
+
 ```bash
 # Using migrate CLI
 migrate -path ./infra/migrations \
@@ -290,19 +316,23 @@ migrate -path ./infra/migrations \
 ## Monitoring
 
 ### Metrics to Track
+
 - Model change frequency
 - Active model distribution over time
 - Failed model updates
 - User who made changes
 
 ### Logging
+
 All model updates are logged with:
+
 - User ID
 - Timestamp
 - Old model ID
 - New model ID
 
 Example log:
+
 ```json
 {
   "time": "2025-10-08T10:30:00Z",
@@ -316,12 +346,14 @@ Example log:
 ## Known Limitations
 
 ### Phase 1 Constraints
+
 1. **Static Worker Configuration**: Worker still uses hardcoded model; database value not read dynamically
 2. **No Hot Reload**: Requires worker restart to pick up model changes
 3. **No RBAC**: Any authenticated user can access admin endpoints
 4. **No Audit History**: Only stores last update, not full history
 
 ### Planned Improvements (Phase 2)
+
 - Worker reads model from database on startup
 - Worker polls for model changes (or uses cache with TTL)
 - Role-based access control
@@ -331,18 +363,22 @@ Example log:
 ## Troubleshooting
 
 ### "Failed to fetch models"
+
 - **Cause**: API server not running or authentication failed
 - **Fix**: Ensure `make up` is running and you're logged in
 
 ### "Invalid model ID" error
+
 - **Cause**: Trying to activate a model not in registry
 - **Fix**: Only use model IDs from the available models list
 
 ### Worker using wrong model
+
 - **Cause**: Phase 1 doesn't sync with worker yet
 - **Fix**: Manually update `apps/worker/main.go` and restart worker
 
 ### Migration fails
+
 - **Cause**: Database schema conflict
 - **Fix**: Check existing schema, may need to rollback and reapply
 
@@ -356,6 +392,7 @@ Example log:
 ## Changelog
 
 ### Phase 1 (2025-10-08)
+
 - ✅ Database migration for settings table
 - ✅ Settings domain package with repository and service
 - ✅ Admin HTTP endpoints for model management
@@ -364,6 +401,7 @@ Example log:
 - ✅ Documentation
 
 ### Phase 2 (Planned)
+
 - ⏳ Worker integration to read active model from DB
 - ⏳ Role-based access control
 - ⏳ Audit history logging

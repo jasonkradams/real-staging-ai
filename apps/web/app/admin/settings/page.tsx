@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useState, useEffect, useCallback } from "react";
+import { useUser } from "@auth0/nextjs-auth0";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Settings2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiFetch } from "@/lib/api";
 
 interface ModelInfo {
   id: string;
@@ -17,41 +18,32 @@ interface ModelInfo {
 }
 
 export default function AdminSettingsPage() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { user, isLoading: userLoading } = useUser();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchModels();
-  }, []);
-
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const token = await getAccessTokenSilently();
-      const response = await fetch("/api/v1/admin/models", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch models");
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<{ models: ModelInfo[] }>("/v1/admin/models");
       setModels(data.models || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!userLoading && user) {
+      fetchModels();
+    }
+  }, [userLoading, user, fetchModels]);
 
   const updateActiveModel = async (modelID: string) => {
     try {
@@ -59,20 +51,10 @@ export default function AdminSettingsPage() {
       setError(null);
       setSuccessMessage(null);
 
-      const token = await getAccessTokenSilently();
-      const response = await fetch("/api/v1/admin/models/active", {
+      await apiFetch("/v1/admin/models/active", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ value: modelID }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update active model");
-      }
 
       setSuccessMessage("Active model updated successfully!");
       
