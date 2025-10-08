@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/virtual-staging-ai/worker/internal/logging"
+	"github.com/virtual-staging-ai/worker/internal/staging/model"
 )
 
 // DefaultService implements the Service interface using Replicate AI and S3.
@@ -28,7 +29,8 @@ type DefaultService struct {
 	s3Client        *s3.Client
 	bucketName      string
 	replicateClient *replicate.Client
-	modelVersion    string
+	modelID         model.ModelID
+	registry        *model.ModelRegistry
 }
 
 // Ensure DefaultService implements Service interface.
@@ -43,7 +45,7 @@ var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptio
 type ServiceConfig struct {
 	BucketName      string
 	ReplicateToken  string
-	ModelVersion    string
+	ModelID         model.ModelID
 	S3Endpoint      string
 	S3Region        string
 	S3AccessKey     string
@@ -62,10 +64,18 @@ func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService
 		return nil, fmt.Errorf("replicate API token is required")
 	}
 
-	// Use default model version if not specified
-	modelVersion := cfg.ModelVersion
-	if modelVersion == "" {
-		modelVersion = "qwen/qwen-image-edit"
+	// Use default model if not specified
+	modelID := cfg.ModelID
+	if modelID == "" {
+		modelID = model.ModelQwenImageEdit
+	}
+
+	// Initialize model registry
+	registry := model.NewModelRegistry()
+
+	// Validate model exists
+	if !registry.Exists(modelID) {
+		return nil, fmt.Errorf("unsupported model: %s", modelID)
 	}
 
 	bucketName := cfg.BucketName
@@ -98,7 +108,8 @@ func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService
 			s3Client:        s3Client,
 			bucketName:      bucketName,
 			replicateClient: replicateClient,
-			modelVersion:    modelVersion,
+			modelID:         modelID,
+			registry:        registry,
 		}, nil
 	}
 
@@ -127,7 +138,8 @@ func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService
 			s3Client:        s3Client,
 			bucketName:      bucketName,
 			replicateClient: replicateClient,
-			modelVersion:    modelVersion,
+			modelID:         modelID,
+			registry:        registry,
 		}, nil
 	}
 
@@ -143,7 +155,8 @@ func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService
 		s3Client:        s3Client,
 		bucketName:      bucketName,
 		replicateClient: replicateClient,
-		modelVersion:    modelVersion,
+		modelID:         modelID,
+		registry:        registry,
 	}, nil
 }
 
@@ -281,23 +294,31 @@ func (s *DefaultService) callReplicateAPI(ctx context.Context, imageDataURL, pro
 	tracer := otel.Tracer("virtual-staging-worker/staging")
 	ctx, span := tracer.Start(ctx, "staging.callReplicateAPI")
 	span.SetAttributes(
-		attribute.String("model", s.modelVersion),
+		attribute.String("model", string(s.modelID)),
 		attribute.String("prompt", prompt),
 	)
 	defer span.End()
 
-	// Build the input parameters for qwen/qwen-image-edit
-	input := replicate.PredictionInput{
-		"image":          imageDataURL,
-		"prompt":         prompt,
-		"go_fast":        true,
-		"aspect_ratio":   "match_input_image",
-		"output_format":  "webp",
-		"output_quality": 80,
+	// Get the model metadata from registry
+	modelMeta, err := s.registry.Get(s.modelID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "model not found")
+		return "", fmt.Errorf("failed to get model metadata: %w", err)
 	}
 
-	if seed != nil {
-		input["seed"] = *seed
+	// Build the input parameters using the model's input builder
+	inputReq := &model.ModelInputRequest{
+		ImageDataURL: imageDataURL,
+		Prompt:       prompt,
+		Seed:         seed,
+	}
+
+	input, err := modelMeta.InputBuilder.BuildInput(ctx, inputReq)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "input build failed")
+		return "", fmt.Errorf("failed to build model input: %w", err)
 	}
 
 	// Create and run the prediction
@@ -306,7 +327,7 @@ func (s *DefaultService) callReplicateAPI(ctx context.Context, imageDataURL, pro
 		Events: []replicate.WebhookEventType{},
 	}
 
-	prediction, err := s.replicateClient.CreatePrediction(ctx, s.modelVersion, input, &webhook, false)
+	prediction, err := s.replicateClient.CreatePrediction(ctx, string(s.modelID), input, &webhook, false)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "CreatePrediction failed")

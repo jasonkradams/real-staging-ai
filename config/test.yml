@@ -28,4 +28,4 @@ otel:
   exporter_otlp_endpoint: ""
 
 replicate:
-  model_version: qwen/qwen-image-edit
+  # Model selection is now handled in code via staging.ModelID enum

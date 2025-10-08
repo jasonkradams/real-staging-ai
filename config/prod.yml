@@ -34,7 +34,7 @@ redis:
   addr: ${REDIS_ADDR}
 
 replicate:
-  model_version: ${REPLICATE_MODEL_VERSION:qwen/qwen-image-edit}
+  # Model selection is now handled in code via staging.ModelID enum
 
 s3:
   # Production S3 should use IAM roles or environment variables

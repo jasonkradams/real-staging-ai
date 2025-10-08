@@ -8,6 +8,16 @@ The worker service uses Redis as a message broker for a job queue. When the API 
 
 The job queue is implemented using Redis Lists, which provide a simple and reliable way to implement a FIFO queue.
 
+## AI Model Registry
+
+The worker uses a model registry system to support multiple AI models for virtual staging. Each model has its own API contract and is registered with metadata and an input builder. Models are defined in the `apps/worker/internal/staging/model/` package. See [`docs/model_registry.md`](./model_registry.md) for detailed architecture documentation.
+
+Currently supported models:
+- **Qwen Image Edit** (`qwen/qwen-image-edit`) - Fast image editing optimized for staging
+- **Flux Kontext Max** (`black-forest-labs/flux-kontext-max`) - High-quality image generation with advanced context understanding
+
+The active model is configured in code (not config files) and defaults to Qwen Image Edit. Each model has its own input builder that handles model-specific parameters and validation.
+
 ## Job Processing
 
 The worker service continuously polls the Redis queue for new jobs. When a new job is received, the worker performs the following steps:

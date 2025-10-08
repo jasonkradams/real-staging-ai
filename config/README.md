@@ -68,7 +68,7 @@ Redis configuration:
 ### `replicate`
 Replicate AI API configuration (Worker only):
 - `api_token`: Replicate API token (should be set in `apps/worker/secrets.yml` or `REPLICATE_API_TOKEN` env var)
-- `model_version`: Model version to use (default: qwen/qwen-image-edit)
+- **Note**: Model selection is now handled in code via `staging.ModelID` enum (see `docs/model_registry.md`)
 
 ### `s3`
 S3/MinIO configuration:

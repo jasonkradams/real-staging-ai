@@ -51,8 +51,7 @@ type Redis struct {
 }
 
 type Replicate struct {
-	APIToken     string `yaml:"api_token" env:"REPLICATE_API_TOKEN"`
-	ModelVersion string `yaml:"model_version" env:"REPLICATE_MODEL_VERSION" env-default:"qwen/qwen-image-edit"`
+	APIToken string `yaml:"api_token" env:"REPLICATE_API_TOKEN"`
 }
 
 type S3 struct {

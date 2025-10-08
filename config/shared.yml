@@ -31,7 +31,7 @@ redis:
 
 replicate:
   # API token should be set via environment variable: REPLICATE_API_TOKEN
-  model_version: qwen/qwen-image-edit
+  # Model selection is now handled in code via staging.ModelID enum
 
 s3:
   access_key: minioadmin

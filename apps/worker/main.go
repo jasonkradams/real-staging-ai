@@ -17,6 +17,7 @@ import (
 	"github.com/virtual-staging-ai/worker/internal/queue"
 	"github.com/virtual-staging-ai/worker/internal/repository"
 	"github.com/virtual-staging-ai/worker/internal/staging"
+	"github.com/virtual-staging-ai/worker/internal/staging/model"
 	"github.com/virtual-staging-ai/worker/internal/telemetry"
 )
 
@@ -67,7 +68,7 @@ func main() {
 	stagingCfg := &staging.ServiceConfig{
 		BucketName:     cfg.S3Bucket(),
 		ReplicateToken: cfg.Replicate.APIToken,
-		ModelVersion:   cfg.Replicate.ModelVersion,
+		ModelID:        model.ModelFluxKontextMax, // Default model
 		S3Endpoint:     cfg.S3.Endpoint,
 		S3Region:       cfg.S3.Region,
 		S3AccessKey:    cfg.S3.AccessKey,
