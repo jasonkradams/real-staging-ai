@@ -12,8 +12,9 @@ The cost tracking feature tracks the cost of processing each image and provides 
 ### Database Schema
 
 **New columns in `images` table**:
+
 ```sql
-ALTER TABLE images 
+ALTER TABLE images
   ADD COLUMN cost_usd DECIMAL(10, 4) DEFAULT 0.00,
   ADD COLUMN model_used VARCHAR(255),
   ADD COLUMN processing_time_ms INTEGER,
@@ -21,12 +22,14 @@ ALTER TABLE images
 ```
 
 **Indexes**:
+
 - `idx_images_project_cost` - For fast cost aggregation by project
 - `idx_images_model` - For cost analysis by model
 
 ### Cost Calculation
 
 **Model Pricing Table** (`apps/worker/internal/staging/pricing.go`):
+
 ```go
 var modelPricingTable = []ModelPricing{
     {
@@ -49,6 +52,7 @@ var modelPricingTable = []ModelPricing{
 **Endpoint**: `GET /api/v1/projects/:project_id/cost`
 
 **Response**:
+
 ```json
 {
   "project_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -59,6 +63,7 @@ var modelPricingTable = []ModelPricing{
 ```
 
 **Fields**:
+
 - `total_cost_usd` - Total cost for all images in the project
 - `image_count` - Number of images processed
 - `avg_cost_usd` - Average cost per image
@@ -93,7 +98,7 @@ cost := staging.GetModelCost(modelID)
 prediction, err := replicateClient.Run(...)
 
 // 3. Update cost in database
-err = imageRepo.UpdateImageCost(ctx, imageID, cost, string(modelID), 
+err = imageRepo.UpdateImageCost(ctx, imageID, cost, string(modelID),
     processingTimeMs, prediction.ID)
 ```
 
@@ -148,7 +153,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ```sql
 -- Get total cost for a project
-SELECT 
+SELECT
     project_id,
     SUM(cost_usd) as total_cost,
     COUNT(*) as image_count,
@@ -158,7 +163,7 @@ WHERE project_id = '123e4567-e89b-12d3-a456-426614174000'
 GROUP BY project_id;
 
 -- Get cost breakdown by model
-SELECT 
+SELECT
     model_used,
     COUNT(*) as image_count,
     SUM(cost_usd) as total_cost,
@@ -172,11 +177,13 @@ GROUP BY model_used;
 ### Apply Migration
 
 **Development**:
+
 ```bash
 make migrate
 ```
 
 **Test**:
+
 ```bash
 make migrate-test
 ```
@@ -194,6 +201,7 @@ migrate down 1
 ## Future Enhancements
 
 ### Phase 2: Advanced Cost Features
+
 - [ ] Monthly cost reports
 - [ ] Cost alerts and budgets
 - [ ] Detailed billing statements
@@ -202,6 +210,7 @@ migrate down 1
 - [ ] Integration with Stripe for billing
 
 ### Phase 3: Cost Optimization
+
 - [ ] Real-time cost estimation before processing
 - [ ] Model recommendation based on cost vs quality
 - [ ] Bulk processing discounts
@@ -230,7 +239,7 @@ var modelPricingTable = []ModelPricing{
 ### Cost by Time Period
 
 ```sql
-SELECT 
+SELECT
     DATE_TRUNC('day', created_at) as day,
     SUM(cost_usd) as daily_cost,
     COUNT(*) as images_processed
@@ -243,7 +252,7 @@ ORDER BY day DESC;
 ### Top Spending Projects
 
 ```sql
-SELECT 
+SELECT
     p.id,
     p.name,
     SUM(i.cost_usd) as total_cost,
@@ -258,7 +267,7 @@ LIMIT 10;
 ### Model Usage and Cost
 
 ```sql
-SELECT 
+SELECT
     model_used,
     COUNT(*) as usage_count,
     SUM(cost_usd) as total_cost,
@@ -305,6 +314,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ### Alerts
 
 Set up alerts for:
+
 - Daily spending exceeds threshold
 - Unusual cost spikes
 - Projects with abnormally high costs
@@ -327,6 +337,7 @@ Set up alerts for:
 ## Changelog
 
 ### 2025-10-08
+
 - ✅ Database migration for cost tracking columns
 - ✅ Image model updated with cost fields
 - ✅ Repository methods for cost updates and aggregation
@@ -335,6 +346,7 @@ Set up alerts for:
 - ✅ Documentation
 
 ### Future
+
 - ⏳ UI components to display costs
 - ⏳ Cost analytics dashboard
 - ⏳ Billing integration

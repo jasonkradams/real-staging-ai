@@ -78,8 +78,9 @@ func (h *AdminHandler) UpdateActiveModel(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := c.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	// Validate required field
+	if req.Value == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
 	// Get user ID from context (set by auth middleware)
@@ -141,8 +142,9 @@ func (h *AdminHandler) UpdateSetting(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := c.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	// Validate required field
+	if req.Value == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
 	// Get user ID from context (set by auth middleware)

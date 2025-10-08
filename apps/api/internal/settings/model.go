@@ -22,5 +22,5 @@ type ModelInfo struct {
 
 // UpdateSettingRequest represents a request to update a setting.
 type UpdateSettingRequest struct {
-	Value string `json:"value" validate:"required"`
+	Value string `json:"value"`
 }
