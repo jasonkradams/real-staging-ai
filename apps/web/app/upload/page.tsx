@@ -327,11 +327,11 @@ export default function UploadPage() {
                 onChange={(e) => setRoomType(e.target.value)}
               >
                 <option value="">Auto-detect</option>
-                <option value="living room">Living Room</option>
+                <option value="living_room">Living Room</option>
                 <option value="bedroom">Bedroom</option>
                 <option value="kitchen">Kitchen</option>
-                <option value="dining room">Dining Room</option>
                 <option value="bathroom">Bathroom</option>
+                <option value="dining_room">Dining Room</option>
                 <option value="office">Office</option>
                 <option value="entryway">Entryway</option>
                 <option value="outdoor">Outdoor/Patio</option>
@@ -349,14 +349,14 @@ export default function UploadPage() {
                 <option value="">Default</option>
                 <option value="modern">Modern</option>
                 <option value="contemporary">Contemporary</option>
-                <option value="minimalist">Minimalist</option>
-                <option value="scandinavian">Scandinavian</option>
-                <option value="industrial">Industrial</option>
-                <option value="mid-century modern">Mid-Century Modern</option>
                 <option value="traditional">Traditional</option>
+                <option value="industrial">Industrial</option>
+                <option value="scandinavian">Scandinavian</option>
                 <option value="rustic">Rustic</option>
                 <option value="coastal">Coastal</option>
                 <option value="bohemian">Bohemian</option>
+                <option value="minimalist">Minimalist</option>
+                <option value="mid-century modern">Mid-Century Modern</option>
               </select>
             </div>
           </div>

@@ -176,12 +176,12 @@ func (h *DefaultHandler) validateCreateImageRequest(req *CreateImageRequest) []V
 
 	// Validate room type if provided
 	if req.RoomType != nil {
-		validRoomTypes := []string{"living_room", "bedroom", "kitchen", "bathroom", "dining_room", "office"}
+		validRoomTypes := []string{"living_room", "bedroom", "kitchen", "bathroom", "dining_room", "office", "entryway", "outdoor"}
 		isValid := slices.Contains(validRoomTypes, *req.RoomType)
 		if !isValid {
 			errors = append(errors, ValidationErrorDetail{
 				Field:   "room_type",
-				Message: "room_type must be one of: living_room, bedroom, kitchen, bathroom, dining_room, office",
+				Message: "room_type must be one of: living_room, bedroom, kitchen, bathroom, dining_room, office, entryway, outdoor",
 			})
 		}
 	}
