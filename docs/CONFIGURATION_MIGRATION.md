@@ -53,13 +53,13 @@ Each YAML file contains these sections:
 ```go
 bucketName := os.Getenv("S3_BUCKET")
 if bucketName == "" {
-    bucketName = "virtual-staging"
+    bucketName = "real-staging"
 }
 ```
 
 **After:**
 ```go
-import "github.com/virtual-staging-ai/api/internal/config"
+import "github.com/real-staging-ai/api/internal/config"
 
 cfg, err := config.NewDefaultConfig()
 if err != nil {
@@ -80,7 +80,7 @@ if replicateToken == "" {
 
 **After:**
 ```go
-import "github.com/virtual-staging-ai/worker/internal/config"
+import "github.com/real-staging-ai/worker/internal/config"
 
 cfg, err := config.NewDefaultConfig()
 if err != nil {
@@ -96,9 +96,9 @@ replicateToken := cfg.GetReplicateAPIToken()
 api:
   environment:
     - APP_ENV=dev
-    - AUTH0_AUDIENCE=https://api.virtualstaging.local
+    - AUTH0_AUDIENCE=https://api.realstaging.local
     - AUTH0_DOMAIN=dev-sleeping-pandas.us.auth0.com
-    - PGDATABASE=virtualstaging
+    - PGDATABASE=realstaging
     - PGHOST=postgres
     # ... 15 more variables
 ```

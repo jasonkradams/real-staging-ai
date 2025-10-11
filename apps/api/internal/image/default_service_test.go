@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
-	"github.com/virtual-staging-ai/api/internal/config"
-	"github.com/virtual-staging-ai/api/internal/job"
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/job"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 func TestNewDefaultService(t *testing.T) {

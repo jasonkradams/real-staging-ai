@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/labstack/echo/v4"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 // Table-driven tests for GetMySubscriptions

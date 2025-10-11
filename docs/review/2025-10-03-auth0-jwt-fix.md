@@ -31,7 +31,7 @@ During debugging, browser localStorage contained old invalid tokens that persist
 
 Added missing `AUTH0_AUDIENCE` configuration:
 ```bash
-AUTH0_AUDIENCE=https://api.virtualstaging.local
+AUTH0_AUDIENCE=https://api.realstaging.local
 ```
 
 This matches the audience configured in the backend API and tells Auth0 to issue proper JWT access tokens.
@@ -90,7 +90,7 @@ curl http://localhost:3000/auth/access-token
 Decode token at [jwt.io](https://jwt.io) and verify:
 ```json
 {
-  "aud": "https://api.virtualstaging.local",
+  "aud": "https://api.realstaging.local",
   "iss": "https://dev-sleeping-pandas.us.auth0.com/",
   "sub": "auth0|...",
   "exp": 1234567890,

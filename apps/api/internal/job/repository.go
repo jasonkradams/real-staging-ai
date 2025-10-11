@@ -3,7 +3,7 @@ package job
 import (
 	"context"
 
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 //go:generate go run github.com/matryer/moq@v0.5.3 -out repository_mock.go . Repository

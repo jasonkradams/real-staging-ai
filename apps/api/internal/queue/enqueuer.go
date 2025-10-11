@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
-	"github.com/virtual-staging-ai/api/internal/config"
-	"github.com/virtual-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -95,7 +95,7 @@ func NewAsynqEnqueuerFromEnv(cfg *config.Config) (*AsynqEnqueuer, error) {
 
 // EnqueueStageRun enqueues a stage:run task with the provided payload.
 func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPayload, opts *EnqueueOpts) (string, error) {
-	tracer := otel.Tracer("virtual-staging-api/queue")
+	tracer := otel.Tracer("real-staging-api/queue")
 	ctx, span := tracer.Start(ctx, "queue.EnqueueStageRun")
 	defer span.End()
 

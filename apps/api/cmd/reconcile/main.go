@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/virtual-staging-ai/api/internal/config"
-	"github.com/virtual-staging-ai/api/internal/logging"
-	"github.com/virtual-staging-ai/api/internal/reconcile"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/reconcile"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 func main() {

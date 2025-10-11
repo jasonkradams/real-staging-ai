@@ -10,7 +10,7 @@ import (
 	"time"
 
 	redis "github.com/redis/go-redis/v9"
-	"github.com/virtual-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -54,7 +54,7 @@ func NewDefaultSSE(rdb *redis.Client, cfg Config) *DefaultSSE {
 // It emits an initial "connected" event, periodic "heartbeat" events, and "job_update" events
 // containing a minimal payload: {"status":"..."}.
 func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID string) error {
-	tracer := otel.Tracer("virtual-staging-api/sse")
+	tracer := otel.Tracer("real-staging-api/sse")
 	ctx, span := tracer.Start(ctx, "sse.StreamImage")
 	span.SetAttributes(attribute.String("image.id", imageID))
 	defer span.End()

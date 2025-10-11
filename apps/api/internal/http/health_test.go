@@ -29,5 +29,5 @@ func TestServer_HealthCheck(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "ok", response["status"])
-	assert.Equal(t, "virtual-staging-api", response["service"])
+	assert.Equal(t, "real-staging-api", response["service"])
 }

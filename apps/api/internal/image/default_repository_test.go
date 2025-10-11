@@ -12,8 +12,8 @@ import (
 	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 func TestDefaultRepository_CreateImage(t *testing.T) {

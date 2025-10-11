@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/virtual-staging-ai/api/internal/reconcile"
+	"github.com/real-staging-ai/api/internal/reconcile"
 )
 
 func TestReconcileImages_Integration(t *testing.T) {
@@ -43,7 +43,7 @@ func TestReconcileImages_Integration(t *testing.T) {
 			projectID, userID, "Test Project Reconcile")
 
 		// Insert image with original_url that doesn't exist in S3
-		originalURL := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", imageID)
+		originalURL := fmt.Sprintf("http://localhost:4566/real-staging/uploads/%s/original.jpg", imageID)
 		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)
 			VALUES ($1, $2, $3, 'queued', NOW(), NOW())`,
@@ -86,7 +86,7 @@ func TestReconcileImages_Integration(t *testing.T) {
 			projectID, userID, "Test Project Reconcile 2")
 
 		// Insert image with original_url that doesn't exist
-		originalURL := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", imageID)
+		originalURL := fmt.Sprintf("http://localhost:4566/real-staging/uploads/%s/original.jpg", imageID)
 		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)
 			VALUES ($1, $2, $3, 'queued', NOW(), NOW())`,
@@ -133,8 +133,8 @@ func TestReconcileImages_Integration(t *testing.T) {
 			project1, userID, "Project 1", project2, "Project 2")
 
 		// Insert images for both projects
-		originalURL1 := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", image1)
-		originalURL2 := fmt.Sprintf("http://localhost:4566/virtual-staging/uploads/%s/original.jpg", image2)
+		originalURL1 := fmt.Sprintf("http://localhost:4566/real-staging/uploads/%s/original.jpg", image1)
+		originalURL2 := fmt.Sprintf("http://localhost:4566/real-staging/uploads/%s/original.jpg", image2)
 
 		_, _ = db.Pool().Exec(ctx, `
 			INSERT INTO images (id, project_id, original_url, status, created_at, updated_at)

@@ -51,7 +51,7 @@ AUTH0_DOMAIN=dev-sleeping-pandas.us.auth0.com
 AUTH0_CLIENT_ID=your_client_id
 AUTH0_CLIENT_SECRET=your_client_secret
 AUTH0_SECRET=your_random_secret_32_chars
-AUTH0_AUDIENCE=https://api.virtualstaging.local
+AUTH0_AUDIENCE=https://api.realstaging.local
 APP_BASE_URL=http://localhost:3000
 
 # API

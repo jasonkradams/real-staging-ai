@@ -1,6 +1,6 @@
 # Documentation Todos
 
-This document outlines the documentation tasks for the Virtual Staging AI project.
+This document outlines the documentation tasks for the Real Staging AI project.
 
 ## 1. Technical Specifications (in `docs/`)
 

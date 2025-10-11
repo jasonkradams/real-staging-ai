@@ -125,7 +125,7 @@ func (h *DefaultWebhookHandler) ValidateWebhookSignature(payload []byte, signatu
    docker compose restart api
    
    # Systemd
-   sudo systemctl restart virtual-staging-api
+   sudo systemctl restart real-staging-api
    ```
 
 3. **Verify Deployment**

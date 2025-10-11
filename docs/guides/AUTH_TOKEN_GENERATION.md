@@ -14,8 +14,8 @@ This document describes how to generate a test token from Auth0 to authenticate 
 2.  Navigate to **Applications > APIs**.
 3.  Click **+ Create API**.
 4.  Provide the following information:
-    - **Name:** A descriptive name for your API (e.g., "Virtual Staging API").
-    - **Identifier:** `https://api.virtualstaging.local`. This is the `audience` the server will expect.
+    - **Name:** A descriptive name for your API (e.g., "Real Staging API").
+    - **Identifier:** `https://api.realstaging.local`. This is the `audience` the server will expect.
     - **Signing Algorithm:** Keep the default `RS256`.
 5.  Click **Create**.
 
@@ -24,7 +24,7 @@ This document describes how to generate a test token from Auth0 to authenticate 
 | Name                 | Identifier                                       | Signing Algorithm |
 | -------------------- | ------------------------------------------------ | ----------------- |
 | Auth0 Management API | https://dev-sleeping-pandas.us.auth0.com/api/v2/ | RS256             |
-| Virtual Staging API  | https://api.virtualstaging.local                 | RS256             |
+| Real Staging API     | https://api.realstaging.local                    | RS256             |
 
 #### Test Settings
 
@@ -100,7 +100,7 @@ func main() {
 1.  Navigate to **Applications > Applications**.
 2.  Click **+ Create Application**.
 3.  Provide the following information:
-    - **Name:** A name for your application (e.g., "Virtual Staging Web App").
+    - **Name:** A name for your application (e.g., "Real Staging Web App").
     - **Application Type:** Select **Single Page Web Applications**.
 4.  Click **Create**.
 
@@ -135,7 +135,7 @@ For a more streamlined workflow, you can use the Auth0 CLI.
     ```
 3.  **Get a test token:**
     ```bash
-    auth0 test token --audience https://api.virtualstaging.local
+    auth0 test token --audience https://api.realstaging.local
     ```
 
 This command will provide you with a test token that you can use for your API requests.

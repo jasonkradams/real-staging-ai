@@ -1,4 +1,4 @@
-# Contributing to Virtual Staging AI
+# Contributing to Real Staging AI
 
 First off, thank you for considering contributing to this project! We welcome any contributions, from bug reports and feature requests to code contributions.
 

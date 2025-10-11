@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/virtual-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/config"
 )
 
 // DefaultDatabase wraps the pgx connection pool with tracing
@@ -51,7 +51,7 @@ func NewDefaultDatabase(cfg *config.DB) (*DefaultDatabase, error) {
 
 	return &DefaultDatabase{
 		pool:   pool,
-		tracer: otel.Tracer("virtual-staging-api/database"),
+		tracer: otel.Tracer("real-staging-api/database"),
 	}, nil
 }
 
@@ -69,7 +69,7 @@ func (db *DefaultDatabase) Pool() PgxPool {
 func (db *DefaultDatabase) QueryRow(ctx context.Context, sql string, arguments ...any) pgx.Row {
 	tr := db.tracer
 	if tr == nil {
-		tr = otel.Tracer("virtual-staging-api/database")
+		tr = otel.Tracer("real-staging-api/database")
 	}
 	ctx, span := tr.Start(ctx, "db.query_row")
 	defer span.End()
@@ -86,7 +86,7 @@ func (db *DefaultDatabase) QueryRow(ctx context.Context, sql string, arguments .
 func (db *DefaultDatabase) Query(ctx context.Context, sql string, arguments ...any) (pgx.Rows, error) {
 	tr := db.tracer
 	if tr == nil {
-		tr = otel.Tracer("virtual-staging-api/database")
+		tr = otel.Tracer("real-staging-api/database")
 	}
 	ctx, span := tr.Start(ctx, "db.query")
 	defer span.End()
@@ -108,7 +108,7 @@ func (db *DefaultDatabase) Query(ctx context.Context, sql string, arguments ...a
 func (db *DefaultDatabase) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
 	tr := db.tracer
 	if tr == nil {
-		tr = otel.Tracer("virtual-staging-api/database")
+		tr = otel.Tracer("real-staging-api/database")
 	}
 	ctx, span := tr.Start(ctx, "db.exec")
 	defer span.End()

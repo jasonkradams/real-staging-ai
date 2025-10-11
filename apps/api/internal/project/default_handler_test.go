@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 // ---------------------- Validation tests ----------------------

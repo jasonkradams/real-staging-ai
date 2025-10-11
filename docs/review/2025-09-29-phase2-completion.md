@@ -102,7 +102,7 @@ Phase 2 focused on critical improvements to the storage reconciliation system, s
 ```bash
 $ make test-integration
 ...
-ok  github.com/virtual-staging-ai/api/tests/integration  0.123s
+ok  github.com/real-staging-ai/api/tests/integration  0.123s
 ```
 
 All reconciliation integration tests pass with real Postgres and MinIO.
@@ -111,7 +111,7 @@ All reconciliation integration tests pass with real Postgres and MinIO.
 ```bash
 $ make test
 ...
-ok  github.com/virtual-staging-ai/api/internal/reconcile  (cached)
+ok  github.com/real-staging-ai/api/internal/reconcile  (cached)
 ```
 
 All existing unit tests continue to pass.

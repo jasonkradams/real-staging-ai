@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/virtual-staging-ai/api/internal/config"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 func TestS3Integration_UploadHeadDelete(t *testing.T) {

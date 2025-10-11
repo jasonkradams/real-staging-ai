@@ -20,8 +20,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/virtual-staging-ai/worker/internal/logging"
-	"github.com/virtual-staging-ai/worker/internal/staging/model"
+	"github.com/real-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/staging/model"
 )
 
 // DefaultService implements the Service interface using Replicate AI and S3.
@@ -163,7 +163,7 @@ func NewDefaultService(ctx context.Context, cfg *ServiceConfig) (*DefaultService
 // StageImage processes an image with AI staging and returns the staged image URL in S3.
 func (s *DefaultService) StageImage(ctx context.Context, req *StagingRequest) (string, error) {
 	log := logging.Default()
-	tracer := otel.Tracer("virtual-staging-worker/staging")
+	tracer := otel.Tracer("real-staging-worker/staging")
 	ctx, span := tracer.Start(ctx, "staging.StageImage")
 	span.SetAttributes(
 		attribute.String("image.id", req.ImageID),
@@ -238,7 +238,7 @@ func (s *DefaultService) StageImage(ctx context.Context, req *StagingRequest) (s
 
 // DownloadFromS3 downloads a file from S3 and returns its content.
 func (s *DefaultService) DownloadFromS3(ctx context.Context, fileKey string) (io.ReadCloser, error) {
-	tracer := otel.Tracer("virtual-staging-worker/staging")
+	tracer := otel.Tracer("real-staging-worker/staging")
 	_, span := tracer.Start(ctx, "staging.DownloadFromS3")
 	span.SetAttributes(attribute.String("s3.key", fileKey))
 	defer span.End()
@@ -259,7 +259,7 @@ func (s *DefaultService) DownloadFromS3(ctx context.Context, fileKey string) (io
 
 // UploadToS3 uploads a file to S3 and returns the public URL.
 func (s *DefaultService) UploadToS3(ctx context.Context, imageID string, content io.Reader, contentType string) (string, error) {
-	tracer := otel.Tracer("virtual-staging-worker/staging")
+	tracer := otel.Tracer("real-staging-worker/staging")
 	_, span := tracer.Start(ctx, "staging.UploadToS3")
 	span.SetAttributes(attribute.String("image.id", imageID))
 	defer span.End()
@@ -291,7 +291,7 @@ func (s *DefaultService) UploadToS3(ctx context.Context, imageID string, content
 
 // callReplicateAPI calls the Replicate API to stage an image.
 func (s *DefaultService) callReplicateAPI(ctx context.Context, imageDataURL, prompt string, seed *int64) (string, error) {
-	tracer := otel.Tracer("virtual-staging-worker/staging")
+	tracer := otel.Tracer("real-staging-worker/staging")
 	ctx, span := tracer.Start(ctx, "staging.callReplicateAPI")
 	span.SetAttributes(
 		attribute.String("model", string(s.modelID)),
@@ -507,7 +507,7 @@ func extractS3KeyFromURL(rawURL string) (string, error) {
 	parts := strings.SplitN(path, "/", 2)
 	if len(parts) == 2 {
 		// Check if first part looks like a bucket name
-		if strings.Contains(parts[0], "virtual-staging") {
+		if strings.Contains(parts[0], "real-staging") {
 			return parts[1], nil
 		}
 	}

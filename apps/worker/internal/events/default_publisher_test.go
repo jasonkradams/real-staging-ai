@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/virtual-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/logging"
 )
 
 func TestDefaultPublisher_Success_NoRetry(t *testing.T) {

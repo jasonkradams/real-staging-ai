@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/virtual-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/config"
 )
 
 func TestGetEnvOrDefault(t *testing.T) {

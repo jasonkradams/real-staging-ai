@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/virtual-staging-ai/worker/internal/config"
+	"github.com/real-staging-ai/worker/internal/config"
 )
 
 func TestNewDefaultPublisher_MissingEnv(t *testing.T) {

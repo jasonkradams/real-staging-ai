@@ -25,7 +25,7 @@ type App struct {
 }
 
 type DB struct {
-	PGDatabase string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
+	PGDatabase string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"realstaging"`
 	PGHost     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
 	PGPassword string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
 	PGPort     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
@@ -56,7 +56,7 @@ type Replicate struct {
 
 type S3 struct {
 	AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
-	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
+	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"real-staging"`
 	Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
 	PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
 	Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`

@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 
-	configLib "github.com/virtual-staging-ai/api/internal/config"
+	configLib "github.com/real-staging-ai/api/internal/config"
 )
 
 // PresignedUploadResult contains the result of generating a presigned upload URL.

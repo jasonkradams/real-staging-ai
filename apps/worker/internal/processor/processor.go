@@ -9,11 +9,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/virtual-staging-ai/worker/internal/events"
-	"github.com/virtual-staging-ai/worker/internal/logging"
-	"github.com/virtual-staging-ai/worker/internal/queue"
-	"github.com/virtual-staging-ai/worker/internal/repository"
-	"github.com/virtual-staging-ai/worker/internal/staging"
+	"github.com/real-staging-ai/worker/internal/events"
+	"github.com/real-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/queue"
+	"github.com/real-staging-ai/worker/internal/repository"
+	"github.com/real-staging-ai/worker/internal/staging"
 )
 
 // ImageProcessor handles image processing jobs.
@@ -43,7 +43,7 @@ type JobPayload struct {
 
 // ProcessJob processes a job based on its type.
 func (p *ImageProcessor) ProcessJob(ctx context.Context, job *queue.Job) error {
-	tracer := otel.Tracer("virtual-staging-worker/processor")
+	tracer := otel.Tracer("real-staging-worker/processor")
 	ctx, span := tracer.Start(ctx, "processor.ProcessJob")
 	if job != nil {
 		span.SetAttributes(
@@ -67,7 +67,7 @@ func (p *ImageProcessor) ProcessJob(ctx context.Context, job *queue.Job) error {
 // processStageJob processes an image staging job.
 func (p *ImageProcessor) processStageJob(ctx context.Context, job *queue.Job) error {
 	log := logging.Default()
-	tracer := otel.Tracer("virtual-staging-worker/processor")
+	tracer := otel.Tracer("real-staging-worker/processor")
 	ctx, span := tracer.Start(ctx, "processor.processStageJob")
 	defer span.End()
 

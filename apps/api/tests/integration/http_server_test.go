@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	httpLib "github.com/virtual-staging-ai/api/internal/http"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/project"
+	httpLib "github.com/real-staging-ai/api/internal/http"
+	"github.com/real-staging-ai/api/internal/image"
+	"github.com/real-staging-ai/api/internal/project"
 )
 
 func TestCreateProjectRoute_HTTP(t *testing.T) {

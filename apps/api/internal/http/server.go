@@ -8,17 +8,17 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 
-	"github.com/virtual-staging-ai/api/internal/auth"
-	"github.com/virtual-staging-ai/api/internal/billing"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/logging"
-	"github.com/virtual-staging-ai/api/internal/project"
-	"github.com/virtual-staging-ai/api/internal/reconcile"
-	"github.com/virtual-staging-ai/api/internal/settings"
-	"github.com/virtual-staging-ai/api/internal/sse"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/stripe"
-	webdocs "github.com/virtual-staging-ai/api/web"
+	"github.com/real-staging-ai/api/internal/auth"
+	"github.com/real-staging-ai/api/internal/billing"
+	"github.com/real-staging-ai/api/internal/image"
+	"github.com/real-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/project"
+	"github.com/real-staging-ai/api/internal/reconcile"
+	"github.com/real-staging-ai/api/internal/settings"
+	"github.com/real-staging-ai/api/internal/sse"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/stripe"
+	webdocs "github.com/real-staging-ai/api/web"
 )
 
 // Server holds the dependencies for the HTTP server.
@@ -37,7 +37,7 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 	e := echo.New()
 
 	// Add OpenTelemetry middleware
-	e.Use(otelecho.Middleware("virtual-staging-api"))
+	e.Use(otelecho.Middleware("real-staging-api"))
 
 	// Add other middleware
 	e.Use(middleware.Logger())
@@ -238,7 +238,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) healthCheck(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status":  "ok",
-		"service": "virtual-staging-api",
+		"service": "real-staging-api",
 	})
 }
 

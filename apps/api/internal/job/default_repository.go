@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 // DefaultRepository implements the JobRepository interface.

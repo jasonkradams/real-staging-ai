@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
-	"github.com/virtual-staging-ai/worker/internal/config"
-	"github.com/virtual-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/config"
+	"github.com/real-staging-ai/worker/internal/logging"
 )
 
 // Job represents a processing job.

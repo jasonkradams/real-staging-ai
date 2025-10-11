@@ -20,7 +20,7 @@ This document tracks post-P0 tasks to polish DevEx, Observability, and Docs. Ite
 
 - API Docs publishing:
   - [x] Add link to README
-  - [x] Update repo description with docs link (manual action: add https://jasonkradams.github.io/virtual-staging-ai/ to GitHub repo settings)
+  - [x] Update repo description with docs link (manual action: add https://jasonkradams.github.io/real-staging-ai/ to GitHub repo settings)
 - Frontend bootstrap (Phase 1):
   - [x] App scaffold under `apps/web` (Next.js 15 + TypeScript + Tailwind)
   - [x] Pages: Dashboard (`/`), Upload (`/upload`), Images (`/images`)

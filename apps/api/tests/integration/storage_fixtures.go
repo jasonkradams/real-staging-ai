@@ -6,7 +6,7 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 //go:embed testdata/seed.sql

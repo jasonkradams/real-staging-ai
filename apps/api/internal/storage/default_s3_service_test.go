@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	configLib "github.com/virtual-staging-ai/api/internal/config"
+	configLib "github.com/real-staging-ai/api/internal/config"
 )
 
 func TestValidateContentType(t *testing.T) {

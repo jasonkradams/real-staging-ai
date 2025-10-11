@@ -1,4 +1,4 @@
-module github.com/virtual-staging-ai/api
+module github.com/real-staging-ai/api
 
 go 1.25.1
 

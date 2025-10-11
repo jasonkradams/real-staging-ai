@@ -10,15 +10,15 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/virtual-staging-ai/worker/internal/config"
-	"github.com/virtual-staging-ai/worker/internal/events"
-	"github.com/virtual-staging-ai/worker/internal/logging"
-	"github.com/virtual-staging-ai/worker/internal/processor"
-	"github.com/virtual-staging-ai/worker/internal/queue"
-	"github.com/virtual-staging-ai/worker/internal/repository"
-	"github.com/virtual-staging-ai/worker/internal/staging"
-	"github.com/virtual-staging-ai/worker/internal/staging/model"
-	"github.com/virtual-staging-ai/worker/internal/telemetry"
+	"github.com/real-staging-ai/worker/internal/config"
+	"github.com/real-staging-ai/worker/internal/events"
+	"github.com/real-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/processor"
+	"github.com/real-staging-ai/worker/internal/queue"
+	"github.com/real-staging-ai/worker/internal/repository"
+	"github.com/real-staging-ai/worker/internal/staging"
+	"github.com/real-staging-ai/worker/internal/staging/model"
+	"github.com/real-staging-ai/worker/internal/telemetry"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 	log.Info(ctx, fmt.Sprintf("Loaded configuration for environment: %s", cfg.App.Env))
 
 	// Initialize OpenTelemetry
-	shutdown, err := telemetry.InitTracing(ctx, "virtual-staging-worker")
+	shutdown, err := telemetry.InitTracing(ctx, "real-staging-worker")
 	if err != nil {
 		log.Error(ctx, "Failed to initialize tracing:", err)
 	}
@@ -82,7 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info(ctx, "Starting Virtual Staging AI Worker...")
+	log.Info(ctx, "Starting Real Staging AI Worker...")
 	// Create context that listens for the interrupt signal from the OS
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

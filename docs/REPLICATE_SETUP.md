@@ -1,10 +1,10 @@
-# Replicate API Setup for Virtual Staging
+# Replicate API Setup for Real Staging
 
 This guide explains how to set up Replicate API integration for AI-powered virtual staging.
 
 ## Overview
 
-Virtual Staging AI uses [Replicate](https://replicate.com) to run the actual AI model for staging images. The integration uses the `qwen/qwen-image-edit` model, which provides:
+Real Staging AI uses [Replicate](https://replicate.com) to run the actual AI model for staging images. The integration uses the `qwen/qwen-image-edit` model, which provides:
 
 - **Fast generation**: ~9 seconds per image
 - **Cost-effective**: ~$0.011 per image (~90 images per $1)
@@ -104,7 +104,7 @@ Examples:
 | Variable              | Description                         | Example           |
 | --------------------- | ----------------------------------- | ----------------- |
 | `REPLICATE_API_TOKEN` | Your Replicate API token            | `r8_abc123...`    |
-| `S3_BUCKET_NAME`      | S3 bucket for storing staged images | `virtual-staging` |
+| `S3_BUCKET_NAME`      | S3 bucket for storing staged images | `real-staging` |
 
 ### Optional Environment Variables
 

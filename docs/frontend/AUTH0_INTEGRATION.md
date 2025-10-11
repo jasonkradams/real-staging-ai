@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Virtual Staging AI frontend now uses the official `@auth0/nextjs-auth0` SDK (v4) to handle user authentication. This replaces the manual token entry from Phase 1 with a proper OAuth 2.0 / OpenID Connect flow.
+The Real Staging AI frontend now uses the official `@auth0/nextjs-auth0` SDK (v4) to handle user authentication. This replaces the manual token entry from Phase 1 with a proper OAuth 2.0 / OpenID Connect flow.
 
 ## Features
 
@@ -68,7 +68,7 @@ Required variables:
 | `AUTH0_CLIENT_SECRET`  | Auth0 application client secret                   | `xyz789...`                          |
 | `AUTH0_SECRET`         | Secret for encrypting session cookies (≥32 chars) | Generate with `openssl rand -hex 32` |
 | `APP_BASE_URL`         | Application base URL                              | `http://localhost:3000`              |
-| `AUTH0_AUDIENCE`       | Auth0 API audience (must match backend)           | `https://api.virtualstaging.local`   |
+| `AUTH0_AUDIENCE`       | Auth0 API audience (must match backend)           | `https://api.realstaging.local`   |
 | `NEXT_PUBLIC_API_BASE` | Backend API base URL                              | `/api`                               |
 
 Optional variables:
@@ -97,7 +97,7 @@ In the Auth0 Dashboard, configure your application:
 The backend API must be configured with the same Auth0 settings:
 
 - `AUTH0_DOMAIN`: Same as frontend
-- `AUTH0_AUDIENCE`: Same as frontend (e.g., `https://api.virtualstaging.local`)
+- `AUTH0_AUDIENCE`: Same as frontend (e.g., `https://api.realstaging.local`)
 
 The API validates JWT access tokens signed by Auth0.
 

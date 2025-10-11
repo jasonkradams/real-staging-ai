@@ -1,6 +1,6 @@
 # Configuration
 
-This directory contains environment-specific configuration files for the Virtual Staging AI backend services (API and Worker).
+This directory contains environment-specific configuration files for the Real Staging AI backend services (API and Worker).
 
 ## File Structure
 
@@ -84,7 +84,7 @@ S3/MinIO configuration:
 ### API Service
 
 ```go
-import "github.com/virtual-staging-ai/api/internal/config"
+import "github.com/real-staging-ai/api/internal/config"
 
 cfg, err := config.NewDefaultConfig()
 if err != nil {
@@ -99,7 +99,7 @@ s3Bucket := cfg.GetS3BucketName()
 ### Worker Service
 
 ```go
-import "github.com/virtual-staging-ai/worker/internal/config"
+import "github.com/real-staging-ai/worker/internal/config"
 
 cfg, err := config.NewDefaultConfig()
 if err != nil {

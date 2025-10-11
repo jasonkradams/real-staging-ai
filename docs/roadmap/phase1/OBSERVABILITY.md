@@ -35,7 +35,7 @@ We use Go `slog` for structured JSON logs across API and Worker and include OTEL
 Example output:
 
 ```
-{"time":"2025-09-26T14:08:45-07:00","level":"WARN","msg":"events publish failed","service":"virtual-staging-worker","image_id":"img-123","status":"processing","attempt":2,"error":"dial tcp 127.0.0.1:6390: connect: connection refused","trace_id":"...","span_id":"..."}
+{"time":"2025-09-26T14:08:45-07:00","level":"WARN","msg":"events publish failed","service":"real-staging-worker","image_id":"img-123","status":"processing","attempt":2,"error":"dial tcp 127.0.0.1:6390: connect: connection refused","trace_id":"...","span_id":"..."}
 ```
 
 ## Metrics (P2)

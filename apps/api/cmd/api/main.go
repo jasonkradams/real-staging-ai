@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/virtual-staging-ai/api/internal/config"
-	"github.com/virtual-staging-ai/api/internal/http"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/job"
-	"github.com/virtual-staging-ai/api/internal/logging"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/http"
+	"github.com/real-staging-ai/api/internal/image"
+	"github.com/real-staging-ai/api/internal/job"
+	"github.com/real-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 // main is the entrypoint of the API server.

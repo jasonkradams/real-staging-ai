@@ -54,11 +54,11 @@ endif
 
 migrate: ## Run database migrations on the development database
 	@echo "Running database migrations on the development database..."
-	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/virtualstaging?sslmode=disable up
+	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable up
 
 migrate-down-dev: ## Rollback database migrations on the development database
 	@echo "Running database migrations on the development database..."
-	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/virtualstaging?sslmode=disable down -all
+	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable down -all
 
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
@@ -163,7 +163,7 @@ clean-mock: ## Remove all mock files
 clean-all: clean ## Remove all mock files and clean databases/storage
 	$(MAKE) migrate-down-dev
 	@echo "Cleaning MinIO buckets..."
-	docker compose exec minio sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc rm --recursive --force local/virtual-staging/uploads/ || true"
+	docker compose exec minio sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc rm --recursive --force local/real-staging/uploads/ || true"
 	@echo "Removing node_modules..."
 	find . -type d -name node_modules -exec rm -rf {} + &
 	$(MAKE) tidy

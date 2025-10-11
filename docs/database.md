@@ -1,6 +1,6 @@
 # Database Schema
 
-This document provides an overview of the database schema for the Virtual Staging AI project.
+This document provides an overview of the database schema for the Real Staging AI project.
 
 ## Tables
 

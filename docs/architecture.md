@@ -1,6 +1,6 @@
 # Architecture
 
-This document provides a high-level overview of the system architecture for the Virtual Staging AI project.
+This document provides a high-level overview of the system architecture for the Real Staging AI project.
 
 ## System Components
 

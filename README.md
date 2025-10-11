@@ -107,7 +107,7 @@ make docs
 
 ### Hosted API Docs (GitHub Pages)
 
-- Latest published docs: https://jasonkradams.github.io/virtual-staging-ai/
+- Latest published docs: https://jasonkradams.github.io/real-staging-ai/
 - Deployment runs via [pages.yml](.github/workflows/pages.yml) on pushes to `main`.
 - Repository settings must keep **Settings → Pages → Source → GitHub Actions** enabled.
 

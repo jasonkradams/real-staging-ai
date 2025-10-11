@@ -8,10 +8,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 
-	"github.com/virtual-staging-ai/api/internal/auth"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/stripe"
-	"github.com/virtual-staging-ai/api/internal/user"
+	"github.com/real-staging-ai/api/internal/auth"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/stripe"
+	"github.com/real-staging-ai/api/internal/user"
 )
 
 // DefaultHandler implements the billing Handler by wrapping existing repositories

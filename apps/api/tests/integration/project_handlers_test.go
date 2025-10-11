@@ -16,9 +16,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	httpLib "github.com/virtual-staging-ai/api/internal/http"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	httpLib "github.com/real-staging-ai/api/internal/http"
+	"github.com/real-staging-ai/api/internal/image"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 const testUserHeader = "auth0|testuser"

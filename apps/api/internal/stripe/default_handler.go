@@ -16,9 +16,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/virtual-staging-ai/api/internal/logging"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/user"
+	"github.com/real-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/user"
 )
 
 // DefaultHandler handles Stripe webhooks and related event processing.

@@ -28,7 +28,7 @@ export default function Page() {
           <div className="mx-auto max-w-4xl text-center space-y-6 py-12">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
               <Sparkles className="h-4 w-4" />
-              AI-Powered Virtual Staging
+              AI-Powered Real Staging
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Transform Empty Spaces into
@@ -83,7 +83,7 @@ export default function Page() {
         {/* Features Section */}
         <section id="features" className="space-y-8">
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-bold">Why Choose Virtual Staging AI?</h2>
+            <h2 className="text-3xl font-bold">Why Choose Real Staging AI?</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Professional results, instant delivery, and a seamless workflow designed for real estate professionals.
             </p>

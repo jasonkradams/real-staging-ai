@@ -1,6 +1,6 @@
-# Virtual Staging AI - Web Frontend
+# Real Staging AI - Web Frontend
 
-Next.js web application for Virtual Staging AI with Auth0 authentication.
+Next.js web application for Real Staging AI with Auth0 authentication.
 
 ## Tech Stack
 
@@ -33,7 +33,7 @@ Required environment variables:
 - `AUTH0_CLIENT_SECRET` - Auth0 application client secret
 - `AUTH0_SECRET` - Secret for encrypting sessions (generate with `openssl rand -hex 32`)
 - `APP_BASE_URL` - Application URL (`http://localhost:3000` for dev)
-- `AUTH0_AUDIENCE` - Auth0 API audience (must match backend: `https://api.virtualstaging.local`)
+- `AUTH0_AUDIENCE` - Auth0 API audience (must match backend: `https://api.realstaging.local`)
 
 See `env.example` for complete configuration.
 
@@ -134,7 +134,7 @@ The Next.js app proxies `/api/*` requests to the backend API at `http://localhos
 
 - **Auth0 Integration**: [docs/frontend/AUTH0_INTEGRATION.md](../../docs/frontend/AUTH0_INTEGRATION.md)
 - **Phase 1 Implementation**: [docs/frontend/PHASE1_IMPLEMENTATION.md](../../docs/frontend/PHASE1_IMPLEMENTATION.md)
-- **API Documentation**: https://jasonkradams.github.io/virtual-staging-ai/
+- **API Documentation**: https://jasonkradams.github.io/real-staging-ai/
 
 ## Troubleshooting
 

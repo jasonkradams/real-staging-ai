@@ -1,4 +1,4 @@
-module github.com/virtual-staging-ai/worker
+module github.com/real-staging-ai/worker
 
 go 1.25.1
 
@@ -17,7 +17,7 @@ require (
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/replicate/replicate-go v0.26.0
 	github.com/stretchr/testify v1.11.1
-	github.com/virtual-staging-ai/api v0.0.0-00010101000000-000000000000
+	github.com/real-staging-ai/api v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0
@@ -83,4 +83,4 @@ require (
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
-replace github.com/virtual-staging-ai/api => ../api
+replace github.com/real-staging-ai/api => ../api

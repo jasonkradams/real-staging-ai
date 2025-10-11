@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: Virtual Staging AI API
+  title: Real Staging AI API
   description: |
-    API for the Virtual Staging AI application.
+    API for the Real Staging AI application.
     
     ## Authentication
     
@@ -25,7 +25,7 @@ info:
     Access tokens are JWTs signed by Auth0 with the following claims:
     - `iss`: Auth0 domain (e.g., `https://dev-sleeping-pandas.us.auth0.com/`)
     - `sub`: User ID (e.g., `auth0|123456789`)
-    - `aud`: API audience (e.g., `https://api.virtualstaging.local`)
+    - `aud`: API audience (e.g., `https://api.realstaging.local`)
     - `exp`: Expiration timestamp
     - `iat`: Issued at timestamp
     - `scope`: OAuth scopes (e.g., `openid profile email`)
@@ -51,7 +51,7 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local development server
-  - url: https://api.virtualstaging.ai
+  - url: https://api.realstaging.ai
     description: Production server
 paths:
   /api/v1/projects:
@@ -454,7 +454,7 @@ paths:
                     example: ok
                   service:
                     type: string
-                    example: virtual-staging-api
+                    example: real-staging-api
   /api/v1/images/{id}/presign:
     get:
       summary: Generate presigned download URL for an image
@@ -641,7 +641,7 @@ components:
         
         **Token claims:**
         - `sub`: User ID (used to identify the authenticated user)
-        - `aud`: Must match `https://api.virtualstaging.local`
+        - `aud`: Must match `https://api.realstaging.local`
         - `iss`: Auth0 domain
         - `exp`: Expiration (tokens typically valid for 1 hour)
         

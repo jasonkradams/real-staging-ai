@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/virtual-staging-ai/api/internal/logging"
-	"github.com/virtual-staging-ai/api/internal/settings"
+	"github.com/real-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/settings"
 )
 
 // AdminHandler handles admin-related HTTP requests.

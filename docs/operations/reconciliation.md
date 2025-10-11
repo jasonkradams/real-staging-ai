@@ -117,7 +117,7 @@ make reconcile-images DRY_RUN=1
 make reconcile-images DRY_RUN=0
 
 # Step 4: Verify in DB
-docker compose exec postgres psql -U postgres -d virtualstaging \
+docker compose exec postgres psql -U postgres -d realstaging \
   -c "SELECT id, status, error FROM images WHERE status='error' LIMIT 10;"
 ```
 
@@ -141,7 +141,7 @@ docker compose exec postgres psql -U postgres -d virtualstaging \
 
 ## Observability
 
-- **Logs**: Structured JSON logs with `service=virtual-staging-api`
+- **Logs**: Structured JSON logs with `service=real-staging-api`
 - **Traces**: OTEL span `reconcile.images` with attributes (`dry_run`, `limit`, etc.)
 - **Metrics**: Log summaries include counts for checked/missing/updated
 

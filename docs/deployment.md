@@ -1,6 +1,6 @@
 # Deployment
 
-This document provides a guide on how to deploy the Virtual Staging AI application to a production environment.
+This document provides a guide on how to deploy the Real Staging AI application to a production environment.
 
 ## Overview
 
@@ -18,8 +18,8 @@ The application is designed to be deployed as a set of containerized services us
 The `docker-compose.yml` file is configured to build the Docker images for the `api` and `worker` services automatically. To build the images manually, you can use the following commands from the root of the project:
 
 ```bash
-docker build -t virtual-staging-api ./apps/api
-docker build -t virtual-staging-worker ./apps/worker
+docker build -t real-staging-api ./apps/api
+docker build -t real-staging-worker ./apps/worker
 ```
 
 ## Deployment Strategies

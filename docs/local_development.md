@@ -1,6 +1,6 @@
 # Local Development Setup
 
-This guide provides instructions on how to set up the Virtual Staging AI project for local development.
+This guide provides instructions on how to set up the Real Staging AI project for local development.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Before you begin, make sure you have the following tools installed on your syste
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/virtual-staging-ai/api.git
+    git clone https://github.com/real-staging-ai/api.git
     cd api
     ```
 

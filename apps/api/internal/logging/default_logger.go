@@ -17,7 +17,7 @@ type defaultSLogger struct {
 func NewDefaultLogger() Logger {
 	lvl := parseLevel(os.Getenv("LOG_LEVEL"))
 	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
-	l := slog.New(h).With("service", "virtual-staging-api")
+	l := slog.New(h).With("service", "real-staging-api")
 	return &defaultSLogger{l: l}
 }
 

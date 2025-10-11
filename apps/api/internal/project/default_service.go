@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 // DefaultService provides business logic for project operations.

@@ -61,7 +61,7 @@ func (s *Server) presignImageDownloadHandler(c echo.Context) error {
 		bucket = os.Getenv("S3_BUCKET_NAME")
 	}
 	if bucket == "" {
-		bucket = "virtual-staging"
+		bucket = "real-staging"
 	}
 
 	// Derive file key from URL path. Expect path-style: /<bucket>/<key>

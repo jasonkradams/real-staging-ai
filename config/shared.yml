@@ -5,11 +5,11 @@ app:
   env: dev
 
 auth0:
-  audience: https://api.virtualstaging.local
+  audience: https://api.realstaging.local
   domain: dev-sleeping-pandas.us.auth0.com
 
 db:
-  pgdatabase: virtualstaging
+  pgdatabase: realstaging
   pghost: localhost
   pgpassword: postgres
   pgport: 5432
@@ -35,7 +35,7 @@ replicate:
 
 s3:
   access_key: minioadmin
-  bucket_name: virtual-staging
+  bucket_name: real-staging
   endpoint: http://localhost:9000
   public_endpoint: http://localhost:9000
   region: us-west-1

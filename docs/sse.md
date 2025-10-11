@@ -1,6 +1,6 @@
 # Server-Sent Events (SSE)
 
-This document explains how Virtual Staging AI streams realtime image job updates to clients using Server‑Sent Events (SSE).
+This document explains how Real Staging AI streams realtime image job updates to clients using Server‑Sent Events (SSE).
 
 The API exposes a per-image event stream that emits:
 - An initial "connected" event

@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap outlines Phase 1 for Virtual Staging AI: validate core flows end-to-end with a mocked staging worker, solid auth, billing, and ops foundations. Later phases will introduce true AI staging and a full-featured web UI.
+This roadmap outlines Phase 1 for Real Staging AI: validate core flows end-to-end with a mocked staging worker, solid auth, billing, and ops foundations. Later phases will introduce true AI staging and a full-featured web UI.
 
 ## Phase 1 — Goals
 

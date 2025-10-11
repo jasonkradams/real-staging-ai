@@ -21,15 +21,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/virtual-staging-ai/api/internal/config"
-	httpLib "github.com/virtual-staging-ai/api/internal/http"
-	"github.com/virtual-staging-ai/api/internal/image"
-	"github.com/virtual-staging-ai/api/internal/job"
-	"github.com/virtual-staging-ai/api/internal/storage"
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
-	workerEvents "github.com/virtual-staging-ai/worker/internal/events"
-	workerQueue "github.com/virtual-staging-ai/worker/internal/queue"
-	workerRepo "github.com/virtual-staging-ai/worker/internal/repository"
+	"github.com/real-staging-ai/api/internal/config"
+	httpLib "github.com/real-staging-ai/api/internal/http"
+	"github.com/real-staging-ai/api/internal/image"
+	"github.com/real-staging-ai/api/internal/job"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage/queries"
+	workerEvents "github.com/real-staging-ai/worker/internal/events"
+	workerQueue "github.com/real-staging-ai/worker/internal/queue"
+	workerRepo "github.com/real-staging-ai/worker/internal/repository"
 )
 
 func setupTestDB(t *testing.T) *storage.DefaultDatabase {

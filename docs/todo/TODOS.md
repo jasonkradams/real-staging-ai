@@ -1,6 +1,6 @@
 # Project Todos
 
-This document outlines the systematic plan and checklist to implement the Virtual Staging AI project.
+This document outlines the systematic plan and checklist to implement the Real Staging AI project.
 
 ## Milestone 1: Project Setup & Foundation
 

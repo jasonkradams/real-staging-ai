@@ -123,7 +123,7 @@ The following environment variables must be set in `.env.local`:
 | `AUTH0_CLIENT_SECRET`      | OAuth client secret | From Auth0 Dashboard                              |
 | `AUTH0_SECRET`             | Session encryption  | Generate with `openssl rand -hex 32`              |
 | `APP_BASE_URL`             | App base URL        | `http://localhost:3000`                           |
-| `AUTH0_AUDIENCE`           | API audience        | `https://api.virtualstaging.local`                |
+| `AUTH0_AUDIENCE`           | API audience        | `https://api.realstaging.local`                |
 | `AUTH0_SCOPE` _(optional)_ | OAuth scopes        | Defaults to `openid profile email offline_access` |
 
 ### Auth0 Application Settings

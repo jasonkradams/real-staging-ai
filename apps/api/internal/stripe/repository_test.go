@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/virtual-staging-ai/api/internal/storage/queries"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 // rowStub implements pgx.Row and feeds a predetermined Invoice back to sqlc scan destinations.

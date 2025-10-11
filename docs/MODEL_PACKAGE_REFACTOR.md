@@ -59,7 +59,7 @@ apps/worker/internal/staging/
 
 1. **`default_service.go`**
 
-   - Added import: `"github.com/virtual-staging-ai/worker/internal/staging/model"`
+   - Added import: `"github.com/real-staging-ai/worker/internal/staging/model"`
    - Updated type references: `ModelID` → `model.ModelID`
    - Updated registry references: `NewModelRegistry()` → `model.NewModelRegistry()`
    - Updated default model: `ModelQwenImageEdit` → `model.ModelQwenImageEdit`
@@ -151,7 +151,7 @@ go test ./...
 **Before** (old import):
 
 ```go
-import "github.com/virtual-staging-ai/worker/internal/staging"
+import "github.com/real-staging-ai/worker/internal/staging"
 
 // ModelID was in staging package
 modelID := staging.ModelQwenImageEdit
@@ -161,8 +161,8 @@ modelID := staging.ModelQwenImageEdit
 
 ```go
 import (
-    "github.com/virtual-staging-ai/worker/internal/staging"
-    "github.com/virtual-staging-ai/worker/internal/staging/model"
+    "github.com/real-staging-ai/worker/internal/staging"
+    "github.com/real-staging-ai/worker/internal/staging/model"
 )
 
 // ModelID is now in model package

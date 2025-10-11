@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/virtual-staging-ai/api/internal/project"
-	"github.com/virtual-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/project"
+	"github.com/real-staging-ai/api/internal/storage"
 )
 
 func TestProjectStorageSQLc_CreateProject(t *testing.T) {

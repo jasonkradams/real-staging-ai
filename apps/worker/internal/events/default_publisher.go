@@ -14,8 +14,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/virtual-staging-ai/worker/internal/config"
-	"github.com/virtual-staging-ai/worker/internal/logging"
+	"github.com/real-staging-ai/worker/internal/config"
+	"github.com/real-staging-ai/worker/internal/logging"
 )
 
 // Options controls retry/backoff behavior for the default publisher.
@@ -77,7 +77,7 @@ type defaultRedisPublisher struct {
 }
 
 func (p *defaultRedisPublisher) PublishJobUpdate(ctx context.Context, ev JobUpdateEvent) error {
-	tracer := otel.Tracer("virtual-staging-worker/events")
+	tracer := otel.Tracer("real-staging-worker/events")
 	ctx, span := tracer.Start(ctx, "events.PublishJobUpdate")
 	defer span.End()
 

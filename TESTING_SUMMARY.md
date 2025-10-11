@@ -1,4 +1,4 @@
-# Testing Summary - Virtual Staging AI
+# Testing Summary - Real Staging AI
 
 ## Overview
 

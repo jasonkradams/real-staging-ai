@@ -127,8 +127,8 @@ Models are now defined in code as constants. Model selection will eventually be 
 
 ```go
 import (
-    "github.com/virtual-staging-ai/worker/internal/staging"
-    "github.com/virtual-staging-ai/worker/internal/staging/model"
+    "github.com/real-staging-ai/worker/internal/staging"
+    "github.com/real-staging-ai/worker/internal/staging/model"
 )
 
 // Create service with specific model

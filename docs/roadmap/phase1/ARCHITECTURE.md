@@ -1,7 +1,7 @@
 ### Monorepo Layout
 
 ```
-/virtual-staging
+/real-staging
   /apps
     /web               # Next.js UI (upload, dashboard, checkout)
     /api               # Go Echo service (REST, auth, Stripe, jobs)

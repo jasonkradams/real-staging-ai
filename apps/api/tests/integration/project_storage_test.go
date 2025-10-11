@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/virtual-staging-ai/api/internal/project"
+	"github.com/real-staging-ai/api/internal/project"
 )
 
 func TestProjectStorage_CreateProject(t *testing.T) {

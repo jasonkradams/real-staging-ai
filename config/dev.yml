@@ -7,7 +7,7 @@ app:
 db:
   pghost: postgres
   pgport: 5432
-  pgdatabase: virtualstaging
+  pgdatabase: realstaging
   pguser: postgres
   pgpassword: postgres
 
@@ -19,7 +19,7 @@ redis:
 
 s3:
   access_key: minioadmin
-  bucket_name: virtual-staging
+  bucket_name: real-staging
   endpoint: http://minio:9000
   public_endpoint: http://localhost:9000
   region: us-west-1

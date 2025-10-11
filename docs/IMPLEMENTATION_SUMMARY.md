@@ -62,11 +62,11 @@ go test -v -cover .
 
 ```go
 // Before
-import "github.com/virtual-staging-ai/worker/internal/staging"
+import "github.com/real-staging-ai/worker/internal/staging"
 modelID := staging.ModelQwenImageEdit
 
 // After
-import "github.com/virtual-staging-ai/worker/internal/staging/model"
+import "github.com/real-staging-ai/worker/internal/staging/model"
 modelID := model.ModelQwenImageEdit
 ```
 

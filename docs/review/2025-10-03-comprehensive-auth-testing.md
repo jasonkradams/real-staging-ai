@@ -165,7 +165,7 @@ Created comprehensive testing setup:
     [... 4 passing tests ...]
 
 PASS
-ok      github.com/virtual-staging-ai/api/internal/auth 0.199s
+ok      github.com/real-staging-ai/api/internal/auth 0.199s
 ```
 
 ### Frontend

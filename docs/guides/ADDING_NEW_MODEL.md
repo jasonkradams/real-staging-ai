@@ -1,6 +1,6 @@
 # Adding a New AI Model
 
-This guide walks through the process of adding a new AI model to the Virtual Staging system.
+This guide walks through the process of adding a new AI model to the Real Staging system.
 
 ## Prerequisites
 
@@ -205,8 +205,8 @@ To make your model the default, update `apps/worker/main.go`:
 
 ```go
 import (
-    "github.com/virtual-staging-ai/worker/internal/staging"
-    "github.com/virtual-staging-ai/worker/internal/staging/model"
+    "github.com/real-staging-ai/worker/internal/staging"
+    "github.com/real-staging-ai/worker/internal/staging/model"
 )
 
 stagingCfg := &staging.ServiceConfig{

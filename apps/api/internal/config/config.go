@@ -35,7 +35,7 @@ type Auth0 struct {
 
 type DB struct {
 	URL      string `yaml:"url" env:"DATABASE_URL"` // Full connection URL (takes precedence)
-	Database string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"virtualstaging"`
+	Database string `yaml:"pgdatabase" env:"PGDATABASE" env-default:"realstaging"`
 	Host     string `yaml:"pghost" env:"PGHOST" env-default:"localhost"`
 	Password string `yaml:"pgpassword" env:"PGPASSWORD" env-default:"postgres"`
 	Port     int    `yaml:"pgport" env:"PGPORT" env-default:"5432"`
@@ -62,7 +62,7 @@ type Redis struct {
 
 type S3 struct {
 	AccessKey      string `yaml:"access_key" env:"S3_ACCESS_KEY"`
-	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"virtual-staging"`
+	BucketName     string `yaml:"bucket_name" env:"S3_BUCKET_NAME" env-default:"real-staging"`
 	Endpoint       string `yaml:"endpoint" env:"S3_ENDPOINT"`
 	PublicEndpoint string `yaml:"public_endpoint" env:"S3_PUBLIC_ENDPOINT"`
 	Region         string `yaml:"region" env:"S3_REGION" env-default:"us-west-1"`

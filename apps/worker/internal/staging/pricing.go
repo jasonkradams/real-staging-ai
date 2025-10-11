@@ -1,6 +1,6 @@
 package staging
 
-import "github.com/virtual-staging-ai/worker/internal/staging/model"
+import "github.com/real-staging-ai/worker/internal/staging/model"
 
 // ModelPricing defines the cost per prediction for each model.
 // Prices are based on Replicate's pricing as of 2025-01.

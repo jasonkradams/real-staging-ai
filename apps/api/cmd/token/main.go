@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/virtual-staging-ai/api/internal/logging"
+	"github.com/real-staging-ai/api/internal/logging"
 	"gopkg.in/yaml.v2"
 )
 

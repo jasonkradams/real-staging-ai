@@ -14,7 +14,7 @@
 ```yaml
 openapi: 3.0.3
 info:
-  title: Virtual Staging API
+  title: Real Staging API
   version: 0.1.0
 servers:
   - url: https://api.local

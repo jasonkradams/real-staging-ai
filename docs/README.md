@@ -1,6 +1,6 @@
-# Virtual Staging AI — Documentation
+# Real Staging AI — Documentation
 
-This project is an AI-driven Virtual Staging platform for real estate agents and photographers. Users upload photos of empty rooms; the system returns the same photos virtually furnished. Phase 1 focuses on a production-grade backend with a mocked image “staging” step to validate the full flow end-to-end (auth → upload → job → result → billing) before GPU inference is introduced.
+This project is an AI-driven Real Staging platform for real estate agents and photographers. Users upload photos of empty rooms; the system returns the same photos virtually furnished. Phase 1 focuses on a production-grade backend with a mocked image “staging” step to validate the full flow end-to-end (auth → upload → job → result → billing) before GPU inference is introduced.
 
 ## Quick Start
 
@@ -56,7 +56,7 @@ Authenticated via Auth0 (JWT Bearer). Core endpoints:
 - Stripe webhooks: `/api/v1/stripe/webhook`
 - Billing (added): `/api/v1/billing/subscriptions`, `/api/v1/billing/invoices`
 
-OpenAPI: lives under `web/api/v1/oas3.yaml` and is published via GitHub Pages at https://jasonkradams.github.io/virtual-staging-ai/. The roadmap contains an OpenAPI sketch under `docs/roadmap/phase1/API.md`.
+OpenAPI: lives under `web/api/v1/oas3.yaml` and is published via GitHub Pages at https://jasonkradams.github.io/real-staging-ai/. The roadmap contains an OpenAPI sketch under `docs/roadmap/phase1/API.md`.
 
 ## Configuration & Environments
 
