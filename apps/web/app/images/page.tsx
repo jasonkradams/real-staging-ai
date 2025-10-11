@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import JSZip from "jszip";
+import NextImage from "next/image";
+
 import { 
   FolderOpen, 
   RefreshCw, 
@@ -144,11 +146,13 @@ export default function ImagesPage() {
   const handleImageHover = useCallback((imageId: string) => {
     setHoveredImageId(imageId);
     
-    // Prefetch original if not already loaded
     const urls = imageUrls[imageId];
-    if (urls && urls.original && !document.querySelector(`img[src="${urls.original}"]`)) {
-      const img = new Image();
-      img.src = urls.original;
+    if (urls?.original && typeof window !== "undefined") {
+      const existing = document.querySelector(`img[src="${urls.original}"]`);
+      if (!existing) {
+        const preloadImg = new window.Image();
+        preloadImg.src = urls.original;
+      }
     }
   }, [imageUrls]);
 
@@ -522,47 +526,56 @@ export default function ImagesPage() {
       {/* Grid View */}
       {!loadingImages && images.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((image) => (
-            <div 
-              key={image.id}
-              className={cn(
-                "card group cursor-pointer transition-all duration-200",
-                selectedImageIds.has(image.id) && "ring-2 ring-blue-500 shadow-xl"
-              )}
-              onClick={() => toggleImageSelection(image.id)}
-              onMouseEnter={() => handleImageHover(image.id)}
-              onMouseLeave={() => setHoveredImageId(null)}
-            >
-              <div className="relative aspect-video bg-gray-100 overflow-hidden rounded-t-2xl">
-                {/* Image Preview - Show staged by default, original on hover */}
-                {imageUrls[image.id] ? (
-                  <>
+          {images.map((image) => {
+            const urls = imageUrls[image.id];
+            const stagedSrc = urls?.staged ?? null;
+            const originalSrc = urls?.original ?? null;
+
+            return (
+              <div
+                key={image.id}
+                className={cn(
+                  "card group cursor-pointer transition-all duration-200",
+                  selectedImageIds.has(image.id) && "ring-2 ring-blue-500 shadow-xl"
+                )}
+                onClick={() => toggleImageSelection(image.id)}
+                onMouseEnter={() => handleImageHover(image.id)}
+                onMouseLeave={() => setHoveredImageId(null)}
+              >
+                <div className="relative aspect-video bg-gray-100 overflow-hidden rounded-t-2xl">
+                  {/* Image Preview - Show staged by default, original on hover */}
+                  {urls ? (
+                    <>
                     {/* Staged Image (shown by default) */}
-                    {imageUrls[image.id].staged && (
-                      <img
-                        src={imageUrls[image.id].staged}
+                    {typeof stagedSrc === "string" && (
+                      <NextImage
+                        src={stagedSrc}
                         alt="Staged"
+                        fill
                         className={cn(
-                          "absolute inset-0 w-full h-full object-cover transition-all duration-300",
+                          "absolute inset-0 object-cover transition-all duration-300",
                           hoveredImageId === image.id ? "opacity-0" : "opacity-100 group-hover:scale-105"
                         )}
                         loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     )}
                     {/* Original Image (shown on hover) */}
-                    {imageUrls[image.id].original && (
-                      <img
-                        src={imageUrls[image.id].original}
+                    {typeof originalSrc === "string" && (
+                      <NextImage
+                        src={originalSrc}
                         alt="Original"
+                        fill
                         className={cn(
-                          "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                          "absolute inset-0 object-cover transition-opacity duration-300",
                           hoveredImageId === image.id ? "opacity-100" : "opacity-0"
                         )}
                         loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     )}
                     {/* Fallback if no images loaded yet */}
-                    {!imageUrls[image.id].staged && !imageUrls[image.id].original && (
+                    {!stagedSrc && !originalSrc && (
                       <div className="flex items-center justify-center h-full">
                         <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
                       </div>
@@ -572,10 +585,10 @@ export default function ImagesPage() {
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
                   </div>
-                )}
+                  )}
 
-                {/* Selection Indicator */}
-                <div className={cn(
+                  {/* Selection Indicator */}
+                  <div className={cn(
                   "absolute top-3 left-3 flex items-center justify-center h-6 w-6 rounded-full border-2 transition-all",
                   selectedImageIds.has(image.id)
                     ? "bg-blue-600 border-blue-600"
@@ -660,7 +673,8 @@ export default function ImagesPage() {
                 )}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 
@@ -681,15 +695,18 @@ export default function ImagesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {images.map((image) => (
-                    <tr 
-                      key={image.id}
-                      className={cn(
-                        "hover:bg-gray-50 transition-colors cursor-pointer",
-                        selectedImageIds.has(image.id) && "bg-blue-50"
-                      )}
-                      onClick={() => toggleImageSelection(image.id)}
-                    >
+                  {images.map((image) => {
+                    const thumbSrc = imageUrls[image.id]?.staged ?? null;
+
+                    return (
+                      <tr
+                        key={image.id}
+                        className={cn(
+                          "hover:bg-gray-50 transition-colors cursor-pointer",
+                          selectedImageIds.has(image.id) && "bg-blue-50"
+                        )}
+                        onClick={() => toggleImageSelection(image.id)}
+                      >
                       <td className="px-4 py-4">
                         <div
                           className={cn(
@@ -706,10 +723,12 @@ export default function ImagesPage() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="h-16 w-24 rounded-lg overflow-hidden bg-gray-100">
-                          {imageUrls[image.id]?.staged ? (
-                            <img
-                              src={imageUrls[image.id].staged}
+                          {typeof thumbSrc === "string" ? (
+                            <NextImage
+                              src={thumbSrc}
                               alt="Preview"
+                              width={96}
+                              height={64}
                               className="h-full w-full object-cover"
                             />
                           ) : imageUrls[image.id] ? (
@@ -773,7 +792,8 @@ export default function ImagesPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
