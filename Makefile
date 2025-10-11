@@ -126,6 +126,8 @@ lint-fix: ## Run golangci-lint with --fix on all Go modules
 	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
 	@echo "--> Linting and fixing worker module"
 	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
+	@echo "--> Linting and fixing web server"
+	cd apps/web && npm run lint:fix
 
 up: migrate ## Run the api server
 	@echo Starting Application...
