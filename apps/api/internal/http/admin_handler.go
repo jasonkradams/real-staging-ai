@@ -1,25 +1,31 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
 	"github.com/real-staging-ai/api/internal/auth"
 	"github.com/real-staging-ai/api/internal/logging"
 	"github.com/real-staging-ai/api/internal/settings"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/user"
 )
 
 // AdminHandler handles admin-related HTTP requests.
 type AdminHandler struct {
 	settingsService settings.Service
+	db              storage.Database
 	log             logging.Logger
 }
 
 // NewAdminHandler creates a new AdminHandler.
-func NewAdminHandler(settingsService settings.Service, log logging.Logger) *AdminHandler {
+func NewAdminHandler(settingsService settings.Service, db storage.Database, log logging.Logger) *AdminHandler {
 	return &AdminHandler{
 		settingsService: settingsService,
+		db:              db,
 		log:             log,
 	}
 }
@@ -85,22 +91,22 @@ func (h *AdminHandler) UpdateActiveModel(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
-	// Get user ID from JWT token
-	userID, err := auth.GetUserID(c)
+	// Get user UUID from Auth0 sub
+	userUUID, err := h.resolveUserUUID(c)
 	if err != nil {
-		h.log.Error(ctx, "failed to get user ID from token", "error", err)
+		h.log.Error(ctx, "failed to resolve user", "error", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, map[string]string{
 			"message": "User not authenticated",
 		})
 	}
 
-	err = h.settingsService.UpdateActiveModel(ctx, req.Value, userID)
+	err = h.settingsService.UpdateActiveModel(ctx, req.Value, userUUID)
 	if err != nil {
 		h.log.Error(ctx, "failed to update active model", "error", err, "model_id", req.Value)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	h.log.Info(ctx, "active model updated", "model_id", req.Value, "user_id", userID)
+	h.log.Info(ctx, "active model updated", "model_id", req.Value, "user_uuid", userUUID)
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message":  "Active model updated successfully",
@@ -152,26 +158,56 @@ func (h *AdminHandler) UpdateSetting(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
-	// Get user ID from JWT token
-	userID, err := auth.GetUserID(c)
+	// Get user UUID from Auth0 sub
+	userUUID, err := h.resolveUserUUID(c)
 	if err != nil {
-		h.log.Error(ctx, "failed to get user ID from token", "error", err)
+		h.log.Error(ctx, "failed to resolve user", "error", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, map[string]string{
 			"message": "User not authenticated",
 		})
 	}
 
-	err = h.settingsService.UpdateSetting(ctx, key, req.Value, userID)
+	err = h.settingsService.UpdateSetting(ctx, key, req.Value, userUUID)
 	if err != nil {
 		h.log.Error(ctx, "failed to update setting", "error", err, "key", key)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	h.log.Info(ctx, "setting updated", "key", key, "user_id", userID)
+	h.log.Info(ctx, "setting updated", "key", key, "user_uuid", userUUID)
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Setting updated successfully",
 		"key":     key,
 		"value":   req.Value,
 	})
+}
+
+// resolveUserUUID looks up or creates a user based on Auth0 sub, returning the user's UUID.
+func (h *AdminHandler) resolveUserUUID(c echo.Context) (string, error) {
+	ctx := c.Request().Context()
+
+	// Get Auth0 sub from JWT token
+	auth0Sub, err := auth.GetUserIDOrDefault(c)
+	if err != nil {
+		return "", err
+	}
+
+	// Look up user by Auth0 sub
+	uRepo := user.NewDefaultRepository(h.db)
+	u, err := uRepo.GetByAuth0Sub(ctx, auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User doesn't exist, create them
+			u, err = uRepo.Create(ctx, auth0Sub, "", "user")
+			if err != nil {
+				h.log.Error(ctx, "failed to create user", "error", err, "auth0_sub", auth0Sub)
+				return "", err
+			}
+		} else {
+			h.log.Error(ctx, "failed to get user by auth0 sub", "error", err, "auth0_sub", auth0Sub)
+			return "", err
+		}
+	}
+
+	return u.ID.String(), nil
 }

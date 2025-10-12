@@ -138,7 +138,7 @@ func NewServer(
 	// Admin settings routes
 	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
 	settingsService := settings.NewDefaultService(settingsRepo)
-	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	adminHandler := NewAdminHandler(settingsService, s.db, logging.Default())
 	admin.GET("/models", adminHandler.ListModels)
 	admin.GET("/models/active", adminHandler.GetActiveModel)
 	admin.PUT("/models/active", adminHandler.UpdateActiveModel)
@@ -222,7 +222,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	// Admin settings routes (test server)
 	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
 	settingsService := settings.NewDefaultService(settingsRepo)
-	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	adminHandler := NewAdminHandler(settingsService, s.db, logging.Default())
 	admin.GET("/models", withTestUser(adminHandler.ListModels))
 	admin.GET("/models/active", withTestUser(adminHandler.GetActiveModel))
 	admin.PUT("/models/active", withTestUser(adminHandler.UpdateActiveModel))
