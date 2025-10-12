@@ -34,10 +34,10 @@ linters:
     - exhaustive    # Check exhaustiveness of enum switch statements
     - gocheckcompilerdirectives # Check that go compiler directive comments are valid
     - gochecknoinits # Check that no init functions are present
-    # - goconst       # Find repeated strings that could be replaced by a constant
+    # - goconst       # Find repeated strings that could be replaced by a constant (mostly test strings)
     - gocritic      # Opinionated Go source code checker
     - gocyclo       # Check cyclomatic complexity
-    # - godot         # Check if comments end in a period
+    # - godot         # Check if comments end in a period (too pedantic)
     - gomodguard    # Allow/block list linter for Go module dependencies
     - goprintffuncname # Check that printf-like functions are named with f at the end
     - gosec         # Inspect source code for security problems
@@ -48,7 +48,7 @@ linters:
     - misspell      # Find commonly misspelled English words in comments
     - nakedret      # Find naked returns in functions greater than a specified length
     - nilerr        # Find code that returns nil even if it checks err
-    # - nilnil        # Check that there is no simultaneous return of nil error and nil value
+    # - nilnil        # Check that there is no simultaneous return of nil error and nil value (too strict for mocks/tests)
     # - noctx         # Find sending http request without context.Context
     - nolintlint    # Report ill-formed or insufficient nolint directives
     - nonamedreturns # Report all named returns
@@ -56,17 +56,17 @@ linters:
     # - predeclared   # Find code that shadows one of Go's predeclared identifiers
     - promlinter    # Check Prometheus metrics naming via promlint
     - reassign      # Check that package variables are not reassigned
-    # - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    # - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go (360+ issues)
     - rowserrcheck  # Check whether Err of rows is checked successfully
     - sloglint      # Ensure consistent code style when using log/slog
-    # - sqlclosecheck # Check that sql.Rows and sql.Stmt are closed
+    # - sqlclosecheck # Check that sql.Rows and sql.Stmt are closed (false positives on wrappers)
     - testableexamples # Check if examples are testable
-    # - testifylint   # Check usage of github.com/stretchr/testify
+    # - testifylint   # Check usage of github.com/stretchr/testify (124 issues)
     # - testpackage   # Check that tests are in a separate _test package
     - tparallel     # Detect inappropriate usage of t.Parallel()
     - unconvert     # Remove unnecessary type conversions
-    # - unparam       # Report unused function parameters
-    # - usestdlibvars # Detect possibility to use variables/constants from stdlib
+    # - unparam       # Report unused function parameters (false positives on test helpers)
+    - usestdlibvars # Detect possibility to use variables/constants from stdlib
     - wastedassign  # Find wasted assignment statements
     # - whitespace    # Check for unnecessary newlines
     
@@ -201,7 +201,10 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - goconst
+        - goconst  # Test data often has repeated strings that don't need constants
+        - nilnil   # Test helpers often return (nil, nil) for simplicity
+        - sqlclosecheck  # Test helpers often return rows to caller
+        - unparam  # Test helpers may have unused params for flexibility
     
     # Exclude some staticcheck messages
     - linters:
@@ -228,6 +231,11 @@ issues:
         - gocyclo
         - dupl
         - lll
+    
+    # Database wrapper returns rows to caller to close
+    - path: storage/default_database\.go
+      linters:
+        - sqlclosecheck  # Rows returned to caller to close
 
 severity:
   default: error
