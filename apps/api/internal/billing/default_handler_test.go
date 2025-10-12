@@ -387,12 +387,17 @@ func Test_parseLimitOffset(t *testing.T) {
 		wantLimit  int32
 		wantOffset int32
 	}{
-		{name: "defaults", query: "", wantLimit: DefaultLimit, wantOffset: 0},
-		{name: "zero limit -> default", query: "limit=0", wantLimit: DefaultLimit, wantOffset: 0},
-		{name: "cap max", query: "limit=100000", wantLimit: MaxLimit, wantOffset: 0},
-		{name: "neg offset ignored", query: "offset=-7", wantLimit: DefaultLimit, wantOffset: 0},
-		{name: "pos offset set", query: "offset=12", wantLimit: DefaultLimit, wantOffset: 12},
-		{name: "both set", query: "limit=7&offset=3", wantLimit: 7, wantOffset: 3},
+		{name: "success: defaults", query: "", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: zero limit -> default", query: "limit=0", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: negative limit -> default", query: "limit=-5", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: below max limit", query: "limit=75", wantLimit: 75, wantOffset: 0},
+		{name: "success: at max limit", query: "limit=100", wantLimit: MaxLimit, wantOffset: 0},
+		{name: "success: above max -> default", query: "limit=150", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: way above max -> default", query: "limit=100000", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: neg offset ignored", query: "offset=-7", wantLimit: DefaultLimit, wantOffset: 0},
+		{name: "success: pos offset set", query: "offset=12", wantLimit: DefaultLimit, wantOffset: 12},
+		{name: "success: both set within limits", query: "limit=7&offset=3", wantLimit: 7, wantOffset: 3},
+		{name: "success: above max with offset", query: "limit=200&offset=50", wantLimit: DefaultLimit, wantOffset: 50},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

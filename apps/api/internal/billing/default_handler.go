@@ -153,9 +153,6 @@ func (h *DefaultHandler) parseLimitOffset(c echo.Context) (int32, int32) {
 			limit = int32(n)
 		}
 	}
-	if limit > MaxLimit {
-		limit = MaxLimit
-	}
 
 	if v := c.QueryParam("offset"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n >= 0 && n <= 2147483647 {

@@ -51,7 +51,7 @@ linters:
     - noctx         # Find sending http request without context.Context
     - nolintlint    # Report ill-formed or insufficient nolint directives
     - nonamedreturns # Report all named returns
-    # - nosprintfhostport # Check for misuse of Sprintf to construct a host with port
+    - nosprintfhostport # Check for misuse of Sprintf to construct a host with port
     # - predeclared   # Find code that shadows one of Go's predeclared identifiers
     - promlinter    # Check Prometheus metrics naming via promlint
     - reassign      # Check that package variables are not reassigned

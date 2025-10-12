@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -130,6 +132,7 @@ func (c *Config) DatabaseURL() string {
 	}
 
 	// Construct from individual components
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.DB.User, c.DB.Password, c.DB.Host, c.DB.Port, c.DB.Database, c.DB.SSLMode)
+	hostPort := net.JoinHostPort(c.DB.Host, strconv.Itoa(c.DB.Port))
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+		c.DB.User, c.DB.Password, hostPort, c.DB.Database, c.DB.SSLMode)
 }

@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -34,8 +36,9 @@ func NewDefaultDatabase(cfg *config.DB) (*DefaultDatabase, error) {
 	if cfg.URL != "" {
 		dbURL = cfg.URL
 	} else {
-		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database, cfg.SSLMode)
+		hostPort := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
+		dbURL = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+			cfg.User, cfg.Password, hostPort, cfg.Database, cfg.SSLMode)
 	}
 
 	// Create connection pool

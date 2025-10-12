@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -124,8 +126,9 @@ func (c *Config) DatabaseURL() string {
 	}
 
 	// Construct from individual components
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.DB.PGUser, c.DB.PGPassword, c.DB.PGHost, c.DB.PGPort, c.DB.PGDatabase, c.DB.PGSSLMode)
+	hostPort := net.JoinHostPort(c.DB.PGHost, strconv.Itoa(c.DB.PGPort))
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+		c.DB.PGUser, c.DB.PGPassword, hostPort, c.DB.PGDatabase, c.DB.PGSSLMode)
 }
 
 // S3Bucket returns the S3 bucket name, supporting legacy S3_BUCKET env var.
