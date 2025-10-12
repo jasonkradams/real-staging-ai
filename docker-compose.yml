@@ -76,6 +76,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  docs:
+    build:
+      context: apps/docs
+      dockerfile: Dockerfile
+    ports: ["8000:8000"]
+    volumes:
+      - ./apps/docs:/docs
 
 volumes:
   minio-data:

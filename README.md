@@ -98,20 +98,19 @@ See `docs/configuration.md` for all environment variables. Highlights:
 - **Stripe Webhooks**
   - `STRIPE_WEBHOOK_SECRET` (required in non-dev): verified with HMAC-SHA256 and timestamp tolerance.
 
-## API Docs
+## Documentation
 
-- OpenAPI is embedded and served at `/api/v1/docs`.
-- Validate spec:
+**Full Documentation:** [docs.real-staging.ai](https://docs.real-staging.ai) (coming soon) or run locally:
 
 ```bash
-make docs
+make docs-serve
+# Open http://localhost:8000
 ```
 
-### Hosted API Docs (GitHub Pages)
-
+**API Reference:**
+- OpenAPI is embedded and served at `/api/v1/docs`
+- Validate spec: `make docs-validate`
 - Latest published docs: https://jasonkradams.github.io/real-staging-ai/
-- Deployment runs via [pages.yml](.github/workflows/pages.yml) on pushes to `main`.
-- Repository settings must keep **Settings → Pages → Source → GitHub Actions** enabled.
 
 ## Conventional Commits
 

@@ -1,0 +1,260 @@
+site_name: Real Staging AI
+site_description: Professional AI-powered virtual staging for real estate
+site_author: Real Staging AI Team
+site_url: https://docs.real-staging.ai
+
+# Repository
+repo_name: jasonkradams/real-staging-ai
+repo_url: https://github.com/jasonkradams/real-staging-ai
+edit_uri: edit/main/apps/docs/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 Real Staging AI
+
+# Theme Configuration
+theme:
+  name: material
+  custom_dir: overrides
+  
+  # Brand colors matching apps/web
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  font:
+    text: Inter
+    code: Fira Code
+  
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
+  
+  features:
+    # Navigation
+    - navigation.instant        # Instant loading
+    - navigation.instant.progress
+    - navigation.tracking       # Update URL with active anchor
+    - navigation.tabs           # Top-level sections as tabs
+    - navigation.tabs.sticky    # Sticky tabs
+    - navigation.sections       # Render sections in sidebar
+    - navigation.expand         # Expand all sections by default
+    - navigation.path           # Show breadcrumbs
+    - navigation.indexes        # Section index pages
+    - navigation.top            # Back to top button
+    
+    # Table of contents
+    - toc.follow                # Sidebar follows scroll
+    - toc.integrate             # Integrate TOC in left sidebar
+    
+    # Search
+    - search.suggest            # Search suggestions
+    - search.highlight          # Highlight search results
+    - search.share              # Share search results
+    
+    # Code blocks
+    - content.code.copy         # Copy button for code blocks
+    - content.code.annotate     # Code annotations
+    
+    # Content
+    - content.tabs.link         # Link content tabs across page
+    - content.tooltips          # Improved tooltips
+
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Extra JavaScript
+extra_javascript:
+  - javascripts/extra.js
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section
+      toc_depth: 3
+  
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+      cache_safe: true
+
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jasonkradams/real-staging-ai
+      name: GitHub Repository
+    - icon: fontawesome/solid/globe
+      link: https://real-staging.ai
+      name: Real Staging AI
+  
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve by
+            <a href="https://github.com/jasonkradams/real-staging-ai/issues/new" target="_blank" rel="noopener">opening an issue</a>.
+  
+  version:
+    provider: mike
+    default: latest
+
+# Navigation
+nav:
+  - Home: index.md
+  
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Your First Project: getting-started/first-project.md
+  
+  - Architecture:
+    - architecture/index.md
+    - API Service: architecture/api-service.md
+    - Worker Service: architecture/worker-service.md
+    - Database: architecture/database.md
+    - Tech Stack: architecture/tech-stack.md
+  
+  - Guides:
+    - guides/index.md
+    - Configuration: guides/configuration.md
+    - Local Development: guides/local-development.md
+    - Testing: guides/testing.md
+    - Authentication: guides/authentication.md
+    - Adding AI Models: guides/adding-models.md
+    - Server-Sent Events: guides/sse-events.md
+    - Linting & Code Quality: guides/linting.md
+  
+  - Operations:
+    - operations/index.md
+    - Deployment: operations/deployment.md
+    - Storage Reconciliation: operations/reconciliation.md
+    - Monitoring: operations/monitoring.md
+  
+  - API Reference:
+    - api-reference/index.md
+    - OpenAPI Specification: api-reference/openapi.md
+  
+  - Development:
+    - development/index.md
+    - Contributing: development/contributing.md
+    - Repository Guidelines: development/repository-guidelines.md
+    - Cost Tracking: development/cost-tracking.md
+    - Model Registry: development/model-registry.md
+  
+  - Implementation Notes:
+    - implementation-notes/index.md
+    - Multi-Upload: implementation-notes/multi-upload.md
+    - Configuration Migration: implementation-notes/configuration-migration.md
+    - Model Refactors: implementation-notes/model-refactors.md
+    - Staging Model Registry: implementation-notes/staging-model-registry.md
+  
+  - Security:
+    - security/index.md
+    - Stripe Webhooks: security/stripe-webhooks.md
+  
+  - Project History:
+    - project-history/index.md
+    - Roadmap: project-history/roadmap.md
+    - Phase 1:
+      - project-history/phase1/index.md
+      - API Design: project-history/phase1/api.md
+      - Architecture: project-history/phase1/architecture.md
+      - Authentication: project-history/phase1/auth.md
+      - Queue Design: project-history/phase1/queue.md
+      - S3 Storage: project-history/phase1/s3.md
+      - Database Schema: project-history/phase1/schema.md
+      - Security: project-history/phase1/security.md
+      - Observability: project-history/phase1/observability.md
+      - Setup: project-history/phase1/setup.md
+      - Stripe Integration: project-history/phase1/stripe.md
+    - Phase 2:
+      - project-history/phase2/index.md
+    - Code Reviews:
+      - project-history/reviews/index.md
+  
+  - Legal:
+    - License: legal/license.md

@@ -85,9 +85,29 @@ test-integration: migrate-test ## Run integration tests
 	@echo "Stopping test infrastructure..."
 	docker compose -f docker-compose.test.yml down
 
-docs: ## Validate the OpenAPI specification
+docs-validate: ## Validate the OpenAPI specification
 	@echo "Validating OpenAPI specification..."
 	docker run --rm -v $(CURDIR)/apps/api/web/api/v1:/spec python:3.13-slim /bin/sh -c "pip install openapi-spec-validator && openapi-spec-validator /spec/oas3.yaml"
+
+docs-install: ## Install MkDocs and dependencies for documentation site
+	@echo "Installing documentation dependencies..."
+	cd apps/docs && pip3 install -r requirements.txt
+
+docs-serve: ## Serve documentation site locally at localhost:8000
+	@echo "Starting documentation server..."
+	cd apps/docs && mkdocs serve -a 0.0.0.0:8000
+
+docs-build: ## Build static documentation site
+	@echo "Building documentation site..."
+	cd apps/docs && mkdocs build
+
+docs-up: ## Run docs in Docker container
+	@echo "Starting docs container..."
+	docker compose up -d docs
+
+docs-down: ## Stop docs container
+	@echo "Stopping docs container..."
+	docker compose stop docs
 
 postman: ## Generate a Postman collection from the OpenAPI specification
 	@echo "Generating Postman collection..."
