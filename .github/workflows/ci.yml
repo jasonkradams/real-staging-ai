@@ -77,7 +77,7 @@ jobs:
 
       - name: Run golangci-lint (${{ matrix.module }})
         run: |
-          docker run --rm -v ${{ github.workspace }}:/app -w /app/apps/${{ matrix.module }} golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+          docker run --rm -v ${{ github.workspace }}:/app -w /app/apps/${{ matrix.module }} golangci/golangci-lint:v2.5.0-alpine golangci-lint run
 
   lint_web:
     runs-on: ubuntu-latest
