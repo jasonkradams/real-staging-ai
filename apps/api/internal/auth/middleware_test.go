@@ -414,24 +414,29 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 	}
 }
 
-func TestGetUserID(t *testing.T) {
+// Helper to test JWT claim extraction functions
+func testJWTClaimExtractor(
+	t *testing.T,
+	extractFunc func(echo.Context) (string, error),
+	claimKey, claimValue, missingErrMsg string,
+) {
 	e := echo.New()
 
 	type testCase struct {
 		name        string
 		token       interface{}
-		wantUserID  string
+		wantValue   string
 		wantErr     bool
 		errContains string
 	}
 
 	cases := []testCase{
 		{
-			name: "valid JWT token with sub claim",
+			name: "valid JWT token with " + claimKey + " claim",
 			token: &jwt.Token{
-				Claims: jwt.MapClaims{"sub": "auth0|123456789"},
+				Claims: jwt.MapClaims{claimKey: claimValue},
 			},
-			wantUserID: "auth0|123456789",
+			wantValue: claimValue,
 		},
 		{
 			name:        "no JWT token in context",
@@ -448,12 +453,12 @@ func TestGetUserID(t *testing.T) {
 			errContains: "invalid JWT claims",
 		},
 		{
-			name: "missing sub claim",
+			name: "missing " + claimKey + " claim",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{},
 			},
 			wantErr:     true,
-			errContains: "sub claim not found",
+			errContains: missingErrMsg,
 		},
 	}
 
@@ -467,19 +472,23 @@ func TestGetUserID(t *testing.T) {
 				c.Set("user", tc.token)
 			}
 
-			userID, err := GetUserID(c)
+			value, err := extractFunc(c)
 			if tc.wantErr {
 				assert.Error(t, err)
-				assert.Empty(t, userID)
+				assert.Empty(t, value)
 				if tc.errContains != "" {
 					assert.Contains(t, err.Error(), tc.errContains)
 				}
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.wantUserID, userID)
+				assert.Equal(t, tc.wantValue, value)
 			}
 		})
 	}
+}
+
+func TestGetUserID(t *testing.T) {
+	testJWTClaimExtractor(t, GetUserID, "sub", "auth0|123456789", "sub claim not found")
 }
 
 func TestGetUserIDOrDefault(t *testing.T) {
@@ -520,68 +529,5 @@ func TestGetUserIDOrDefault(t *testing.T) {
 }
 
 func TestGetUserEmail(t *testing.T) {
-	e := echo.New()
-	type testCase struct {
-		name        string
-		token       interface{}
-		wantEmail   string
-		wantErr     bool
-		errContains string
-	}
-
-	cases := []testCase{
-		{
-			name: "valid JWT token with email claim",
-			token: &jwt.Token{
-				Claims: jwt.MapClaims{"email": "test@example.com"},
-			},
-			wantEmail: "test@example.com",
-		},
-		{
-			name:        "no JWT token in context",
-			token:       nil,
-			wantErr:     true,
-			errContains: "no JWT token found in context",
-		},
-		{
-			name: "invalid claims type",
-			token: &jwt.Token{
-				Claims: &jwt.RegisteredClaims{},
-			},
-			wantErr:     true,
-			errContains: "invalid JWT claims",
-		},
-		{
-			name: "missing email claim",
-			token: &jwt.Token{
-				Claims: jwt.MapClaims{},
-			},
-			wantErr:     true,
-			errContains: "email claim not found",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-
-			if tc.token != nil {
-				c.Set("user", tc.token)
-			}
-
-			email, err := GetUserEmail(c)
-			if tc.wantErr {
-				assert.Error(t, err)
-				assert.Empty(t, email)
-				if tc.errContains != "" {
-					assert.Contains(t, err.Error(), tc.errContains)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tc.wantEmail, email)
-			}
-		})
-	}
+	testJWTClaimExtractor(t, GetUserEmail, "email", "test@example.com", "email claim not found")
 }

@@ -44,29 +44,8 @@ func TestGetMySubscriptions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := NewDefaultHandler(nil)
-
-			e := echo.New()
-			target := "/"
-			if tt.query != "" {
-				target = "/?" + tt.query
-			}
-			req := httptest.NewRequest(http.MethodGet, target, nil)
-			req.Header.Set("X-Test-User", tt.userID)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-
-			if err := handler.GetMySubscriptions(c); err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if rec.Code != tt.expectedStatus {
-				t.Fatalf("expected %d, got %d", tt.expectedStatus, rec.Code)
-			}
-		})
-	}
+	handler := NewDefaultHandler(nil)
+	runHandlerTableTest(t, handler.GetMySubscriptions, tests)
 }
 
 // Minimal pgx.Row stub used for DatabaseMock.QueryRow responses
@@ -111,6 +90,49 @@ func (r *rowsIterStub) CommandTag() pgconn.CommandTag           { return pgconn.
 func (r *rowsIterStub) Close()                                  {}
 func (r *rowsIterStub) Conn() *pgx.Conn                         { return nil }
 
+// Helper to create a mock user row for tests
+func mockUserRow(now time.Time) func(dest ...any) error {
+	return func(dest ...any) error {
+		dest[0].(*pgtype.UUID).Bytes = uuid.New()
+		dest[0].(*pgtype.UUID).Valid = true
+		*dest[1].(*string) = "auth0|testuser"
+		*dest[2].(*pgtype.Text) = pgtype.Text{}
+		*dest[3].(*string) = "user"
+		*dest[4].(*pgtype.Timestamptz) = pgtype.Timestamptz{Time: now, Valid: true}
+		return nil
+	}
+}
+
+// Helper to run table-driven tests for handler methods
+func runHandlerTableTest(t *testing.T, handlerFunc func(echo.Context) error, tests []struct {
+	name           string
+	userID         string
+	query          string
+	expectedStatus int
+}) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			target := "/"
+			if tt.query != "" {
+				target = "/?" + tt.query
+			}
+			req := httptest.NewRequest(http.MethodGet, target, nil)
+			req.Header.Set("X-Test-User", tt.userID)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if err := handlerFunc(c); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if rec.Code != tt.expectedStatus {
+				t.Fatalf("expected %d, got %d", tt.expectedStatus, rec.Code)
+			}
+		})
+	}
+}
+
 // --- Subscriptions: DB-backed tests ---
 
 // Unauthorized when db != nil and JWT sub is empty (no X-Test-User header)
@@ -151,38 +173,35 @@ func TestGetMySubscriptions_DB_UserResolveError(t *testing.T) {
     }
 }
 
-func TestGetMySubscriptions_DB_ListError(t *testing.T) {
+// Helper to test DB list errors for both subscriptions and invoices
+func testDBListError(t *testing.T, getHandler func(*storage.DatabaseMock) func(echo.Context) error, query string) {
     now := time.Now()
     db := &storage.DatabaseMock{
         QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-            return rowStub{scan: func(dest ...any) error {
-                // Populate users row
-                dest[0].(*pgtype.UUID).Bytes = uuid.New()
-                dest[0].(*pgtype.UUID).Valid = true
-                *dest[1].(*string) = "auth0|testuser"
-                *dest[2].(*pgtype.Text) = pgtype.Text{}
-                *dest[3].(*string) = "user"
-                *dest[4].(*pgtype.Timestamptz) = pgtype.Timestamptz{Time: now, Valid: true}
-                return nil
-            }}
+            return rowStub{scan: mockUserRow(now)}
         },
         QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
             return nil, errBoom()
         },
     }
-    h := NewDefaultHandler(db)
     e := echo.New()
-    req := httptest.NewRequest(http.MethodGet, "/?limit=9999&offset=-5", nil)
+    req := httptest.NewRequest(http.MethodGet, "/?"+query, nil)
     req.Header.Set("X-Test-User", "auth0|testuser")
     rec := httptest.NewRecorder()
     c := e.NewContext(req, rec)
 
-    if err := h.GetMySubscriptions(c); err != nil {
+    if err := getHandler(db)(c); err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
     if rec.Code != http.StatusInternalServerError {
         t.Fatalf("expected 500, got %d", rec.Code)
     }
+}
+
+func TestGetMySubscriptions_DB_ListError(t *testing.T) {
+    testDBListError(t, func(db *storage.DatabaseMock) func(echo.Context) error {
+        return NewDefaultHandler(db).GetMySubscriptions
+    }, "limit=9999&offset=-5")
 }
 
 func TestGetMySubscriptions_DB_SuccessMapping(t *testing.T) {
@@ -229,15 +248,7 @@ func TestGetMySubscriptions_DB_SuccessMapping(t *testing.T) {
 
     db := &storage.DatabaseMock{
         QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-            return rowStub{scan: func(dest ...any) error {
-                dest[0].(*pgtype.UUID).Bytes = uuid.New()
-                dest[0].(*pgtype.UUID).Valid = true
-                *dest[1].(*string) = "auth0|testuser"
-                *dest[2].(*pgtype.Text) = pgtype.Text{}
-                *dest[3].(*string) = "user"
-                *dest[4].(*pgtype.Timestamptz) = pgtype.Timestamptz{Time: now, Valid: true}
-                return nil
-            }}
+            return rowStub{scan: mockUserRow(now)}
         },
         QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
             return rows, nil
@@ -298,36 +309,9 @@ func TestGetMyInvoices_DB_UserResolveError(t *testing.T) {
 }
 
 func TestGetMyInvoices_DB_ListError(t *testing.T) {
-    now := time.Now()
-    db := &storage.DatabaseMock{
-        QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-            return rowStub{scan: func(dest ...any) error {
-                dest[0].(*pgtype.UUID).Bytes = uuid.New()
-                dest[0].(*pgtype.UUID).Valid = true
-                *dest[1].(*string) = "auth0|testuser"
-                *dest[2].(*pgtype.Text) = pgtype.Text{}
-                *dest[3].(*string) = "user"
-                *dest[4].(*pgtype.Timestamptz) = pgtype.Timestamptz{Time: now, Valid: true}
-                return nil
-            }}
-        },
-        QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
-            return nil, errBoom()
-        },
-    }
-    h := NewDefaultHandler(db)
-    e := echo.New()
-    req := httptest.NewRequest(http.MethodGet, "/?limit=0&offset=-1", nil)
-    req.Header.Set("X-Test-User", "auth0|testuser")
-    rec := httptest.NewRecorder()
-    c := e.NewContext(req, rec)
-
-    if err := h.GetMyInvoices(c); err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-    if rec.Code != http.StatusInternalServerError {
-        t.Fatalf("expected 500, got %d", rec.Code)
-    }
+    testDBListError(t, func(db *storage.DatabaseMock) func(echo.Context) error {
+        return NewDefaultHandler(db).GetMyInvoices
+    }, "limit=0&offset=-1")
 }
 
 func TestGetMyInvoices_DB_SuccessMapping(t *testing.T) {
@@ -372,15 +356,7 @@ func TestGetMyInvoices_DB_SuccessMapping(t *testing.T) {
 
     db := &storage.DatabaseMock{
         QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-            return rowStub{scan: func(dest ...any) error {
-                dest[0].(*pgtype.UUID).Bytes = uuid.New()
-                dest[0].(*pgtype.UUID).Valid = true
-                *dest[1].(*string) = "auth0|testuser"
-                *dest[2].(*pgtype.Text) = pgtype.Text{}
-                *dest[3].(*string) = "user"
-                *dest[4].(*pgtype.Timestamptz) = pgtype.Timestamptz{Time: now, Valid: true}
-                return nil
-            }}
+            return rowStub{scan: mockUserRow(now)}
         },
         QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
             return rows, nil
@@ -461,27 +437,6 @@ func TestGetMyInvoices(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := NewDefaultHandler(nil)
-
-			e := echo.New()
-			target := "/"
-			if tt.query != "" {
-				target = "/?" + tt.query
-			}
-			req := httptest.NewRequest(http.MethodGet, target, nil)
-			req.Header.Set("X-Test-User", tt.userID)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-
-			if err := handler.GetMyInvoices(c); err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if rec.Code != tt.expectedStatus {
-				t.Fatalf("expected %d, got %d", tt.expectedStatus, rec.Code)
-			}
-		})
-	}
+	handler := NewDefaultHandler(nil)
+	runHandlerTableTest(t, handler.GetMyInvoices, tests)
 }

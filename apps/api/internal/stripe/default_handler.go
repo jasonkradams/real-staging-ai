@@ -274,14 +274,12 @@ func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, eve
 	return nil
 }
 
-// handleSubscriptionCreated processes new subscription events.
-func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *StripeEvent) error {
+// persistSubscription is a helper to persist subscription data to the database.
+func (h *DefaultHandler) persistSubscription(
+	ctx context.Context, subscriptionData map[string]interface{}, eventType string,
+) error {
 	log := logging.Default()
 
-	subscriptionData, ok := event.Data["object"].(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("invalid subscription data")
-	}
 	if h.db == nil {
 		// No database configured (e.g., in tests). Skip persistence.
 		return nil
@@ -291,143 +289,89 @@ func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *S
 	subscriptionID, _ := subscriptionData["id"].(string)
 	status, _ := subscriptionData["status"].(string)
 
-	log.Error(ctx, fmt.Sprintf("Subscription created - Customer: %s, Subscription: %s, Status: %s",
-		customerID, subscriptionID, status))
+	log.Error(ctx, fmt.Sprintf("Subscription %s - Customer: %s, Subscription: %s, Status: %s",
+		eventType, customerID, subscriptionID, status))
+
+	if customerID == "" || subscriptionID == "" {
+		return nil
+	}
 
 	// Persist subscription state
 	subRepo := NewSubscriptionsRepository(h.db)
 	userRepo := user.NewDefaultRepository(h.db)
-	if customerID != "" && subscriptionID != "" {
-		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
-			// Extract optional subscription details
-			var priceIDPtr *string
-			if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
-				if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
-					if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
-						if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
-							if pid, ok := priceRaw["id"].(string); ok && pid != "" {
-								priceIDPtr = &pid
-							}
-						}
+
+	u, err := userRepo.GetByStripeCustomerID(ctx, customerID)
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf(
+			"No user found for Stripe customer on subscription.%s: %s (err=%v)", eventType, customerID, err))
+		return nil
+	}
+
+	// Extract optional subscription details
+	var priceIDPtr *string
+	if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
+		if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
+			if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
+				if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
+					if pid, ok := priceRaw["id"].(string); ok && pid != "" {
+						priceIDPtr = &pid
 					}
 				}
 			}
-
-			var (
-				cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
-				cancelAtPeriodEnd                          bool
-			)
-
-			if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cpsPtr = &t
-			}
-			if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cpePtr = &t
-			}
-			if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cancelAtPtr = &t
-			}
-			if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				canceledAtPtr = &t
-			}
-			if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
-				cancelAtPeriodEnd = v
-			}
-
-			if _, err := subRepo.UpsertByStripeID(
-				ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr,
-				cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
-			); err != nil {
-				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (created): %v", err))
-			}
-		} else {
-			log.Error(ctx, fmt.Sprintf(
-				"No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err))
 		}
 	}
+
+	var (
+		cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
+		cancelAtPeriodEnd                          bool
+	)
+
+	if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
+		t := time.Unix(int64(v), 0)
+		cpsPtr = &t
+	}
+	if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
+		t := time.Unix(int64(v), 0)
+		cpePtr = &t
+	}
+	if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
+		t := time.Unix(int64(v), 0)
+		cancelAtPtr = &t
+	}
+	if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
+		t := time.Unix(int64(v), 0)
+		canceledAtPtr = &t
+	}
+	if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
+		cancelAtPeriodEnd = v
+	}
+
+	if _, err := subRepo.UpsertByStripeID(
+		ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr,
+		cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
+	); err != nil {
+		log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (%s): %v", eventType, err))
+	}
+
 	return nil
+}
+
+// handleSubscriptionCreated processes new subscription events.
+func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *StripeEvent) error {
+	subscriptionData, ok := event.Data["object"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid subscription data")
+	}
+	return h.persistSubscription(ctx, subscriptionData, "created")
 }
 
 // handleSubscriptionUpdated processes subscription update events.
 func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *StripeEvent) error {
-	log := logging.Default()
-
 	subscriptionData, ok := event.Data["object"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid subscription data")
 	}
-	if h.db == nil {
-		// No database configured (e.g., in tests). Skip persistence.
-		return nil
-	}
-
-	customerID, _ := subscriptionData["customer"].(string)
-	subscriptionID, _ := subscriptionData["id"].(string)
-	status, _ := subscriptionData["status"].(string)
-
-	log.Error(ctx, fmt.Sprintf("Subscription updated - Customer: %s, Subscription: %s, Status: %s",
-		customerID, subscriptionID, status))
-
-	// Persist subscription state
-	subRepo := NewSubscriptionsRepository(h.db)
-	userRepo := user.NewDefaultRepository(h.db)
-	if customerID != "" && subscriptionID != "" {
-		if u, err := userRepo.GetByStripeCustomerID(ctx, customerID); err == nil {
-			// Extract optional subscription details
-			var priceIDPtr *string
-			if itemsRaw, ok := subscriptionData["items"].(map[string]interface{}); ok {
-				if dataArr, ok := itemsRaw["data"].([]interface{}); ok && len(dataArr) > 0 {
-					if firstItem, ok := dataArr[0].(map[string]interface{}); ok {
-						if priceRaw, ok := firstItem["price"].(map[string]interface{}); ok {
-							if pid, ok := priceRaw["id"].(string); ok && pid != "" {
-								priceIDPtr = &pid
-							}
-						}
-					}
-				}
-			}
-
-			var (
-				cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr *time.Time
-				cancelAtPeriodEnd                          bool
-			)
-
-			if v, ok := subscriptionData["current_period_start"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cpsPtr = &t
-			}
-			if v, ok := subscriptionData["current_period_end"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cpePtr = &t
-			}
-			if v, ok := subscriptionData["cancel_at"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				cancelAtPtr = &t
-			}
-			if v, ok := subscriptionData["canceled_at"].(float64); ok && v > 0 {
-				t := time.Unix(int64(v), 0)
-				canceledAtPtr = &t
-			}
-			if v, ok := subscriptionData["cancel_at_period_end"].(bool); ok {
-				cancelAtPeriodEnd = v
-			}
-
-			if _, err := subRepo.UpsertByStripeID(
-				ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr,
-				cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
-			); err != nil {
-				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (updated): %v", err))
-			}
-		} else {
-			log.Error(ctx, fmt.Sprintf(
-				"No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err))
-		}
-	}
-	return nil
+	return h.persistSubscription(ctx, subscriptionData, "updated")
 }
 
 // handleSubscriptionDeleted processes subscription cancellation events.

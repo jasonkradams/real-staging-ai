@@ -19,29 +19,30 @@ import (
 
 // ---------------------- Validation tests ----------------------
 
-func TestValidateCreateProjectRequest(t *testing.T) {
+// Helper to test project name validation
+func testProjectNameValidation(t *testing.T, validateFunc func(string) []ValidationErrorDetail) {
 	cases := []struct {
 		name        string
-		req         *CreateRequest
+		projectName string
 		expectError bool
 		field       string
 		contains    string
 	}{
 		{
 			name:        "success: valid",
-			req:         &CreateRequest{Name: "My Project"},
+			projectName: "My Project",
 			expectError: false,
 		},
 		{
 			name:        "fail: empty name",
-			req:         &CreateRequest{Name: ""},
+			projectName: "",
 			expectError: true,
 			field:       "name",
 			contains:    "required",
 		},
 		{
 			name:        "fail: name too long",
-			req:         &CreateRequest{Name: strings.Repeat("a", 101)},
+			projectName: strings.Repeat("a", 101),
 			expectError: true,
 			field:       "name",
 			contains:    "100",
@@ -50,7 +51,7 @@ func TestValidateCreateProjectRequest(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := validateCreateProjectRequest(tc.req)
+			errs := validateFunc(tc.projectName)
 			if tc.expectError {
 				assert.NotEmpty(t, errs)
 				assert.Equal(t, tc.field, errs[0].Field)
@@ -64,49 +65,16 @@ func TestValidateCreateProjectRequest(t *testing.T) {
 	}
 }
 
-func TestValidateUpdateProjectRequest(t *testing.T) {
-	cases := []struct {
-		name        string
-		req         *UpdateRequest
-		expectError bool
-		field       string
-		contains    string
-	}{
-		{
-			name:        "success: valid",
-			req:         &UpdateRequest{Name: "Renamed Project"},
-			expectError: false,
-		},
-		{
-			name:        "fail: empty name",
-			req:         &UpdateRequest{Name: ""},
-			expectError: true,
-			field:       "name",
-			contains:    "required",
-		},
-		{
-			name:        "fail: name too long",
-			req:         &UpdateRequest{Name: strings.Repeat("x", 101)},
-			expectError: true,
-			field:       "name",
-			contains:    "100",
-		},
-	}
+func TestValidateCreateProjectRequest(t *testing.T) {
+	testProjectNameValidation(t, func(name string) []ValidationErrorDetail {
+		return validateCreateProjectRequest(&CreateRequest{Name: name})
+	})
+}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			errs := validateUpdateProjectRequest(tc.req)
-			if tc.expectError {
-				assert.NotEmpty(t, errs)
-				assert.Equal(t, tc.field, errs[0].Field)
-				if tc.contains != "" {
-					assert.Contains(t, errs[0].Message, tc.contains)
-				}
-			} else {
-				assert.Empty(t, errs)
-			}
-		})
-	}
+func TestValidateUpdateProjectRequest(t *testing.T) {
+	testProjectNameValidation(t, func(name string) []ValidationErrorDetail {
+		return validateUpdateProjectRequest(&UpdateRequest{Name: name})
+	})
 }
 
 // ---------------------- Handler tests ----------------------

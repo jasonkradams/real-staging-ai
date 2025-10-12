@@ -3,6 +3,18 @@
 
 TAB = $(shell printf '\t')
 
+#########
+# Linting
+#########
+
+GOLANGCI_LINT_VERSION := 2.5.0
+GOLANGCI_LINT_IMAGE := golangci/golangci-lint:v$(GOLANGCI_LINT_VERSION)-alpine
+
+HAS_GOLANGCI_LINT := $(shell command -v golangci-lint >/dev/null 2>&1 && echo 1 || echo 0)
+LOCAL_LINT_MATCH := $(shell [ "$(HAS_GOLANGCI_LINT)" = "1" ] && \
+	[ "$$(golangci-lint version 2>/dev/null | head -n1 | grep -oE 'version [0-9]+\.[0-9]+\.[0-9]+')" = "version $(GOLANGCI_LINT_VERSION)" ] && echo 1 || echo 0)
+
+
 help:
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -111,22 +123,42 @@ generate-worker:
 	fi
 	cd apps/worker && go generate ./...
 
-lint: ## Run golangci-lint on all Go modules
-	@echo "Running golangci-lint..."
-	@echo "--> Linting api module"
-	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run
-	@echo "--> Linting worker module"
-	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run
+lint: ## Run golangci-lint locally or in Docker if not available or mismatched
+	@echo "Running golangci-lint ($(GOLANGCI_LINT_VERSION))..."
+	@if [ "$(LOCAL_LINT_MATCH)" = "1" ]; then \
+		echo "--> Using local golangci-lint"; \
+		echo "--> Running api lint"; \
+		cd apps/api && golangci-lint run; \
+		echo "--> Running worker lint"; \
+		cd ../../apps/worker && golangci-lint run; \
+	else \
+		echo "--> Using Dockerized golangci-lint"; \
+		echo "--> Running api lint"; \
+		cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api $(GOLANGCI_LINT_IMAGE) golangci-lint run; \
+		echo "--> Running worker lint"; \
+		cd ../../apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker $(GOLANGCI_LINT_IMAGE) golangci-lint run; \
+	fi
 	@echo "--> Linting web server"
+	@echo "--> Running web lint"
 	cd apps/web && npm run lint
 
-lint-fix: ## Run golangci-lint with --fix on all Go modules
-	@echo "Running golangci-lint with --fix..."
-	@echo "--> Linting and fixing api module"
-	cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
-	@echo "--> Linting and fixing worker module"
-	cd apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker golangci/golangci-lint:v2.4.0-alpine golangci-lint run --fix
+lint-fix: ## Run golangci-lint with --fix locally or in Docker if not available or mismatched
+	@echo "Running golangci-lint with --fix ($(GOLANGCI_LINT_VERSION))..."
+	@if [ "$(LOCAL_LINT_MATCH)" = "1" ]; then \
+		echo "--> Using local golangci-lint"; \
+		echo "--> Running api lint with --fix"; \
+		cd apps/api && golangci-lint run --fix; \
+		echo "--> Running worker lint with --fix"; \
+		cd ../../apps/worker && golangci-lint run --fix; \
+	else \
+		echo "--> Using Dockerized golangci-lint"; \
+		echo "--> Running api lint with --fix"; \
+		cd apps/api && docker run --rm -v $(CURDIR):/app -w /app/apps/api $(GOLANGCI_LINT_IMAGE) golangci-lint run --fix; \
+		echo "--> Running worker lint with --fix"; \
+		cd ../../apps/worker && docker run --rm -v $(CURDIR):/app -w /app/apps/worker $(GOLANGCI_LINT_IMAGE) golangci-lint run --fix; \
+	fi
 	@echo "--> Linting and fixing web server"
+	@echo "--> Running web lint with --fix"
 	cd apps/web && npm run lint:fix
 
 up: migrate ## Run the api server

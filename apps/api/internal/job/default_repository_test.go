@@ -11,10 +11,172 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v2"
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/real-staging-ai/api/internal/storage"
 )
+
+// Helper to test QueryRow-based job operations (GetJobByID, StartJob, CompleteJob)
+func testJobQueryRowOperation(
+	t *testing.T,
+	operationName string,
+	queryName string,
+	expectedStatus string,
+	operation func(repo *DefaultRepository, ctx context.Context, jobID string) (*queries.Job, error),
+) {
+	ctx := context.Background()
+	poolMock, err := pgxmock.NewPool()
+	require.NoError(t, err)
+	defer poolMock.Close()
+
+	dbMock := &storage.DatabaseMock{
+		QueryRowFunc: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			return poolMock.QueryRow(ctx, sql, args...)
+		},
+	}
+
+	repo := NewDefaultRepository(dbMock)
+
+	jobID := uuid.New()
+	imageID := uuid.New()
+	jobType := "stage:run"
+	payload := map[string]any{"key": "value"}
+	payloadJSON, err := json.Marshal(payload)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		jobID       string
+		setupMock   func(mock pgxmock.PgxPoolIface)
+		expectError bool
+	}{
+		{
+			name:  "success: " + operationName,
+			jobID: jobID.String(),
+			setupMock: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectQuery(queryName).
+					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
+						AddRow(
+							pgtype.UUID{Bytes: jobID, Valid: true},
+							pgtype.UUID{Bytes: imageID, Valid: true},
+							jobType,
+							payloadJSON,
+							expectedStatus,
+							pgtype.Text{},
+							pgtype.Timestamptz{},
+							pgtype.Timestamptz{},
+							pgtype.Timestamptz{},
+						))
+			},
+			expectError: false,
+		},
+		{
+			name:        "fail: invalid job ID",
+			jobID:       "invalid-uuid",
+			setupMock:   func(mock pgxmock.PgxPoolIface) {},
+			expectError: true,
+		},
+		{
+			name:  "fail: query error",
+			jobID: jobID.String(),
+			setupMock: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectQuery(queryName).
+					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
+					WillReturnError(errors.New("db error"))
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMock(poolMock)
+			_, err := operation(repo, ctx, tc.jobID)
+
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.NoError(t, poolMock.ExpectationsWereMet())
+		})
+	}
+}
+
+// Helper to test Exec-based job operations (DeleteJob, DeleteJobsByImageID)
+func testJobExecOperation(
+	t *testing.T,
+	operationName string,
+	queryName string,
+	idParamName string,
+	operation func(repo *DefaultRepository, ctx context.Context, id string) error,
+) {
+	ctx := context.Background()
+	poolMock, err := pgxmock.NewPool()
+	require.NoError(t, err)
+	defer poolMock.Close()
+
+	dbMock := &storage.DatabaseMock{
+		ExecFunc: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+			return poolMock.Exec(ctx, sql, args...)
+		},
+	}
+
+	repo := NewDefaultRepository(dbMock)
+	testID := uuid.New()
+
+	testCases := []struct {
+		name        string
+		id          string
+		setupMock   func(mock pgxmock.PgxPoolIface)
+		expectError bool
+	}{
+		{
+			name: "success: " + operationName,
+			id:   testID.String(),
+			setupMock: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectExec(queryName).
+					WithArgs(pgtype.UUID{Bytes: testID, Valid: true}).
+					WillReturnResult(pgxmock.NewResult("DELETE", 1))
+			},
+			expectError: false,
+		},
+		{
+			name:        "fail: invalid " + idParamName,
+			id:          "invalid-uuid",
+			setupMock:   func(mock pgxmock.PgxPoolIface) {},
+			expectError: true,
+		},
+		{
+			name: "fail: query error",
+			id:   testID.String(),
+			setupMock: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectExec(queryName).
+					WithArgs(pgtype.UUID{Bytes: testID, Valid: true}).
+					WillReturnError(errors.New("db error"))
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMock(poolMock)
+			err := operation(repo, ctx, tc.id)
+
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.NoError(t, poolMock.ExpectationsWereMet())
+		})
+	}
+}
 
 func TestDefaultRepository_CreateJob(t *testing.T) {
 	ctx := context.Background()
@@ -107,86 +269,10 @@ func TestDefaultRepository_CreateJob(t *testing.T) {
 }
 
 func TestDefaultRepository_GetJobByID(t *testing.T) {
-	ctx := context.Background()
-	poolMock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer poolMock.Close()
-
-	dbMock := &storage.DatabaseMock{
-		QueryRowFunc: func(ctx context.Context, sql string, args ...any) pgx.Row {
-			return poolMock.QueryRow(ctx, sql, args...)
-		},
-	}
-
-	repo := NewDefaultRepository(dbMock)
-
-	jobID := uuid.New()
-	imageID := uuid.New()
-	jobType := "stage:run"
-	payload := map[string]any{"key": "value"}
-	payloadJSON, err := json.Marshal(payload)
-	require.NoError(t, err)
-
-	testCases := []struct {
-		name        string
-		jobID       string
-		setupMock   func(mock pgxmock.PgxPoolIface)
-		expectError bool
-	}{
-		{
-			name:  "success: get job by id",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("GetJobByID").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows(
-						[]string{"id", "image_id", "type", "payload_json", "status",
-							"error", "created_at", "started_at", "finished_at"}).
-						AddRow(
-							pgtype.UUID{Bytes: jobID, Valid: true},
-							pgtype.UUID{Bytes: imageID, Valid: true},
-							jobType,
-							payloadJSON,
-							"queued",
-							pgtype.Text{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-						))
-			},
-			expectError: false,
-		},
-		{
-			name:        "fail: invalid job ID",
-			jobID:       "invalid-uuid",
-			setupMock:   func(mock pgxmock.PgxPoolIface) {},
-			expectError: true,
-		},
-		{
-			name:  "fail: query error",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("GetJobByID").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnError(errors.New("db error"))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMock(poolMock)
-			_, err := repo.GetJobByID(ctx, tc.jobID)
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.NoError(t, poolMock.ExpectationsWereMet())
+	testJobQueryRowOperation(t, "get job by id", "GetJobByID", "queued",
+		func(repo *DefaultRepository, ctx context.Context, jobID string) (*queries.Job, error) {
+			return repo.GetJobByID(ctx, jobID)
 		})
-	}
 }
 
 func TestDefaultRepository_GetJobsByImageID(t *testing.T) {
@@ -373,169 +459,17 @@ func TestDefaultRepository_UpdateJobStatus(t *testing.T) {
 }
 
 func TestDefaultRepository_StartJob(t *testing.T) {
-	ctx := context.Background()
-	poolMock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer poolMock.Close()
-
-	dbMock := &storage.DatabaseMock{
-		QueryRowFunc: func(ctx context.Context, sql string, args ...any) pgx.Row {
-			return poolMock.QueryRow(ctx, sql, args...)
-		},
-	}
-
-	repo := NewDefaultRepository(dbMock)
-
-	jobID := uuid.New()
-	imageID := uuid.New()
-	jobType := "stage:run"
-	payload := map[string]any{"key": "value"}
-	payloadJSON, err := json.Marshal(payload)
-	require.NoError(t, err)
-
-	testCases := []struct {
-		name        string
-		jobID       string
-		setupMock   func(mock pgxmock.PgxPoolIface)
-		expectError bool
-	}{
-		{
-			name:  "success: start job",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("StartJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows(
-						[]string{"id", "image_id", "type", "payload_json", "status",
-							"error", "created_at", "started_at", "finished_at"}).
-						AddRow(
-							pgtype.UUID{Bytes: jobID, Valid: true},
-							pgtype.UUID{Bytes: imageID, Valid: true},
-							jobType,
-							payloadJSON,
-							"processing",
-							pgtype.Text{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-						))
-			},
-			expectError: false,
-		},
-		{
-			name:        "fail: invalid job ID",
-			jobID:       "invalid-uuid",
-			setupMock:   func(mock pgxmock.PgxPoolIface) {},
-			expectError: true,
-		},
-		{
-			name:  "fail: query error",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("StartJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnError(errors.New("db error"))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMock(poolMock)
-			_, err := repo.StartJob(ctx, tc.jobID)
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.NoError(t, poolMock.ExpectationsWereMet())
+	testJobQueryRowOperation(t, "start job", "StartJob", "processing",
+		func(repo *DefaultRepository, ctx context.Context, jobID string) (*queries.Job, error) {
+			return repo.StartJob(ctx, jobID)
 		})
-	}
 }
 
 func TestDefaultRepository_CompleteJob(t *testing.T) {
-	ctx := context.Background()
-	poolMock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer poolMock.Close()
-
-	dbMock := &storage.DatabaseMock{
-		QueryRowFunc: func(ctx context.Context, sql string, args ...any) pgx.Row {
-			return poolMock.QueryRow(ctx, sql, args...)
-		},
-	}
-
-	repo := NewDefaultRepository(dbMock)
-
-	jobID := uuid.New()
-	imageID := uuid.New()
-	jobType := "stage:run"
-	payload := map[string]any{"key": "value"}
-	payloadJSON, err := json.Marshal(payload)
-	require.NoError(t, err)
-
-	testCases := []struct {
-		name        string
-		jobID       string
-		setupMock   func(mock pgxmock.PgxPoolIface)
-		expectError bool
-	}{
-		{
-			name:  "success: complete job",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("CompleteJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows(
-						[]string{"id", "image_id", "type", "payload_json", "status",
-							"error", "created_at", "started_at", "finished_at"}).
-						AddRow(
-							pgtype.UUID{Bytes: jobID, Valid: true},
-							pgtype.UUID{Bytes: imageID, Valid: true},
-							jobType,
-							payloadJSON,
-							"completed",
-							pgtype.Text{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-							pgtype.Timestamptz{},
-						))
-			},
-			expectError: false,
-		},
-		{
-			name:        "fail: invalid job ID",
-			jobID:       "invalid-uuid",
-			setupMock:   func(mock pgxmock.PgxPoolIface) {},
-			expectError: true,
-		},
-		{
-			name:  "fail: query error",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("CompleteJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnError(errors.New("db error"))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMock(poolMock)
-			_, err := repo.CompleteJob(ctx, tc.jobID)
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.NoError(t, poolMock.ExpectationsWereMet())
+	testJobQueryRowOperation(t, "complete job", "CompleteJob", "completed",
+		func(repo *DefaultRepository, ctx context.Context, jobID string) (*queries.Job, error) {
+			return repo.CompleteJob(ctx, jobID)
 		})
-	}
 }
 
 func TestDefaultRepository_FailJob(t *testing.T) {
@@ -717,131 +651,15 @@ func TestDefaultRepository_GetPendingJobs(t *testing.T) {
 }
 
 func TestDefaultRepository_DeleteJob(t *testing.T) {
-	ctx := context.Background()
-	poolMock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer poolMock.Close()
-
-	dbMock := &storage.DatabaseMock{
-		ExecFunc: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
-			return poolMock.Exec(ctx, sql, args...)
-		},
-	}
-
-	repo := NewDefaultRepository(dbMock)
-
-	jobID := uuid.New()
-
-	testCases := []struct {
-		name        string
-		jobID       string
-		setupMock   func(mock pgxmock.PgxPoolIface)
-		expectError bool
-	}{
-		{
-			name:  "success: delete job",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec("DeleteJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnResult(pgxmock.NewResult("DELETE", 1))
-			},
-			expectError: false,
-		},
-		{
-			name:        "fail: invalid job ID",
-			jobID:       "invalid-uuid",
-			setupMock:   func(mock pgxmock.PgxPoolIface) {},
-			expectError: true,
-		},
-		{
-			name:  "fail: query error",
-			jobID: jobID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec("DeleteJob").
-					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnError(errors.New("db error"))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMock(poolMock)
-			err := repo.DeleteJob(ctx, tc.jobID)
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.NoError(t, poolMock.ExpectationsWereMet())
+	testJobExecOperation(t, "delete job", "DeleteJob", "job ID",
+		func(repo *DefaultRepository, ctx context.Context, id string) error {
+			return repo.DeleteJob(ctx, id)
 		})
-	}
 }
 
 func TestDefaultRepository_DeleteJobsByImageID(t *testing.T) {
-	ctx := context.Background()
-	poolMock, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer poolMock.Close()
-
-	dbMock := &storage.DatabaseMock{
-		ExecFunc: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
-			return poolMock.Exec(ctx, sql, args...)
-		},
-	}
-
-	repo := NewDefaultRepository(dbMock)
-
-	imageID := uuid.New()
-
-	testCases := []struct {
-		name        string
-		imageID     string
-		setupMock   func(mock pgxmock.PgxPoolIface)
-		expectError bool
-	}{
-		{
-			name:    "success: delete jobs by image id",
-			imageID: imageID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec("DeleteJobsByImageID").
-					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
-					WillReturnResult(pgxmock.NewResult("DELETE", 2))
-			},
-			expectError: false,
-		},
-		{
-			name:        "fail: invalid image ID",
-			imageID:     "invalid-uuid",
-			setupMock:   func(mock pgxmock.PgxPoolIface) {},
-			expectError: true,
-		},
-		{
-			name:    "fail: query error",
-			imageID: imageID.String(),
-			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec("DeleteJobsByImageID").
-					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
-					WillReturnError(errors.New("db error"))
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMock(poolMock)
-			err := repo.DeleteJobsByImageID(ctx, tc.imageID)
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.NoError(t, poolMock.ExpectationsWereMet())
+	testJobExecOperation(t, "delete jobs by image id", "DeleteJobsByImageID", "image ID",
+		func(repo *DefaultRepository, ctx context.Context, id string) error {
+			return repo.DeleteJobsByImageID(ctx, id)
 		})
-	}
 }

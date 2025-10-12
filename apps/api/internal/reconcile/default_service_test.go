@@ -64,17 +64,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				Concurrency: 5,
 				DryRun:      false,
 			},
-			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				img := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(
-					ctx context.Context, arg queries.ListImagesForReconcileParams,
-				) ([]*queries.ListImagesForReconcileRow, error) {
-					return []*queries.ListImagesForReconcileRow{img}, nil
-				}
-				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
-					return struct{}{}, nil // File exists
-				}
-			},
+			setupMocks: createBasicHeadFileTestMock("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "", true),
 			expectError: false,
 			validate: func(t *testing.T, result *ReconcileResult) {
 				assert.Equal(t, 1, result.Checked)
@@ -312,17 +302,9 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				Concurrency: 5,
 				DryRun:      true,
 			},
-			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				img := createTestImage("img-1", "ready", "http://s3.amazonaws.com/uploads/test.jpg", "ht!tp://invalid-staged-url")
-				qMock.ListImagesForReconcileFunc = func(
-					ctx context.Context, arg queries.ListImagesForReconcileParams,
-				) ([]*queries.ListImagesForReconcileRow, error) {
-					return []*queries.ListImagesForReconcileRow{img}, nil
-				}
-				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
-					return struct{}{}, nil // Original exists
-				}
-			},
+			setupMocks: createBasicHeadFileTestMock(
+				"img-1", "ready", "http://s3.amazonaws.com/uploads/test.jpg", "ht!tp://invalid-staged-url", true,
+			),
 			expectError: false,
 			validate: func(t *testing.T, result *ReconcileResult) {
 				assert.Equal(t, 1, result.Checked)
@@ -468,6 +450,25 @@ func createTestImage(id, status, originalURL, stagedURL string) *queries.ListIma
 	}
 
 	return img
+}
+
+// Helper to create a basic test mock with single image and optional file existence check
+func createBasicHeadFileTestMock(
+	imageID, status, originalURL, stagedURL string, fileExists bool,
+) func(*queries.QuerierMock, *storage.S3ServiceMock) {
+	return func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
+		img := createTestImage(imageID, status, originalURL, stagedURL)
+		qMock.ListImagesForReconcileFunc = func(
+			ctx context.Context, arg queries.ListImagesForReconcileParams,
+		) ([]*queries.ListImagesForReconcileRow, error) {
+			return []*queries.ListImagesForReconcileRow{img}, nil
+		}
+		if fileExists {
+			s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
+				return struct{}{}, nil // File exists
+			}
+		}
+	}
 }
 
 // Tests for helper functions

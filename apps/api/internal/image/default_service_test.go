@@ -113,21 +113,7 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(
-					ctx context.Context,
-					projectIDStr, originalURL string,
-					roomType, style *string,
-					seed *int64,
-				) (*queries.Image, error) {
-					return &queries.Image{
-						ID:          pgtype.UUID{Bytes: imageID, Valid: true},
-						ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
-						OriginalUrl: "http://example.com/image.jpg",
-						Status:      queries.ImageStatusQueued,
-						CreatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
-						UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
-					}, nil
-				}
+				mockSuccessfulImageCreation(imageID, projectID)(imageRepo, jobRepo)
 				jobRepo.CreateJobFunc = func(
 					ctx context.Context, imageID, jobType string, payloadJSON []byte,
 				) (*queries.Job, error) {
@@ -143,21 +129,7 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(
-					ctx context.Context,
-					projectIDStr, originalURL string,
-					roomType, style *string,
-					seed *int64,
-				) (*queries.Image, error) {
-					return &queries.Image{
-						ID:          pgtype.UUID{Bytes: imageID, Valid: true},
-						ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
-						OriginalUrl: "http://example.com/image.jpg",
-						Status:      queries.ImageStatusQueued,
-						CreatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
-						UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
-					}, nil
-				}
+				mockSuccessfulImageCreation(imageID, projectID)(imageRepo, jobRepo)
 				jobRepo.CreateJobFunc = func(
 					ctx context.Context, imageID, jobType string, payloadJSON []byte,
 				) (*queries.Job, error) {
@@ -671,5 +643,26 @@ func TestDefaultService_DeleteImage(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+// Helper to create a successful image creation mock
+func mockSuccessfulImageCreation(imageID, projectID uuid.UUID) func(*RepositoryMock, *job.RepositoryMock) {
+	return func(imageRepo *RepositoryMock, _ *job.RepositoryMock) {
+		imageRepo.CreateImageFunc = func(
+			ctx context.Context,
+			projectIDStr, originalURL string,
+			roomType, style *string,
+			seed *int64,
+		) (*queries.Image, error) {
+			return &queries.Image{
+				ID:          pgtype.UUID{Bytes: imageID, Valid: true},
+				ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
+				OriginalUrl: "http://example.com/image.jpg",
+				Status:      queries.ImageStatusQueued,
+				CreatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
+				UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
+			}, nil
+		}
 	}
 }
