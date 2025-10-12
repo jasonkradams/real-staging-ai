@@ -128,6 +128,7 @@ func OptionalJWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 // getPublicKey fetches and parses the public key from Auth0's JWKS endpoint
 func getPublicKey(domain, kid string) (*rsa.PublicKey, error) {
 	jwksURL := fmt.Sprintf("https://%s/.well-known/jwks.json", domain)
+	// #nosec G107 -- URL is constructed from trusted Auth0 domain configuration
 	resp, err := http.Get(jwksURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)

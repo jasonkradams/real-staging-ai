@@ -158,6 +158,7 @@ func (r *DefaultRepository) FailJob(ctx context.Context, jobID string, errorMsg 
 func (r *DefaultRepository) GetPendingJobs(ctx context.Context, limit int) ([]*queries.Job, error) {
 	q := queries.New(r.db)
 
+	// #nosec G115 -- Limit is controlled by caller with reasonable defaults
 	jobs, err := q.GetPendingJobs(ctx, int32(limit))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pending jobs: %w", err)

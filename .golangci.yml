@@ -7,14 +7,10 @@ linters:
     - staticcheck
     - errcheck
     - gocritic
-    # - gosec
+    - gosec
     - lll
 run:
   timeout: 5m
-  go: "1.24"
+  go: "1.25"
 severity:
   default: error
-  rules:
-    - linters:
-        - dupl
-      severity: info

@@ -296,7 +296,7 @@ func TestNewDefaultS3Service_LoadDefaultConfig_Error_TestEnv(t *testing.T) {
 	cfgPath := filepath.Join(dir, "aws_config")
 
 	// Write invalid INI content to force config.LoadDefaultConfig to fail.
-	err := os.WriteFile(cfgPath, []byte(":::: not valid ini ::::"), 0644)
+	err := os.WriteFile(cfgPath, []byte(":::: not valid ini ::::"), 0600)
 	require.NoError(t, err)
 
 	// Point the SDK to the invalid config file.

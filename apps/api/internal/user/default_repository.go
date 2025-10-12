@@ -171,8 +171,8 @@ func (r *DefaultRepository) Delete(ctx context.Context, userID string) error {
 // List retrieves a paginated list of users.
 func (r *DefaultRepository) List(ctx context.Context, limit, offset int) ([]*queries.User, error) {
 	params := queries.ListUsersParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Limit:  int32(limit),  // #nosec G115 -- Limit/offset are validated by caller
+		Offset: int32(offset), // #nosec G115 -- Limit/offset are validated by caller
 	}
 
 	users, err := r.queries.ListUsers(ctx, params)

@@ -36,6 +36,7 @@ func TestS3Integration_UploadHeadDelete(t *testing.T) {
 
 	// Load a small image from testdata as our upload payload
 	dataPath := filepath.Join("testdata", "placeholder.png")
+	// #nosec G304 -- Reading from fixed testdata directory in tests
 	fileBytes, err := os.ReadFile(dataPath)
 	require.NoError(t, err, "failed to read test image: %s", dataPath)
 

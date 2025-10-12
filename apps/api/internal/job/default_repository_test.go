@@ -594,7 +594,7 @@ func TestDefaultRepository_GetPendingJobs(t *testing.T) {
 			limit: limit,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("GetPendingJobs").
-					WithArgs(int32(limit)).
+					WithArgs(int32(limit)). // #nosec G115 -- Test value with safe conversion
 					WillReturnRows(pgxmock.NewRows(
 						[]string{"id", "image_id", "type", "payload_json", "status",
 							"error", "created_at", "started_at", "finished_at"}).
@@ -628,7 +628,7 @@ func TestDefaultRepository_GetPendingJobs(t *testing.T) {
 			limit: limit,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("GetPendingJobs").
-					WithArgs(int32(limit)).
+					WithArgs(int32(limit)). // #nosec G115 -- Test value with safe conversion
 					WillReturnError(errors.New("db error"))
 			},
 			expectError: true,

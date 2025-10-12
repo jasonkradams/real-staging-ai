@@ -57,8 +57,8 @@ func (s *DefaultService) ReconcileImages(ctx context.Context, opts ReconcileOpti
 
 	// Build filter params
 	params := queries.ListImagesForReconcileParams{
-		Limit:   int32(opts.Limit),
-		Column2: "", // Empty string means no filter (handled by SQL: $2::text = '')
+		Limit:   int32(opts.Limit), // #nosec G115 -- Limit is controlled by CLI flags with reasonable defaults
+		Column2: "",                // Empty string means no filter (handled by SQL: $2::text = '')
 	}
 	if opts.ProjectID != nil {
 		parsed, parseErr := parseUUID(*opts.ProjectID)

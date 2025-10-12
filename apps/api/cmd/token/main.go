@@ -111,6 +111,7 @@ func loadConfig() config {
 	if cfg.Auth0.ClientID == "" || cfg.Auth0.ClientSecret == "" || cfg.Auth0.Audience == "" || cfg.Auth0.Domain == "" {
 		paths := []string{".secrets/auth0.yml", "secrets.yml"}
 		for _, p := range paths {
+			// #nosec G304 -- Reading from predefined secrets file paths
 			data, err := os.ReadFile(p)
 			if err != nil {
 				continue

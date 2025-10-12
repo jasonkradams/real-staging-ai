@@ -148,7 +148,8 @@ func (h *DefaultHandler) parseLimitOffset(c echo.Context) (int32, int32) {
 	offset := int32(0)
 
 	if v := c.QueryParam("limit"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= int(MaxLimit) {
+			// #nosec G109,G115 -- Value is validated to be positive and within MaxLimit
 			limit = int32(n)
 		}
 	}
@@ -157,7 +158,8 @@ func (h *DefaultHandler) parseLimitOffset(c echo.Context) (int32, int32) {
 	}
 
 	if v := c.QueryParam("offset"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 && n <= 2147483647 {
+			// #nosec G109,G115 -- Value is validated to fit in int32 range
 			offset = int32(n)
 		}
 	}
