@@ -2,9 +2,11 @@ package project
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+
 	"github.com/real-staging-ai/api/internal/storage"
 )
 
@@ -117,7 +119,7 @@ func (s *DefaultRepository) GetProjectByIDAndUserID(ctx context.Context, project
 	var p Project
 	err := s.db.QueryRow(ctx, query, projectID, userID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get project by ID and user ID: %w", err)
@@ -175,7 +177,7 @@ func (s *DefaultRepository) GetProjectByID(ctx context.Context, projectID string
 	var p Project
 	err := s.db.QueryRow(ctx, query, projectID).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get project by ID: %w", err)
@@ -198,7 +200,7 @@ func (s *DefaultRepository) UpdateProjectByUserID(
 	var p Project
 	err := s.db.QueryRow(ctx, query, projectID, userID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update project: %w", err)
@@ -220,7 +222,7 @@ func (s *DefaultRepository) UpdateProject(ctx context.Context, projectID, name s
 	var p Project
 	err := s.db.QueryRow(ctx, query, projectID, name).Scan(&p.ID, &p.Name, &p.UserID, &p.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update project: %w", err)

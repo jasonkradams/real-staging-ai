@@ -8,11 +8,12 @@ import (
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/real-staging-ai/api/internal/logging"
 	"github.com/real-staging-ai/api/internal/storage"
 	"github.com/real-staging-ai/api/internal/storage/queries"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 // DefaultService implements the Service interface.

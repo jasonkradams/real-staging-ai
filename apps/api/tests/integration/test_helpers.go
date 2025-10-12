@@ -6,9 +6,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/real-staging-ai/api/internal/config"
 	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/stretchr/testify/require"
 )
 
 // SetupTestDatabase creates a database connection for integration tests using config.

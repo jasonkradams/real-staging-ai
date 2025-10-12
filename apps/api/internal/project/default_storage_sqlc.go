@@ -2,11 +2,13 @@ package project
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/real-staging-ai/api/internal/storage"
 	"github.com/real-staging-ai/api/internal/storage/queries"
 )
@@ -130,7 +132,7 @@ func (s *DefaultStorageSQLc) GetProjectByID(ctx context.Context, projectID strin
 
 	result, err := s.queries.GetProjectByID(ctx, projectUUIDType)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get project by ID: %w", err)
@@ -183,7 +185,7 @@ func (s *DefaultStorageSQLc) UpdateProject(ctx context.Context, projectID, name 
 
 	result, err := s.queries.UpdateProject(ctx, params)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update project: %w", err)
@@ -233,7 +235,7 @@ func (s *DefaultStorageSQLc) UpdateProjectByUserID(
 
 	result, err := s.queries.UpdateProjectByUserID(ctx, params)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update project: %w", err)

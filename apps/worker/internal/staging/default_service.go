@@ -41,15 +41,15 @@ var awsConfigLoader = config.LoadDefaultConfig
 
 // ServiceConfig holds configuration for the staging service.
 type ServiceConfig struct {
-	BucketName      string
-	ReplicateToken  string
-	ModelID         model.ModelID
-	S3Endpoint      string
-	S3Region        string
-	S3AccessKey     string
-	S3SecretKey     string
-	S3UsePathStyle  bool
-	AppEnv          string
+	BucketName     string
+	ReplicateToken string
+	ModelID        model.ModelID
+	S3Endpoint     string
+	S3Region       string
+	S3AccessKey    string
+	S3SecretKey    string
+	S3UsePathStyle bool
+	AppEnv         string
 }
 
 // NewDefaultService creates a new DefaultService instance using provided configuration.

@@ -2,6 +2,7 @@ package stripe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -110,7 +111,7 @@ func NewInvoicesRepository(db storage.Database) InvoicesRepository {
 func (r *processedEventsRepo) IsProcessed(ctx context.Context, stripeEventID string) (bool, error) {
 	_, err := r.q.GetProcessedEventByStripeID(ctx, stripeEventID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to check processed event: %w", err)
@@ -151,7 +152,7 @@ func (r *processedEventsRepo) Upsert(
 func (r *processedEventsRepo) Get(ctx context.Context, stripeEventID string) (*queries.ProcessedEvent, error) {
 	pe, err := r.q.GetProcessedEventByStripeID(ctx, stripeEventID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("failed to get processed event: %w", err)
@@ -230,7 +231,7 @@ func (r *subscriptionsRepo) GetByStripeID(
 ) (*queries.Subscription, error) {
 	sub, err := r.q.GetSubscriptionByStripeID(ctx, stripeSubscriptionID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("failed to get subscription by stripe id: %w", err)
@@ -314,7 +315,7 @@ func (r *invoicesRepo) Upsert(
 func (r *invoicesRepo) GetByStripeID(ctx context.Context, stripeInvoiceID string) (*queries.Invoice, error) {
 	inv, err := r.q.GetInvoiceByStripeID(ctx, stripeInvoiceID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("failed to get invoice by stripe id: %w", err)

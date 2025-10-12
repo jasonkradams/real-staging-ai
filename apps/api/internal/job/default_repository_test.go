@@ -11,10 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v2"
-	"github.com/real-staging-ai/api/internal/storage"
-	"github.com/real-staging-ai/api/internal/storage/queries"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 // Helper to test QueryRow-based job operations (GetJobByID, StartJob, CompleteJob)

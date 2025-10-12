@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/real-staging-ai/api/internal/project"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProjectStorage_CreateProject(t *testing.T) {

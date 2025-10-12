@@ -10,6 +10,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+
 	"github.com/real-staging-ai/worker/internal/config"
 	"github.com/real-staging-ai/worker/internal/events"
 	"github.com/real-staging-ai/worker/internal/logging"

@@ -9,8 +9,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/real-staging-ai/api/internal/logging"
 	"gopkg.in/yaml.v2"
+
+	"github.com/real-staging-ai/api/internal/logging"
 )
 
 type config struct {

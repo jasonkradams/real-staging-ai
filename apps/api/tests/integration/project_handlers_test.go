@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	httpLib "github.com/real-staging-ai/api/internal/http"
 	"github.com/real-staging-ai/api/internal/image"
 	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testUserHeader = "auth0|testuser"

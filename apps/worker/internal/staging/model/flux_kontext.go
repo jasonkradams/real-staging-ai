@@ -27,12 +27,12 @@ func (b *FluxKontextInputBuilder) BuildInput(
 	}
 
 	input := replicate.PredictionInput{
-		"prompt":             req.Prompt,
-		"input_image":        req.ImageDataURL,
-		"aspect_ratio":       "match_input_image",
-		"output_format":      "png",
-		"safety_tolerance":   2,
-		"prompt_upsampling":  false,
+		"prompt":            req.Prompt,
+		"input_image":       req.ImageDataURL,
+		"aspect_ratio":      "match_input_image",
+		"output_format":     "png",
+		"safety_tolerance":  2,
+		"prompt_upsampling": false,
 	}
 
 	if req.Seed != nil {

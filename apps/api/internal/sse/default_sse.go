@@ -10,10 +10,11 @@ import (
 	"time"
 
 	redis "github.com/redis/go-redis/v9"
-	"github.com/real-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+
+	"github.com/real-staging-ai/api/internal/logging"
 )
 
 // DefaultSSE is a Redis Pub/Sub–backed implementation of SSE.

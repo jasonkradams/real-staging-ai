@@ -9,10 +9,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/real-staging-ai/api/internal/config"
 	"github.com/real-staging-ai/api/internal/job"
 	"github.com/real-staging-ai/api/internal/storage/queries"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewDefaultService(t *testing.T) {

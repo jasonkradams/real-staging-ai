@@ -53,7 +53,7 @@ type CreateImageRequest struct {
 	RoomType *string `json:"room_type,omitempty" validate:"omitempty,oneof=living_room bedroom kitchen bathroom dining_room office"`
 	//nolint:lll // struct tags are long
 	Style *string `json:"style,omitempty" validate:"omitempty,oneof=modern contemporary traditional industrial scandinavian"`
-	Seed        *int64    `json:"seed,omitempty" validate:"omitempty,min=1,max=4294967295"`
+	Seed  *int64  `json:"seed,omitempty" validate:"omitempty,min=1,max=4294967295"`
 }
 
 // JobPayload represents the payload for image processing jobs.
@@ -88,10 +88,10 @@ type BatchCreateImagesRequest struct {
 
 // BatchCreateImagesResponse represents the response for batch image creation.
 type BatchCreateImagesResponse struct {
-	Images  []*Image              `json:"images"`
-	Errors  []BatchImageError     `json:"errors,omitempty"`
-	Success int                   `json:"success"`
-	Failed  int                   `json:"failed"`
+	Images  []*Image          `json:"images"`
+	Errors  []BatchImageError `json:"errors,omitempty"`
+	Success int               `json:"success"`
+	Failed  int               `json:"failed"`
 }
 
 // BatchImageError represents an error for a specific image in batch creation.

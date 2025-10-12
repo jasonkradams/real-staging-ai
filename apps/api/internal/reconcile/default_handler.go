@@ -40,7 +40,7 @@ func (h *DefaultHandler) ReconcileImages(c echo.Context) error {
 	// For now, we rely on the RECONCILE_ENABLED flag for access control
 
 	var req ReconcileImagesRequest
-	
+
 	// Try binding JSON body first
 	if c.Request().Header.Get(echo.HeaderContentType) == echo.MIMEApplicationJSON {
 		if err := c.Bind(&req); err != nil {
@@ -49,7 +49,7 @@ func (h *DefaultHandler) ReconcileImages(c echo.Context) error {
 			})
 		}
 	}
-	
+
 	// Then bind query parameters (they can override JSON)
 	if err := (&echo.DefaultBinder{}).BindQueryParams(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{

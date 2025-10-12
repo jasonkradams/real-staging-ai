@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -41,10 +42,10 @@ func TestJWTMiddleware(t *testing.T) {
 	}
 
 	type testCase struct {
-		name         string
-		jwk          JWK
-		jwksBody     string
-		setup func(
+		name     string
+		jwk      JWK
+		jwksBody string
+		setup    func(
 			req *http.Request, cfg *Auth0Config,
 			createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
 		)
@@ -288,8 +289,8 @@ func TestJWTMiddleware(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusOK, rec.Code)
 			} else {
-				httpErr, ok := err.(*echo.HTTPError)
-				assert.True(t, ok, "error is not an *echo.HTTPError")
+				var httpErr *echo.HTTPError
+				assert.True(t, errors.As(err, &httpErr), "error is not an *echo.HTTPError")
 				assert.Equal(t, tc.wantCode, httpErr.Code)
 				if tc.errContains != "" {
 					assert.Contains(t, httpErr.Message, tc.errContains)
@@ -403,8 +404,8 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 			err := handler(c)
 			if tc.wantErr {
 				assert.Error(t, err)
-				httpErr, ok := err.(*echo.HTTPError)
-				assert.True(t, ok)
+				var httpErr *echo.HTTPError
+				assert.True(t, errors.As(err, &httpErr))
 				assert.Equal(t, tc.wantCode, httpErr.Code)
 			} else {
 				assert.NoError(t, err)

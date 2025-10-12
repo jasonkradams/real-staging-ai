@@ -2,11 +2,13 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/real-staging-ai/api/internal/storage"
 	"github.com/real-staging-ai/api/internal/storage/queries"
 )
@@ -60,7 +62,7 @@ func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*querie
 
 	user, err := r.queries.GetUserByID(ctx, userUUIDType)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get user by ID: %w", err)
@@ -73,7 +75,7 @@ func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*querie
 func (r *DefaultRepository) GetByAuth0Sub(ctx context.Context, auth0Sub string) (*queries.User, error) {
 	user, err := r.queries.GetUserByAuth0Sub(ctx, auth0Sub)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get user by Auth0 sub: %w", err)
@@ -88,7 +90,7 @@ func (r *DefaultRepository) GetByStripeCustomerID(ctx context.Context, stripeCus
 
 	user, err := r.queries.GetUserByStripeCustomerID(ctx, stripeCustomerIDType)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to get user by Stripe customer ID: %w", err)
@@ -117,7 +119,7 @@ func (r *DefaultRepository) UpdateStripeCustomerID(
 
 	user, err := r.queries.UpdateUserStripeCustomerID(ctx, params)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update user Stripe customer ID: %w", err)
@@ -142,7 +144,7 @@ func (r *DefaultRepository) UpdateRole(ctx context.Context, userID, role string)
 
 	user, err := r.queries.UpdateUserRole(ctx, params)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("unable to update user role: %w", err)

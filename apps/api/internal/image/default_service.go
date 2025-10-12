@@ -108,7 +108,7 @@ func (s *DefaultService) BatchCreateImages(
 	ctx context.Context, reqs []CreateImageRequest,
 ) (*BatchCreateImagesResponse, error) {
 	log := logging.NewDefaultLogger()
-	
+
 	response := &BatchCreateImagesResponse{
 		Images: []*Image{},
 		Errors: []BatchImageError{},

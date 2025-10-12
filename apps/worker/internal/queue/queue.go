@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
+
 	"github.com/real-staging-ai/worker/internal/config"
 	"github.com/real-staging-ai/worker/internal/logging"
 )

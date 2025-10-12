@@ -9,8 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/real-staging-ai/api/internal/storage/queries"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/real-staging-ai/api/internal/storage/queries"
 )
 
 // Use moq-generated QuerierMock from queries package for tests

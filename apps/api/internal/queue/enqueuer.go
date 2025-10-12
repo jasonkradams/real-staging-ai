@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
-	"github.com/real-staging-ai/api/internal/config"
-	"github.com/real-staging-ai/api/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+
+	"github.com/real-staging-ai/api/internal/config"
+	"github.com/real-staging-ai/api/internal/logging"
 )
 
 // TaskTypeStageRun is the queue task type for running the staging pipeline.

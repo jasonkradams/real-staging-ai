@@ -4,11 +4,11 @@ import "time"
 
 // Setting represents a system configuration setting.
 type Setting struct {
-	Key         string     `json:"key"`
-	Value       string     `json:"value"`
-	Description *string    `json:"description,omitempty"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	UpdatedBy   *string    `json:"updated_by,omitempty"`
+	Key         string    `json:"key"`
+	Value       string    `json:"value"`
+	Description *string   `json:"description,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	UpdatedBy   *string   `json:"updated_by,omitempty"`
 }
 
 // ModelInfo represents information about an available AI model.

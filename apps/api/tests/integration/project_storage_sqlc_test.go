@@ -7,10 +7,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/real-staging-ai/api/internal/project"
 	"github.com/real-staging-ai/api/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProjectStorageSQLc_CreateProject(t *testing.T) {

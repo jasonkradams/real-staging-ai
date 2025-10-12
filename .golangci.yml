@@ -1,16 +1,238 @@
 version: "2"
-linters:
-  enable:
-    - unused
-    - dupl
-    - govet
-    - staticcheck
-    - errcheck
-    - gocritic
-    - gosec
-    - lll
+
 run:
   timeout: 5m
-  go: "1.25"
+  go: "1.24"
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+
+output:
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+
+linters:
+  disable-all: true
+  enable:
+    # Core linters (always enabled)
+    - errcheck      # Check for unchecked errors
+    - govet         # Examine Go source code and report suspicious constructs
+    - ineffassign   # Detect ineffectual assignments
+    - unused        # Check for unused constants, variables, functions and types
+    
+    # Additional quality linters
+    - asasalint     # Check for pass []any as any in variadic func(...any)
+    - asciicheck    # Check for non-ASCII identifiers
+    - bidichk       # Check for dangerous unicode character sequences
+    - bodyclose     # Check whether HTTP response body is closed successfully
+    # - copyloopvar   # Detect places where loop variables are copied (Go 1.22+)
+    - dupl          # Tool for code clone detection
+    - durationcheck # Check for two durations multiplied together
+    - errname       # Check that sentinel errors are prefixed with Err
+    - errorlint     # Find code that will cause problems with error wrapping
+    - exhaustive    # Check exhaustiveness of enum switch statements
+    - gocheckcompilerdirectives # Check that go compiler directive comments are valid
+    - gochecknoinits # Check that no init functions are present
+    # - goconst       # Find repeated strings that could be replaced by a constant
+    - gocritic      # Opinionated Go source code checker
+    - gocyclo       # Check cyclomatic complexity
+    # - godot         # Check if comments end in a period
+    - gomodguard    # Allow/block list linter for Go module dependencies
+    - goprintffuncname # Check that printf-like functions are named with f at the end
+    - gosec         # Inspect source code for security problems
+    - lll           # Report long lines
+    - loggercheck   # Check key-value pairs for common logger libraries
+    - makezero      # Find slice declarations with non-zero initial length
+    - mirror        # Detect the use of reverse instead of slices.Reverse
+    - misspell      # Find commonly misspelled English words in comments
+    - nakedret      # Find naked returns in functions greater than a specified length
+    - nilerr        # Find code that returns nil even if it checks err
+    # - nilnil        # Check that there is no simultaneous return of nil error and nil value
+    # - noctx         # Find sending http request without context.Context
+    - nolintlint    # Report ill-formed or insufficient nolint directives
+    - nonamedreturns # Report all named returns
+    # - nosprintfhostport # Check for misuse of Sprintf to construct a host with port
+    # - predeclared   # Find code that shadows one of Go's predeclared identifiers
+    - promlinter    # Check Prometheus metrics naming via promlint
+    - reassign      # Check that package variables are not reassigned
+    # - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - rowserrcheck  # Check whether Err of rows is checked successfully
+    - sloglint      # Ensure consistent code style when using log/slog
+    # - sqlclosecheck # Check that sql.Rows and sql.Stmt are closed
+    - testableexamples # Check if examples are testable
+    # - testifylint   # Check usage of github.com/stretchr/testify
+    # - testpackage   # Check that tests are in a separate _test package
+    - tparallel     # Detect inappropriate usage of t.Parallel()
+    - unconvert     # Remove unnecessary type conversions
+    # - unparam       # Report unused function parameters
+    # - usestdlibvars # Detect possibility to use variables/constants from stdlib
+    - wastedassign  # Find wasted assignment statements
+    # - whitespace    # Check for unnecessary newlines
+    
+linters-settings:
+  dupl:
+    threshold: 60
+  
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - (io.Closer).Close
+      - (*database/sql.Rows).Close
+  
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+  
+  exhaustive:
+    check-generated: false
+    default-signifies-exhaustive: false
+  
+  gocognit:
+    min-complexity: 15
+  
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+      - opinionated
+    disabled-checks:
+      - whyNoLint
+      - unnamedResult
+  
+  gocyclo:
+    min-complexity: 15
+  
+  godot:
+    scope: declarations
+    capital: false
+  
+  gosec:
+    excludes:
+      - G104  # Audit errors not checked (covered by errcheck)
+    confidence: medium
+  
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # Too strict for readability
+      - shadow         # Covered by other linters
+  
+  lll:
+    line-length: 120
+    tab-width: 1
+  
+  misspell:
+    locale: US
+    ignore-words:
+      - cancelled  # Allow both US/UK spelling
+  
+  nakedret:
+    max-func-lines: 30
+  
+  nolintlint:
+    allow-unused: false
+    require-explanation: true
+    require-specific: true
+  
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+  
+  testifylint:
+    enable-all: true
+  
+  unparam:
+    check-exported: false
+  
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: github.com/real-staging-ai
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+  fix: false
+  
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - goconst
+    
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA9003:"  # Empty branches are sometimes intentional
+    
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+    
+    # Ignore complexity in generated code
+    - path: _mock\.go
+      linters:
+        - gocyclo
+        - gocognit
+        - dupl
+        - lll
+    
+    # Ignore complexity in sqlc generated code
+    - path: queries/.*\.go
+      linters:
+        - revive
+        - gocyclo
+        - dupl
+        - lll
+
 severity:
   default: error
+  rules:
+    - linters:
+        - dupl
+        - lll
+      severity: warning

@@ -64,7 +64,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				Concurrency: 5,
 				DryRun:      false,
 			},
-			setupMocks: createBasicHeadFileTestMock("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "", true),
+			setupMocks:  createBasicHeadFileTestMock("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "", true),
 			expectError: false,
 			validate: func(t *testing.T, result *ReconcileResult) {
 				assert.Equal(t, 1, result.Checked)

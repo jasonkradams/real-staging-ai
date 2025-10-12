@@ -2,9 +2,11 @@ package settings
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+
 	"github.com/real-staging-ai/api/internal/storage"
 )
 
@@ -41,7 +43,7 @@ func (r *DefaultRepository) GetByKey(ctx context.Context, key string) (*Setting,
 	)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("setting not found: %s", key)
 		}
 		return nil, fmt.Errorf("failed to get setting: %w", err)
