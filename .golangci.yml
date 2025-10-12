@@ -26,7 +26,7 @@ linters:
     - asciicheck    # Check for non-ASCII identifiers
     - bidichk       # Check for dangerous unicode character sequences
     - bodyclose     # Check whether HTTP response body is closed successfully
-    # - copyloopvar   # Detect places where loop variables are copied (Go 1.22+)
+    - copyloopvar   # Detect places where loop variables are copied (Go 1.22+)
     - dupl          # Tool for code clone detection
     - durationcheck # Check for two durations multiplied together
     - errname       # Check that sentinel errors are prefixed with Err

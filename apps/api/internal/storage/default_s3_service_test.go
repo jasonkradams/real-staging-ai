@@ -193,7 +193,6 @@ func TestDefaultS3Service_GeneratePresignedUploadURL(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			svc, err := NewDefaultS3Service(ctx, &configLib.S3{BucketName: tt.bucket})
@@ -257,7 +256,6 @@ func TestDefaultS3Service_Integration_S3Operations(t *testing.T) {
 	require.NotNil(t, svc)
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			switch tt.operation {
 			case createBucket:
