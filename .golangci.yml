@@ -37,7 +37,6 @@ linters:
     # - goconst       # Find repeated strings that could be replaced by a constant (mostly test strings)
     - gocritic      # Opinionated Go source code checker
     - gocyclo       # Check cyclomatic complexity
-    # - godot         # Check if comments end in a period (too pedantic)
     - gomodguard    # Allow/block list linter for Go module dependencies
     - goprintffuncname # Check that printf-like functions are named with f at the end
     - gosec         # Inspect source code for security problems
@@ -49,7 +48,7 @@ linters:
     - nakedret      # Find naked returns in functions greater than a specified length
     - nilerr        # Find code that returns nil even if it checks err
     # - nilnil        # Check that there is no simultaneous return of nil error and nil value (too strict for mocks/tests)
-    # - noctx         # Find sending http request without context.Context
+    - noctx         # Find sending http request without context.Context
     - nolintlint    # Report ill-formed or insufficient nolint directives
     - nonamedreturns # Report all named returns
     # - nosprintfhostport # Check for misuse of Sprintf to construct a host with port
@@ -110,10 +109,6 @@ linters-settings:
   
   gocyclo:
     min-complexity: 15
-  
-  godot:
-    scope: declarations
-    capital: false
   
   gosec:
     excludes:

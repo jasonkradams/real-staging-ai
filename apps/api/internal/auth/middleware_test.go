@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -20,7 +21,8 @@ import (
 )
 
 func TestNewAuth0Config(t *testing.T) {
-	config := NewAuth0Config("test-domain.auth0.com", "test-audience")
+	ctx := context.Background()
+	config := NewAuth0Config(ctx, "test-domain.auth0.com", "test-audience")
 
 	assert.Equal(t, "test-domain.auth0.com", config.Domain)
 	assert.Equal(t, "test-audience", config.Audience)
@@ -255,6 +257,7 @@ func TestJWTMiddleware(t *testing.T) {
 			}
 
 			config := &Auth0Config{
+				Context:  context.Background(),
 				Domain:   domain,
 				Audience: "test-audience",
 				Issuer:   fmt.Sprintf("https://%s/", domain),
@@ -330,6 +333,7 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 
 	domain := strings.TrimPrefix(server.URL, "https://")
 	config := &Auth0Config{
+		Context:  context.Background(),
 		Domain:   domain,
 		Audience: "test-audience",
 		Issuer:   fmt.Sprintf("https://%s/", domain),

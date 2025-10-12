@@ -2,6 +2,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,6 +24,7 @@ import (
 
 // Server holds the dependencies for the HTTP server.
 type Server struct {
+	ctx       context.Context
 	echo      *echo.Echo
 	db        storage.Database
 	s3Service storage.S3Service
@@ -34,7 +36,12 @@ type Server struct {
 
 // NewServer creates and configures a new Echo server.
 func NewServer(
-	db storage.Database, s3Service storage.S3Service, imageService image.Service, auth0Domain, auth0Audience string,
+	auth0Audience string,
+	auth0Domain string,
+	ctx context.Context,
+	db storage.Database,
+	imageService image.Service,
+	s3Service storage.S3Service,
 ) *Server {
 	e := echo.New()
 
@@ -56,7 +63,7 @@ func NewServer(
 	}))
 
 	// Initialize Auth0 config
-	authConfig := auth.NewAuth0Config(auth0Domain, auth0Audience)
+	authConfig := auth.NewAuth0Config(ctx, auth0Domain, auth0Audience)
 
 	imgHandler := image.NewDefaultHandler(imageService)
 
@@ -66,7 +73,9 @@ func NewServer(
 		ps = p
 	}
 
-	s := &Server{db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, pubsub: ps}
+	s := &Server{
+		ctx: ctx, db: db, s3Service: s3Service, imageService: imageService, echo: e, authConfig: authConfig, pubsub: ps,
+	}
 
 	// Health check route
 	e.GET("/health", s.healthCheck)

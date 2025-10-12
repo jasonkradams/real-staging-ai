@@ -48,7 +48,7 @@ func main() {
 	log.Info(ctx, fmt.Sprintf("Setting up image service (queue: %s)", cfg.Job.QueueName))
 	imageService := image.NewDefaultService(cfg, imageRepo, jobRepo)
 
-	s := http.NewServer(db, s3Service, imageService, cfg.Auth0.Domain, cfg.Auth0.Audience)
+	s := http.NewServer(cfg.Auth0.Audience, cfg.Auth0.Domain, ctx, db, imageService, s3Service)
 	if err := s.Start(":8080"); err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to start server: %v", err))
 	}

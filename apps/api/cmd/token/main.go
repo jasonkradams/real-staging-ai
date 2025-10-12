@@ -60,7 +60,7 @@ func main() {
 		log.Error(ctx, "failed to marshal auth0Config", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
 		log.Error(ctx, "failed to create request", err)
 	}

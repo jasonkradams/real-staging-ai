@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
@@ -28,16 +29,18 @@ type JWK struct {
 	E   string `json:"e"`
 }
 
-// Auth0Config holds Auth0 configuration
+// Auth0Config holds Auth0 configuration.
 type Auth0Config struct {
+	Context  context.Context
 	Domain   string
 	Audience string
 	Issuer   string
 }
 
-// NewAuth0Config creates Auth0 configuration from provided values
-func NewAuth0Config(domain, audience string) *Auth0Config {
+// NewAuth0Config creates Auth0 configuration from provided values.
+func NewAuth0Config(ctx context.Context, domain, audience string) *Auth0Config {
 	return &Auth0Config{
+		Context:  ctx,
 		Domain:   domain,
 		Audience: audience,
 		Issuer:   fmt.Sprintf("https://%s/", domain),
@@ -95,7 +98,7 @@ func JWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 			}
 
 			// Get the public key from Auth0's JWKS endpoint
-			return getPublicKey(config.Domain, kid)
+			return getPublicKey(config.Context, config.Domain, kid)
 		},
 		// Allow tokens via Authorization header or access_token query param (for browser EventSource)
 		TokenLookup: "header:Authorization:Bearer ,query:access_token",
@@ -126,10 +129,14 @@ func OptionalJWTMiddleware(config *Auth0Config) echo.MiddlewareFunc {
 }
 
 // getPublicKey fetches and parses the public key from Auth0's JWKS endpoint
-func getPublicKey(domain, kid string) (*rsa.PublicKey, error) {
+func getPublicKey(ctx context.Context, domain, kid string) (*rsa.PublicKey, error) {
 	jwksURL := fmt.Sprintf("https://%s/.well-known/jwks.json", domain)
 	// #nosec G107 -- URL is constructed from trusted Auth0 domain configuration
-	resp, err := http.Get(jwksURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create JWKS request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
 	}
