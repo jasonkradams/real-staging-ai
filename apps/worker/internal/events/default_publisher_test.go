@@ -21,7 +21,11 @@ func TestDefaultPublisher_Success_NoRetry(t *testing.T) {
 	defer mr.Close()
 
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-	pub := NewDefaultPublisherWithClient(rdb, Options{MaxAttempts: 3, BaseDelay: 5 * time.Millisecond, MaxDelay: 20 * time.Millisecond})
+	pub := NewDefaultPublisherWithClient(rdb, Options{
+		MaxAttempts: 3,
+		BaseDelay:   5 * time.Millisecond,
+		MaxDelay:    20 * time.Millisecond,
+	})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -51,7 +55,11 @@ func TestDefaultPublisher_RetryAndFail_Logs(t *testing.T) {
 	logging.SetDefault(memLogger)
 	t.Cleanup(func() { logging.SetDefault(prev) })
 	rdb := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6390"})
-	pub := NewDefaultPublisherWithClient(rdb, Options{MaxAttempts: 2, BaseDelay: 5 * time.Millisecond, MaxDelay: 10 * time.Millisecond})
+	pub := NewDefaultPublisherWithClient(rdb, Options{
+		MaxAttempts: 2,
+		BaseDelay:   5 * time.Millisecond,
+		MaxDelay:    10 * time.Millisecond,
+	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
@@ -63,7 +71,11 @@ func TestDefaultPublisher_RetryAndFail_Logs(t *testing.T) {
 }
 
 func TestDefaultPublisher_BackoffBounded(t *testing.T) {
-	pub := NewDefaultPublisherWithClient(nil, Options{MaxAttempts: 5, BaseDelay: 10 * time.Millisecond, MaxDelay: 25 * time.Millisecond})
+	pub := NewDefaultPublisherWithClient(nil, Options{
+		MaxAttempts: 5,
+		BaseDelay:   10 * time.Millisecond,
+		MaxDelay:    25 * time.Millisecond,
+	})
 	drp, ok := pub.(*defaultRedisPublisher)
 	require.True(t, ok)
 	// attempt 1 => 10ms, 2 => 20ms, 3 => 25ms (capped), 4 => 25ms

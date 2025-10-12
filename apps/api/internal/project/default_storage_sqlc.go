@@ -200,7 +200,9 @@ func (s *DefaultStorageSQLc) UpdateProject(ctx context.Context, projectID, name 
 }
 
 // UpdateProjectByUserID updates an existing project's name with user ownership verification.
-func (s *DefaultStorageSQLc) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
+func (s *DefaultStorageSQLc) UpdateProjectByUserID(
+	ctx context.Context, projectID, userID, name string,
+) (*Project, error) {
 	projectUUID, err := uuid.Parse(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid project ID format: %w", err)

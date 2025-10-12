@@ -78,7 +78,8 @@ func (s *Server) presignImageDownloadHandler(c echo.Context) error {
 
 	signed, err := s.s3Service.GeneratePresignedGetURL(c.Request().Context(), fileKey, expiresIn, contentDisposition)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "internal_server_error", Message: "failed to presign URL"})
+		return c.JSON(http.StatusInternalServerError,
+			ErrorResponse{Error: "internal_server_error", Message: "failed to presign URL"})
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"url": signed})

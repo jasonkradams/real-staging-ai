@@ -65,11 +65,12 @@ func (s *DefaultService) ListAvailableModels(ctx context.Context) ([]ModelInfo, 
 			IsActive:    activeModelID == "qwen/qwen-image-edit",
 		},
 		{
-			ID:          "black-forest-labs/flux-kontext-max",
-			Name:        "Flux Kontext Max",
-			Description: "High-quality image generation and editing with advanced context understanding. Supports both text-to-image and image-to-image.",
-			Version:     "v1",
-			IsActive:    activeModelID == "black-forest-labs/flux-kontext-max",
+			ID:   "black-forest-labs/flux-kontext-max",
+			Name: "Flux Kontext Max",
+			Description: "High-quality image generation and editing with advanced context understanding. " +
+				"Supports both text-to-image and image-to-image.",
+			Version:  "v1",
+			IsActive: activeModelID == "black-forest-labs/flux-kontext-max",
 		},
 	}
 

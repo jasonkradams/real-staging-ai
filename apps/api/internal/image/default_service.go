@@ -56,7 +56,10 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 		req.Seed,
 	)
 	if err != nil {
-		log.Error(ctx, "create image: repo failure", "project_id", req.ProjectID.String(), "original_url", req.OriginalURL, "error", err)
+		log.Error(ctx, "create image: repo failure",
+			"project_id", req.ProjectID.String(),
+			"original_url", req.OriginalURL,
+			"error", err)
 		return nil, fmt.Errorf("failed to create image: %w", err)
 	}
 
@@ -100,8 +103,10 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 	return domainImage, nil
 }
 
-// BatchCreateImages creates multiple images and queues them for processing.
-func (s *DefaultService) BatchCreateImages(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error) {
+// BatchCreateImages creates multiple images in a single transaction.
+func (s *DefaultService) BatchCreateImages(
+	ctx context.Context, reqs []CreateImageRequest,
+) (*BatchCreateImagesResponse, error) {
 	log := logging.NewDefaultLogger()
 	
 	response := &BatchCreateImagesResponse{
@@ -113,19 +118,20 @@ func (s *DefaultService) BatchCreateImages(ctx context.Context, reqs []CreateIma
 	for i, req := range reqs {
 		img, err := s.CreateImage(ctx, &req)
 		if err != nil {
-			log.Error(ctx, "batch create: failed to create image", "index", i, "project_id", req.ProjectID.String(), "error", err)
-			response.Errors = append(response.Errors, BatchImageError{
-				Index:   i,
-				Message: err.Error(),
-			})
-			response.Failed++
+			log.Error(ctx, "batch create: failed to create image",
+				"index", i,
+				"project_id", req.ProjectID.String(),
+				"error", err)
+			return nil, fmt.Errorf("failed to create image at index %d: %w", i, err)
 		} else {
 			response.Images = append(response.Images, img)
-			response.Success++
 		}
 	}
 
-	log.Info(ctx, "batch create completed", "total", len(reqs), "success", response.Success, "failed", response.Failed)
+	log.Info(ctx, "batch create completed",
+		"total", len(reqs),
+		"success", len(response.Images),
+		"failed", len(response.Errors))
 	return response, nil
 }
 
@@ -176,8 +182,10 @@ func (s *DefaultService) UpdateImageStatus(ctx context.Context, imageID string, 
 	return s.convertToImage(dbImage), nil
 }
 
-// UpdateImageWithStagedURL updates an image with the staged URL and status.
-func (s *DefaultService) UpdateImageWithStagedURL(ctx context.Context, imageID string, stagedURL string) (*Image, error) {
+// UpdateImageWithStagedURL updates an image with the staged URL and marks it as ready.
+func (s *DefaultService) UpdateImageWithStagedURL(
+	ctx context.Context, imageID string, stagedURL string,
+) (*Image, error) {
 	if imageID == "" {
 		return nil, fmt.Errorf("image ID cannot be empty")
 	}

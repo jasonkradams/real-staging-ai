@@ -24,7 +24,9 @@ func NewDefaultRepository(db storage.Database) *DefaultRepository {
 }
 
 // CreateImage creates a new image in the database.
-func (r *DefaultRepository) CreateImage(ctx context.Context, projectID string, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+func (r *DefaultRepository) CreateImage(
+	ctx context.Context, projectID string, originalURL string, roomType, style *string, seed *int64,
+) (*queries.Image, error) {
 	q := queries.New(r.db)
 
 	projectUUID, err := uuid.Parse(projectID)
@@ -144,7 +146,9 @@ func (r *DefaultRepository) GetImagesByProjectID(ctx context.Context, projectID 
 }
 
 // UpdateImageStatus updates an image's processing status.
-func (r *DefaultRepository) UpdateImageStatus(ctx context.Context, imageID string, status string) (*queries.Image, error) {
+func (r *DefaultRepository) UpdateImageStatus(
+	ctx context.Context, imageID string, status string,
+) (*queries.Image, error) {
 	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
@@ -179,7 +183,9 @@ func (r *DefaultRepository) UpdateImageStatus(ctx context.Context, imageID strin
 }
 
 // UpdateImageWithStagedURL updates an image with the staged URL and status.
-func (r *DefaultRepository) UpdateImageWithStagedURL(ctx context.Context, imageID string, stagedURL string, status string) (*queries.Image, error) {
+func (r *DefaultRepository) UpdateImageWithStagedURL(
+	ctx context.Context, imageID string, stagedURL string, status string,
+) (*queries.Image, error) {
 	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
@@ -215,7 +221,9 @@ func (r *DefaultRepository) UpdateImageWithStagedURL(ctx context.Context, imageI
 }
 
 // UpdateImageWithError updates an image with an error status and message.
-func (r *DefaultRepository) UpdateImageWithError(ctx context.Context, imageID string, errorMsg string) (*queries.Image, error) {
+func (r *DefaultRepository) UpdateImageWithError(
+	ctx context.Context, imageID string, errorMsg string,
+) (*queries.Image, error) {
 	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)
@@ -284,7 +292,9 @@ func (r *DefaultRepository) DeleteImagesByProjectID(ctx context.Context, project
 }
 
 // UpdateImageCost updates cost tracking information for an image.
-func (r *DefaultRepository) UpdateImageCost(ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string) error {
+func (r *DefaultRepository) UpdateImageCost(
+	ctx context.Context, imageID string, costUSD float64, modelUsed string, processingTimeMs int, predictionID string,
+) error {
 	imageUUID, err := uuid.Parse(imageID)
 	if err != nil {
 		return fmt.Errorf("invalid image ID: %w", err)

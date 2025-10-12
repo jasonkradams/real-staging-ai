@@ -19,7 +19,9 @@ func NewFluxKontextInputBuilder() *FluxKontextInputBuilder {
 }
 
 // BuildInput creates the input parameters for the Flux Kontext Max model.
-func (b *FluxKontextInputBuilder) BuildInput(ctx context.Context, req *ModelInputRequest) (replicate.PredictionInput, error) {
+func (b *FluxKontextInputBuilder) BuildInput(
+	ctx context.Context, req *ModelInputRequest,
+) (replicate.PredictionInput, error) {
 	if err := b.Validate(req); err != nil {
 		return nil, err
 	}

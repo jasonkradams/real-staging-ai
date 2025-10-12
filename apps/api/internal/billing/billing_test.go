@@ -22,7 +22,8 @@ func TestNormalizeLimitOffset(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotL, gotO := NormalizeLimitOffset(tc.limit, tc.offset)
 			if gotL != tc.wantLimit || gotO != tc.wantOffset {
-				t.Fatalf("NormalizeLimitOffset(%d,%d) = (%d,%d); want (%d,%d)", tc.limit, tc.offset, gotL, gotO, tc.wantLimit, tc.wantOffset)
+				t.Fatalf("NormalizeLimitOffset(%d,%d) = (%d,%d); want (%d,%d)",
+					tc.limit, tc.offset, gotL, gotO, tc.wantLimit, tc.wantOffset)
 			}
 		})
 	}

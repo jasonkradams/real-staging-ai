@@ -456,10 +456,14 @@ func (f *fakeDBIdemFirstMissingThenUpsertOK) QueryRow(ctx context.Context, sql s
 	// Second call for UpsertProcessedEventByStripeID -> ok
 	return okRow{}
 }
-func (f *fakeDBIdemFirstMissingThenUpsertOK) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+func (f *fakeDBIdemFirstMissingThenUpsertOK) Query(
+	ctx context.Context, sql string, args ...interface{},
+) (pgx.Rows, error) {
 	return nil, nil
 }
-func (f *fakeDBIdemFirstMissingThenUpsertOK) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+func (f *fakeDBIdemFirstMissingThenUpsertOK) Exec(
+	ctx context.Context, sql string, args ...interface{},
+) (pgconn.CommandTag, error) {
 	return pgconn.CommandTag{}, nil
 }
 
@@ -805,7 +809,10 @@ func TestWebhook_InvoicePaymentSucceeded_OK(t *testing.T) {
 	t.Setenv("STRIPE_WEBHOOK_SECRET", "")
 	h := NewDefaultHandler(nil)
 
-	obj := map[string]any{"id": "in_1", "customer": "cus_1", "subscription": "sub_1", "status": "paid", "amount_due": float64(1000), "amount_paid": float64(1000), "currency": "usd", "number": "F-1001"}
+	obj := map[string]any{
+		"id": "in_1", "customer": "cus_1", "subscription": "sub_1", "status": "paid",
+		"amount_due": float64(1000), "amount_paid": float64(1000), "currency": "usd", "number": "F-1001",
+	}
 	body := makeEvent("invoice.payment_succeeded", obj)
 	c, rec := newEchoCtx(http.MethodPost, body, nil)
 
@@ -821,7 +828,10 @@ func TestWebhook_InvoicePaymentFailed_OK(t *testing.T) {
 	t.Setenv("STRIPE_WEBHOOK_SECRET", "")
 	h := NewDefaultHandler(nil)
 
-	obj := map[string]any{"id": "in_2", "customer": "cus_2", "subscription": "sub_2", "status": "failed", "amount_due": float64(2000), "amount_paid": float64(0), "currency": "usd", "number": "F-1002"}
+	obj := map[string]any{
+		"id": "in_2", "customer": "cus_2", "subscription": "sub_2", "status": "failed",
+		"amount_due": float64(2000), "amount_paid": float64(0), "currency": "usd", "number": "F-1002",
+	}
 	body := makeEvent("invoice.payment_failed", obj)
 	c, rec := newEchoCtx(http.MethodPost, body, nil)
 

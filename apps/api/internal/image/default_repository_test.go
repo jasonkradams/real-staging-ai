@@ -54,9 +54,26 @@ func TestDefaultRepository_CreateImage(t *testing.T) {
 			seed:        &seed,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("INSERT INTO images").
-					WithArgs(pgtype.UUID{Bytes: projectID, Valid: true}, "http://example.com/image.jpg", pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "project_id", "original_url", "staged_url", "room_type", "style", "seed", "status", "error", "created_at", "updated_at"}).
-						AddRow(pgtype.UUID{Bytes: uuid.New(), Valid: true}, pgtype.UUID{Bytes: projectID, Valid: true}, "http://example.com/image.jpg", pgtype.Text{}, pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}, "queued", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+					WithArgs(
+						pgtype.UUID{Bytes: projectID, Valid: true}, "http://example.com/image.jpg",
+						pgtype.Text{String: "living_room", Valid: true},
+						pgtype.Text{String: "modern", Valid: true},
+						pgtype.Int8{Int64: 123, Valid: true},
+					).
+					WillReturnRows(
+						pgxmock.NewRows([]string{
+							"id", "project_id", "original_url", "staged_url",
+							"room_type", "style", "seed", "status", "error", "created_at", "updated_at",
+						}).
+							AddRow(
+								pgtype.UUID{Bytes: uuid.New(), Valid: true},
+								pgtype.UUID{Bytes: projectID, Valid: true},
+								"http://example.com/image.jpg", pgtype.Text{},
+								pgtype.Text{String: "living_room", Valid: true},
+								pgtype.Text{String: "modern", Valid: true},
+								pgtype.Int8{Int64: 123, Valid: true},
+								"queued", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{},
+							))
 			},
 			expectError: false,
 		},
@@ -75,7 +92,14 @@ func TestDefaultRepository_CreateImage(t *testing.T) {
 			style:       &style,
 			seed:        &seed,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("INSERT INTO images").WithArgs(pgtype.UUID{Bytes: projectID, Valid: true}, "http://example.com/image.jpg", pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}).WillReturnError(errors.New("db error"))
+				mock.ExpectQuery("INSERT INTO images").
+					WithArgs(
+						pgtype.UUID{Bytes: projectID, Valid: true}, "http://example.com/image.jpg",
+						pgtype.Text{String: "living_room", Valid: true},
+						pgtype.Text{String: "modern", Valid: true},
+						pgtype.Int8{Int64: 123, Valid: true},
+					).
+					WillReturnError(errors.New("db error"))
 			},
 			expectError: true,
 		},
@@ -122,10 +146,24 @@ func TestDefaultRepository_GetImageByID(t *testing.T) {
 			name:    "success: get image by id",
 			imageID: imageID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImageByID :one\s+SELECT .+ FROM images\s+WHERE id = \$1`,
+				).
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "project_id", "original_url", "staged_url", "room_type", "style", "seed", "status", "error", "created_at", "updated_at"}).
-						AddRow(pgtype.UUID{Bytes: uuid.New(), Valid: true}, pgtype.UUID{Bytes: uuid.New(), Valid: true}, "http://example.com/image.jpg", pgtype.Text{}, pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}, "queued", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+					WillReturnRows(
+						pgxmock.NewRows([]string{
+							"id", "project_id", "original_url", "staged_url",
+							"room_type", "style", "seed", "status", "error", "created_at", "updated_at",
+						}).
+							AddRow(
+								pgtype.UUID{Bytes: uuid.New(), Valid: true},
+								pgtype.UUID{Bytes: uuid.New(), Valid: true},
+								"http://example.com/image.jpg", pgtype.Text{},
+								pgtype.Text{String: "living_room", Valid: true},
+								pgtype.Text{String: "modern", Valid: true},
+								pgtype.Int8{Int64: 123, Valid: true},
+								"queued", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{},
+							))
 			},
 			expectError: false,
 		},
@@ -139,7 +177,9 @@ func TestDefaultRepository_GetImageByID(t *testing.T) {
 			name:    "fail: query error",
 			imageID: imageID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImageByID :one\s+SELECT .+ FROM images\s+WHERE id = \$1`,
+				).
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
 					WillReturnError(errors.New("db error"))
 			},
@@ -149,7 +189,9 @@ func TestDefaultRepository_GetImageByID(t *testing.T) {
 			name:    "fail: not found",
 			imageID: imageID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImageByID :one\s+SELECT .+ FROM images\s+WHERE id = \$1`,
+				).
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
 					WillReturnError(pgx.ErrNoRows)
 			},
@@ -159,7 +201,9 @@ func TestDefaultRepository_GetImageByID(t *testing.T) {
 			name:    "fail: scan error",
 			imageID: imageID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImageByID :one\s+SELECT .+ FROM images\s+WHERE id = \$1`,
+				).
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
 					WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow("not a uuid"))
 			},
@@ -208,7 +252,9 @@ func TestDefaultRepository_GetImagesByProjectID(t *testing.T) {
 			name:      "success: get images by project id",
 			projectID: projectID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE project_id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImagesByProjectID :many\s+SELECT .+ FROM images\s+WHERE project_id = \$1\s+ORDER BY`,
+				).
 					WithArgs(pgtype.UUID{Bytes: projectID, Valid: true}).
 					WillReturnRows(pgxmock.NewRows([]string{"id"}))
 			},
@@ -224,7 +270,9 @@ func TestDefaultRepository_GetImagesByProjectID(t *testing.T) {
 			name:      "fail: query error",
 			projectID: projectID.String(),
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("SELECT id, project_id, original_url, staged_url, room_type, style, seed, status, error, created_at, updated_at FROM images WHERE project_id = \\$1").
+				mock.ExpectQuery(
+					`-- name: GetImagesByProjectID :many\s+SELECT .+ FROM images\s+WHERE project_id = \$1\s+ORDER BY`,
+				).
 					WithArgs(pgtype.UUID{Bytes: projectID, Valid: true}).
 					WillReturnError(errors.New("db error"))
 			},
@@ -277,8 +325,21 @@ func TestDefaultRepository_UpdateImageStatus(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("UPDATE images").
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, queries.ImageStatusProcessing).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "project_id", "original_url", "staged_url", "room_type", "style", "seed", "status", "error", "created_at", "updated_at"}).
-						AddRow(pgtype.UUID{Bytes: imageID, Valid: true}, pgtype.UUID{Bytes: uuid.New(), Valid: true}, "http://example.com/image.jpg", pgtype.Text{}, pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}, "processing", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "project_id", "original_url", "staged_url", "room_type", "style",
+							"seed", "status", "error", "created_at", "updated_at"}).
+						AddRow(
+							pgtype.UUID{Bytes: imageID, Valid: true},
+							pgtype.UUID{Bytes: uuid.New(), Valid: true},
+							"http://example.com/image.jpg",
+							pgtype.Text{},
+							pgtype.Text{String: "living_room", Valid: true},
+							pgtype.Text{String: "modern", Valid: true},
+							pgtype.Int8{Int64: 123, Valid: true},
+							"processing",
+							pgtype.Text{},
+							pgtype.Timestamptz{},
+							pgtype.Timestamptz{}))
 
 			},
 			expectError: false,
@@ -351,9 +412,25 @@ func TestDefaultRepository_UpdateImageWithStagedURL(t *testing.T) {
 			status:    status,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("UPDATE images").
-					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, pgtype.Text{String: stagedURL, Valid: true}, queries.ImageStatusReady).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "project_id", "original_url", "staged_url", "room_type", "style", "seed", "status", "error", "created_at", "updated_at"}).
-						AddRow(pgtype.UUID{Bytes: imageID, Valid: true}, pgtype.UUID{Bytes: uuid.New(), Valid: true}, "http://example.com/image.jpg", pgtype.Text{String: stagedURL, Valid: true}, pgtype.Text{String: "living_room", Valid: true}, pgtype.Text{String: "modern", Valid: true}, pgtype.Int8{Int64: 123, Valid: true}, "ready", pgtype.Text{}, pgtype.Timestamptz{}, pgtype.Timestamptz{}))
+					WithArgs(
+						pgtype.UUID{Bytes: imageID, Valid: true},
+						pgtype.Text{String: stagedURL, Valid: true},
+						queries.ImageStatusReady).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "project_id", "original_url", "staged_url", "room_type", "style",
+							"seed", "status", "error", "created_at", "updated_at"}).
+						AddRow(
+							pgtype.UUID{Bytes: imageID, Valid: true},
+							pgtype.UUID{Bytes: uuid.New(), Valid: true},
+							"http://example.com/image.jpg",
+							pgtype.Text{String: stagedURL, Valid: true},
+							pgtype.Text{String: "living_room", Valid: true},
+							pgtype.Text{String: "modern", Valid: true},
+							pgtype.Int8{Int64: 123, Valid: true},
+							"ready",
+							pgtype.Text{},
+							pgtype.Timestamptz{},
+							pgtype.Timestamptz{}))
 
 			},
 			expectError: false,
@@ -373,7 +450,10 @@ func TestDefaultRepository_UpdateImageWithStagedURL(t *testing.T) {
 			status:    status,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("UPDATE images").
-					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, pgtype.Text{String: stagedURL, Valid: true}, queries.ImageStatusReady).
+					WithArgs(
+						pgtype.UUID{Bytes: imageID, Valid: true},
+						pgtype.Text{String: stagedURL, Valid: true},
+						queries.ImageStatusReady).
 					WillReturnError(errors.New("db error"))
 			},
 			expectError: true,

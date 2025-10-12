@@ -24,7 +24,11 @@ type ImageProcessor struct {
 }
 
 // NewImageProcessor creates a new image processor.
-func NewImageProcessor(imageRepo repository.ImageRepository, stagingService staging.Service, publisher events.Publisher) *ImageProcessor {
+func NewImageProcessor(
+	imageRepo repository.ImageRepository,
+	stagingService staging.Service,
+	publisher events.Publisher,
+) *ImageProcessor {
 	return &ImageProcessor{
 		imageRepo:      imageRepo,
 		stagingService: stagingService,

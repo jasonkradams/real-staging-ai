@@ -28,7 +28,9 @@ type PresignedUploadResult struct {
 }
 
 // GeneratePresignedGetURL generates a browser-accessible presigned GET URL for a specific file key.
-func (s *DefaultS3Service) GeneratePresignedGetURL(ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string) (string, error) {
+func (s *DefaultS3Service) GeneratePresignedGetURL(
+	ctx context.Context, fileKey string, expiresInSeconds int64, contentDisposition string,
+) (string, error) {
 	// Choose a client for presigning that uses the public endpoint if set.
 	presignBase := s.client
 
@@ -163,7 +165,9 @@ func NewDefaultS3Service(ctx context.Context, s3Cfg *configLib.S3) (*DefaultS3Se
 }
 
 // GeneratePresignedUploadURL generates a presigned URL for uploading a file to S3.
-func (s *DefaultS3Service) GeneratePresignedUploadURL(ctx context.Context, userID, filename, contentType string, fileSize int64) (*PresignedUploadResult, error) {
+func (s *DefaultS3Service) GeneratePresignedUploadURL(
+	ctx context.Context, userID, filename, contentType string, fileSize int64,
+) (*PresignedUploadResult, error) {
 	// Generate a unique file key
 	fileExt := filepath.Ext(filename)
 	baseName := strings.TrimSuffix(filename, fileExt)

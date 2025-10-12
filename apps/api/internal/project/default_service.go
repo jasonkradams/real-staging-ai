@@ -53,7 +53,9 @@ func (s *DefaultService) CreateProject(ctx context.Context, req *CreateRequest) 
 }
 
 // CreateProjectWithUpload creates a project and generates a presigned upload URL.
-func (s *DefaultService) CreateProjectWithUpload(ctx context.Context, req *CreateRequest, filename, contentType string, fileSize int64) (*WithUploadURL, error) {
+func (s *DefaultService) CreateProjectWithUpload(
+	ctx context.Context, req *CreateRequest, filename, contentType string, fileSize int64,
+) (*WithUploadURL, error) {
 	// Create the project first
 	createdProject, err := s.CreateProject(ctx, req)
 	if err != nil {
@@ -61,9 +63,11 @@ func (s *DefaultService) CreateProjectWithUpload(ctx context.Context, req *Creat
 	}
 
 	// Generate upload URL
-	uploadResult, err := s.s3Service.GeneratePresignedUploadURL(ctx, req.UserID, filename, contentType, fileSize)
+	uploadResult, err := s.s3Service.GeneratePresignedUploadURL(
+		ctx, req.UserID, filename, contentType, fileSize)
 	if err != nil {
-		// Project was created but upload URL failed - in a real system you might want to handle this differently
+		// Project was created but upload URL failed - in a real system you might
+		// want to handle this differently
 		return &WithUploadURL{
 			Project: createdProject,
 		}, fmt.Errorf("project created but failed to generate upload URL: %w", err)

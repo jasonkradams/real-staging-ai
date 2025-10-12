@@ -52,7 +52,9 @@ func TestDefaultRepository_CreateJob(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("INSERT INTO jobs").
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, jobType, payloadJSON).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: uuid.New(), Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -81,7 +83,9 @@ func TestDefaultRepository_CreateJob(t *testing.T) {
 			jobType:     jobType,
 			payloadJSON: payloadJSON,
 			setupMock: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectQuery("INSERT INTO jobs").WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, jobType, payloadJSON).WillReturnError(errors.New("db error"))
+				mock.ExpectQuery("INSERT INTO jobs").
+					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}, jobType, payloadJSON).
+					WillReturnError(errors.New("db error"))
 			},
 			expectError: true,
 		},
@@ -135,7 +139,9 @@ func TestDefaultRepository_GetJobByID(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("GetJobByID").
 					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -217,7 +223,9 @@ func TestDefaultRepository_GetJobsByImageID(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("GetJobsByImageID").
 					WithArgs(pgtype.UUID{Bytes: imageID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID1, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -312,7 +320,9 @@ func TestDefaultRepository_UpdateJobStatus(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("UpdateJobStatus").
 					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}, status).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -395,7 +405,9 @@ func TestDefaultRepository_StartJob(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("StartJob").
 					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -476,7 +488,9 @@ func TestDefaultRepository_CompleteJob(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("CompleteJob").
 					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -560,7 +574,9 @@ func TestDefaultRepository_FailJob(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("FailJob").
 					WithArgs(pgtype.UUID{Bytes: jobID, Valid: true}, pgtype.Text{String: errorMsg, Valid: true}).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},
@@ -645,7 +661,9 @@ func TestDefaultRepository_GetPendingJobs(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectQuery("GetPendingJobs").
 					WithArgs(int32(limit)).
-					WillReturnRows(pgxmock.NewRows([]string{"id", "image_id", "type", "payload_json", "status", "error", "created_at", "started_at", "finished_at"}).
+					WillReturnRows(pgxmock.NewRows(
+						[]string{"id", "image_id", "type", "payload_json", "status",
+							"error", "created_at", "started_at", "finished_at"}).
 						AddRow(
 							pgtype.UUID{Bytes: jobID1, Valid: true},
 							pgtype.UUID{Bytes: imageID, Valid: true},

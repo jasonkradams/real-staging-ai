@@ -185,8 +185,10 @@ func TestDefaultS3Service_GeneratePresignedUploadURL(t *testing.T) {
 		assert.True(t, uuidPattern.MatchString(res.FileKey), "file key should end with uuid+ext: %s", res.FileKey)
 
 		// URL expectations for test env localstack using path-style addressing
-		assert.Contains(t, res.UploadURL, "http://localhost:4566", "presigned URL should target localstack: %s", res.UploadURL)
-		assert.Contains(t, res.UploadURL, "/"+bucket+"/", "presigned URL should include bucket path segment: %s", res.UploadURL)
+		assert.Contains(t, res.UploadURL, "http://localhost:4566",
+			"presigned URL should target localstack: %s", res.UploadURL)
+		assert.Contains(t, res.UploadURL, "/"+bucket+"/",
+			"presigned URL should include bucket path segment: %s", res.UploadURL)
 		assert.Contains(t, res.UploadURL, res.FileKey, "presigned URL should include file key path: %s", res.UploadURL)
 	}
 
@@ -237,8 +239,14 @@ func TestDefaultS3Service_Integration_S3Operations(t *testing.T) {
 		wantErr   bool
 	}{
 		{name: "create bucket", bucket: "it-bucket", operation: createBucket, wantErr: false},
-		{name: "head non-existent file returns error", bucket: "it-bucket", operation: headFile, fileKey: "uploads/user-x/missing.jpg", wantErr: true},
-		{name: "delete non-existent file succeeds", bucket: "it-bucket", operation: deleteFile, fileKey: "uploads/user-x/missing.jpg", wantErr: false},
+		{
+			name: "head non-existent file returns error", bucket: "it-bucket",
+			operation: headFile, fileKey: "uploads/user-x/missing.jpg", wantErr: true,
+		},
+		{
+			name: "delete non-existent file succeeds", bucket: "it-bucket",
+			operation: deleteFile, fileKey: "uploads/user-x/missing.jpg", wantErr: false,
+		},
 	}
 
 	ctx := context.Background()

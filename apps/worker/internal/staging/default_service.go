@@ -37,9 +37,7 @@ type DefaultService struct {
 var _ Service = (*DefaultService)(nil)
 
 // awsConfigLoader allows overriding AWS config loading in tests.
-var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptions) error) (aws.Config, error) {
-	return config.LoadDefaultConfig(ctx, optFns...)
-}
+var awsConfigLoader = config.LoadDefaultConfig
 
 // ServiceConfig holds configuration for the staging service.
 type ServiceConfig struct {
@@ -258,7 +256,9 @@ func (s *DefaultService) DownloadFromS3(ctx context.Context, fileKey string) (io
 }
 
 // UploadToS3 uploads a file to S3 and returns the public URL.
-func (s *DefaultService) UploadToS3(ctx context.Context, imageID string, content io.Reader, contentType string) (string, error) {
+func (s *DefaultService) UploadToS3(
+	ctx context.Context, imageID string, content io.Reader, contentType string,
+) (string, error) {
 	tracer := otel.Tracer("real-staging-worker/staging")
 	_, span := tracer.Start(ctx, "staging.UploadToS3")
 	span.SetAttributes(attribute.String("image.id", imageID))
@@ -290,7 +290,9 @@ func (s *DefaultService) UploadToS3(ctx context.Context, imageID string, content
 }
 
 // callReplicateAPI calls the Replicate API to stage an image.
-func (s *DefaultService) callReplicateAPI(ctx context.Context, imageDataURL, prompt string, seed *int64) (string, error) {
+func (s *DefaultService) callReplicateAPI(
+	ctx context.Context, imageDataURL, prompt string, seed *int64,
+) (string, error) {
 	tracer := otel.Tracer("real-staging-worker/staging")
 	ctx, span := tracer.Start(ctx, "staging.callReplicateAPI")
 	span.SetAttributes(
@@ -426,7 +428,8 @@ func (s *DefaultService) buildPrompt(roomType, style *string) string {
 	// Build the structured prompt
 	var prompt strings.Builder
 	prompt.WriteString("You are a professional real estate staging photographer. ")
-	prompt.WriteString("You have taken photos of this empty room and have been tasked with adding furniture to the space.\n")
+	prompt.WriteString("You have taken photos of this empty room and have been " +
+		"tasked with adding furniture to the space.\n")
 	prompt.WriteString("- Add in furniture to make the space more appealing to a buyer who loves ")
 	prompt.WriteString(styleTheme)
 	prompt.WriteString("\n")

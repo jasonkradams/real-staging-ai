@@ -44,7 +44,10 @@ func TestJWTMiddleware(t *testing.T) {
 		name         string
 		jwk          JWK
 		jwksBody     string
-		setup        func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string)
+		setup func(
+			req *http.Request, cfg *Auth0Config,
+			createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+		)
 		wantCode     int
 		customDomain string
 		errContains  string
@@ -54,7 +57,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: no kid in header",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -64,7 +70,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name:     "fail: empty jwks",
 			jwksBody: `{"keys":[]}`,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -74,7 +83,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "success: valid token",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -83,7 +95,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: no authorization header",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "Invalid or missing JWT token",
@@ -91,7 +106,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: unexpected signing method",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				claims := jwt.MapClaims{"exp": time.Now().Add(time.Hour).Unix()}
 				token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 				signedToken, _ := token.SignedString([]byte("secret"))
@@ -104,7 +122,10 @@ func TestJWTMiddleware(t *testing.T) {
 			name:         "fail: jwks fetch error",
 			jwk:          goodJWK,
 			customDomain: "invalid-domain",
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -114,7 +135,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name:     "fail: jwks decode error",
 			jwksBody: "{",
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -123,8 +147,14 @@ func TestJWTMiddleware(t *testing.T) {
 		},
 		{
 			name: "fail: malformed modulus in jwk",
-			jwk:  JWK{Kty: "RSA", Kid: "test-kid", N: "-!-", E: base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.PublicKey.E)).Bytes())},
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			jwk: JWK{
+				Kty: "RSA", Kid: "test-kid", N: "-!-",
+				E: base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.PublicKey.E)).Bytes()),
+			},
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -134,7 +164,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: malformed exponent in jwk",
 			jwk:  JWK{Kty: "RSA", Kid: "test-kid", N: base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()), E: "-!-"},
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -144,7 +177,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: expired token",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(-time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -154,7 +190,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: wrong audience",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), "wrong-audience")
 				req.Header.Set("Authorization", "Bearer "+token)
 			},
@@ -164,7 +203,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "success: token in query parameter",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.URL.RawQuery = "access_token=" + token
 			},
@@ -173,7 +215,10 @@ func TestJWTMiddleware(t *testing.T) {
 		{
 			name: "fail: malformed bearer prefix",
 			jwk:  goodJWK,
-			setup: func(req *http.Request, cfg *Auth0Config, createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string) {
+			setup: func(
+				req *http.Request, cfg *Auth0Config,
+				createToken func(key *rsa.PrivateKey, kid string, expiresAt time.Time, aud string) string,
+			) {
 				token := createToken(privateKey, "test-kid", time.Now().Add(time.Hour), cfg.Audience)
 				req.Header.Set("Authorization", "Basic "+token)
 			},

@@ -1,4 +1,14 @@
 version: "2"
+linters:
+  enable:
+    - unused
+    # - dupl
+    - govet
+    - staticcheck
+    - errcheck
+    # - gocritic
+    # - gosec
+    - lll
 run:
   timeout: 5m
   go: "1.24"

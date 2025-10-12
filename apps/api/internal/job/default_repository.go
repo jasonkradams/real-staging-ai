@@ -24,7 +24,9 @@ func NewDefaultRepository(db storage.Database) *DefaultRepository {
 }
 
 // CreateJob creates a new job in the database.
-func (r *DefaultRepository) CreateJob(ctx context.Context, imageID string, jobType string, payloadJSON []byte) (*queries.Job, error) {
+func (r *DefaultRepository) CreateJob(
+	ctx context.Context, imageID string, jobType string, payloadJSON []byte,
+) (*queries.Job, error) {
 	q := queries.New(r.db)
 
 	imageUUID, err := uuid.Parse(imageID)

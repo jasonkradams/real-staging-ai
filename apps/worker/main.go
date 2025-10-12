@@ -49,18 +49,17 @@ func main() {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to open database: %v", err))
-		os.Exit(1)
+		return
 	}
-	if err := db.PingContext(ctx); err != nil {
-		log.Error(ctx, fmt.Sprintf("Failed to connect to database: %v", err))
-		os.Exit(1)
-	}
-
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Error(ctx, fmt.Sprintf("Failed to close database: %v", err))
 		}
 	}()
+	if err := db.PingContext(ctx); err != nil {
+		log.Error(ctx, fmt.Sprintf("Failed to connect to database: %v", err))
+		return
+	}
 
 	imgRepo := repository.NewImageRepository(db)
 

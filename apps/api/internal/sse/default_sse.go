@@ -132,7 +132,8 @@ func (d *DefaultSSE) StreamImage(ctx context.Context, w io.Writer, imageID strin
 			}
 			if err := writeSSE(w, EventJobUpdate, map[string]string{"status": payload.Status}); err != nil {
 				span.SetStatus(codes.Error, "write job_update failed")
-				log.Error(ctx, "sse write job_update failed", "sse.channel", channel, "image_id", imageID, "status", payload.Status, "error", err)
+				log.Error(ctx, "sse write job_update failed",
+					"sse.channel", channel, "image_id", imageID, "status", payload.Status, "error", err)
 				return err
 			}
 			flush(w)

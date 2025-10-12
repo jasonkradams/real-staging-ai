@@ -118,7 +118,9 @@ func (r *processedEventsRepo) IsProcessed(ctx context.Context, stripeEventID str
 	return true, nil
 }
 
-func (r *processedEventsRepo) Upsert(ctx context.Context, stripeEventID string, eventType *string, payload []byte) (*queries.ProcessedEvent, error) {
+func (r *processedEventsRepo) Upsert(
+	ctx context.Context, stripeEventID string, eventType *string, payload []byte,
+) (*queries.ProcessedEvent, error) {
 	// sqlc model: UpsertProcessedEventByStripeID(ctx, $1, $2, $3) :one
 	// eventType stored as TEXT (nullable), payload stored as JSONB (nullable).
 	var et pgtype.Text
@@ -223,7 +225,9 @@ func (r *subscriptionsRepo) UpsertByStripeID(
 	return sub, nil
 }
 
-func (r *subscriptionsRepo) GetByStripeID(ctx context.Context, stripeSubscriptionID string) (*queries.Subscription, error) {
+func (r *subscriptionsRepo) GetByStripeID(
+	ctx context.Context, stripeSubscriptionID string,
+) (*queries.Subscription, error) {
 	sub, err := r.q.GetSubscriptionByStripeID(ctx, stripeSubscriptionID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -234,7 +238,9 @@ func (r *subscriptionsRepo) GetByStripeID(ctx context.Context, stripeSubscriptio
 	return sub, nil
 }
 
-func (r *subscriptionsRepo) ListByUserID(ctx context.Context, userID string, limit, offset int32) ([]*queries.Subscription, error) {
+func (r *subscriptionsRepo) ListByUserID(
+	ctx context.Context, userID string, limit, offset int32,
+) ([]*queries.Subscription, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -316,7 +322,9 @@ func (r *invoicesRepo) GetByStripeID(ctx context.Context, stripeInvoiceID string
 	return inv, nil
 }
 
-func (r *invoicesRepo) ListByUserID(ctx context.Context, userID string, limit, offset int32) ([]*queries.Invoice, error) {
+func (r *invoicesRepo) ListByUserID(
+	ctx context.Context, userID string, limit, offset int32,
+) ([]*queries.Invoice, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)

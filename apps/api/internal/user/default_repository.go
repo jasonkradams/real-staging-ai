@@ -27,7 +27,9 @@ func NewDefaultRepository(db storage.Database) *DefaultRepository {
 }
 
 // Create creates a new user in the database.
-func (r *DefaultRepository) Create(ctx context.Context, auth0Sub, stripeCustomerID, role string) (*queries.User, error) {
+func (r *DefaultRepository) Create(
+	ctx context.Context, auth0Sub, stripeCustomerID, role string,
+) (*queries.User, error) {
 	var stripeCustomerIDType pgtype.Text
 	if stripeCustomerID != "" {
 		stripeCustomerIDType = pgtype.Text{String: stripeCustomerID, Valid: true}
@@ -96,7 +98,9 @@ func (r *DefaultRepository) GetByStripeCustomerID(ctx context.Context, stripeCus
 }
 
 // UpdateStripeCustomerID updates a user's Stripe customer ID.
-func (r *DefaultRepository) UpdateStripeCustomerID(ctx context.Context, userID, stripeCustomerID string) (*queries.User, error) {
+func (r *DefaultRepository) UpdateStripeCustomerID(
+	ctx context.Context, userID, stripeCustomerID string,
+) (*queries.User, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)

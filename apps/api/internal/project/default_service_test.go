@@ -133,14 +133,18 @@ func TestProjectService_CreateProjectWithUpload(t *testing.T) {
 			contentType: "image/jpeg",
 			fileSize:    1024000,
 			setupMock: func(projectMock *project.RepositoryMock, s3Mock *storage.S3ServiceMock) {
-				projectMock.CreateProjectFunc = func(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+				projectMock.CreateProjectFunc = func(
+					ctx context.Context, p *project.Project, userID string,
+				) (*project.Project, error) {
 					return &project.Project{
 						ID:     "project-456",
 						Name:   p.Name,
 						UserID: userID,
 					}, nil
 				}
-				s3Mock.GeneratePresignedUploadURLFunc = func(ctx context.Context, userID string, filename string, contentType string, fileSize int64) (*storage.PresignedUploadResult, error) {
+				s3Mock.GeneratePresignedUploadURLFunc = func(
+					ctx context.Context, userID string, filename string, contentType string, fileSize int64,
+				) (*storage.PresignedUploadResult, error) {
 					return &storage.PresignedUploadResult{
 						UploadURL: "https://s3.example.com/upload-url",
 						FileKey:   "uploads/user123/test-uuid.jpg",
@@ -166,14 +170,18 @@ func TestProjectService_CreateProjectWithUpload(t *testing.T) {
 			contentType: "image/jpeg",
 			fileSize:    1024000,
 			setupMock: func(projectMock *project.RepositoryMock, s3Mock *storage.S3ServiceMock) {
-				projectMock.CreateProjectFunc = func(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+				projectMock.CreateProjectFunc = func(
+					ctx context.Context, p *project.Project, userID string,
+				) (*project.Project, error) {
 					return &project.Project{
 						ID:     "project-789",
 						Name:   p.Name,
 						UserID: userID,
 					}, nil
 				}
-				s3Mock.GeneratePresignedUploadURLFunc = func(ctx context.Context, userID string, filename string, contentType string, fileSize int64) (*storage.PresignedUploadResult, error) {
+				s3Mock.GeneratePresignedUploadURLFunc = func(
+					ctx context.Context, userID string, filename string, contentType string, fileSize int64,
+				) (*storage.PresignedUploadResult, error) {
 					return nil, errors.New("AWS credentials not configured")
 				}
 			},
@@ -197,7 +205,9 @@ func TestProjectService_CreateProjectWithUpload(t *testing.T) {
 			contentType: "image/jpeg",
 			fileSize:    1024000,
 			setupMock: func(projectMock *project.RepositoryMock, s3Mock *storage.S3ServiceMock) {
-				projectMock.CreateProjectFunc = func(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+				projectMock.CreateProjectFunc = func(
+					ctx context.Context, p *project.Project, userID string,
+				) (*project.Project, error) {
 					return nil, errors.New("database error")
 				}
 				// S3 service should not be called since project creation failed
@@ -344,7 +354,9 @@ func TestProjectService_GetProjectByID(t *testing.T) {
 			projectID: "proj123",
 			userID:    "user123",
 			setupMock: func(mock *project.RepositoryMock) {
-				mock.GetProjectByIDAndUserIDFunc = func(ctx context.Context, projectID string, userID string) (*project.Project, error) {
+				mock.GetProjectByIDAndUserIDFunc = func(
+					ctx context.Context, projectID string, userID string,
+				) (*project.Project, error) {
 					return &project.Project{
 						ID:     "proj123",
 						Name:   "Retrieved Project",
@@ -384,7 +396,9 @@ func TestProjectService_GetProjectByID(t *testing.T) {
 			projectID: "proj456",
 			userID:    "user123",
 			setupMock: func(mock *project.RepositoryMock) {
-				mock.GetProjectByIDAndUserIDFunc = func(ctx context.Context, projectID string, userID string) (*project.Project, error) {
+				mock.GetProjectByIDAndUserIDFunc = func(
+					ctx context.Context, projectID string, userID string,
+				) (*project.Project, error) {
 					return nil, errors.New("project not found")
 				}
 			},
@@ -437,7 +451,9 @@ func TestProjectService_UpdateProject(t *testing.T) {
 			userID:    "user123",
 			newName:   "Updated Project Name",
 			setupMock: func(mock *project.RepositoryMock) {
-				mock.UpdateProjectByUserIDFunc = func(ctx context.Context, projectID string, userID string, newName string) (*project.Project, error) {
+				mock.UpdateProjectByUserIDFunc = func(
+					ctx context.Context, projectID string, userID string, newName string,
+				) (*project.Project, error) {
 					return &project.Project{
 						ID:     "proj123",
 						Name:   "Updated Project Name",
@@ -491,7 +507,9 @@ func TestProjectService_UpdateProject(t *testing.T) {
 			userID:    "user123",
 			newName:   "New Name",
 			setupMock: func(mock *project.RepositoryMock) {
-				mock.UpdateProjectByUserIDFunc = func(ctx context.Context, projectID string, userID string, newName string) (*project.Project, error) {
+				mock.UpdateProjectByUserIDFunc = func(
+					ctx context.Context, projectID string, userID string, newName string,
+				) (*project.Project, error) {
 					return nil, errors.New("database error")
 				}
 			},
@@ -694,7 +712,9 @@ func TestProjectService_ComplexScenarios(t *testing.T) {
 
 		// Step 1: Create project with upload
 		projectRepositoryMock := &project.RepositoryMock{}
-		projectRepositoryMock.CreateProjectFunc = func(ctx context.Context, p *project.Project, userID string) (*project.Project, error) {
+		projectRepositoryMock.CreateProjectFunc = func(
+			ctx context.Context, p *project.Project, userID string,
+		) (*project.Project, error) {
 			return &project.Project{
 				ID:     "new-project",
 				Name:   p.Name,
@@ -703,7 +723,9 @@ func TestProjectService_ComplexScenarios(t *testing.T) {
 		}
 
 		s3ServiceMock := &storage.S3ServiceMock{}
-		s3ServiceMock.GeneratePresignedUploadURLFunc = func(ctx context.Context, userID string, filename string, contentType string, fileSize int64) (*storage.PresignedUploadResult, error) {
+		s3ServiceMock.GeneratePresignedUploadURLFunc = func(
+			ctx context.Context, userID string, filename string, contentType string, fileSize int64,
+		) (*storage.PresignedUploadResult, error) {
 			return &storage.PresignedUploadResult{
 				UploadURL: "https://upload.url",
 			}, nil
@@ -722,7 +744,9 @@ func TestProjectService_ComplexScenarios(t *testing.T) {
 		projectID := result.Project.ID
 
 		// Step 2: Get the created project
-		projectRepositoryMock.GetProjectByIDAndUserIDFunc = func(ctx context.Context, projectID string, userID string) (*project.Project, error) {
+		projectRepositoryMock.GetProjectByIDAndUserIDFunc = func(
+			ctx context.Context, projectID string, userID string,
+		) (*project.Project, error) {
 			return &project.Project{
 				ID:     projectID,
 				Name:   "Workflow Project",
@@ -735,7 +759,9 @@ func TestProjectService_ComplexScenarios(t *testing.T) {
 		assert.Equal(t, "Workflow Project", retrievedProject.Name)
 
 		// Step 3: Update the project
-		projectRepositoryMock.UpdateProjectByUserIDFunc = func(ctx context.Context, projectID string, userID string, newName string) (*project.Project, error) {
+		projectRepositoryMock.UpdateProjectByUserIDFunc = func(
+			ctx context.Context, projectID string, userID string, newName string,
+		) (*project.Project, error) {
 			return &project.Project{
 				ID:     projectID,
 				Name:   "Updated Workflow Project",
@@ -743,7 +769,8 @@ func TestProjectService_ComplexScenarios(t *testing.T) {
 			}, nil
 		}
 
-		updatedProject, err := projectService.UpdateProject(context.Background(), projectID, userID, "Updated Workflow Project")
+		updatedProject, err := projectService.UpdateProject(
+			context.Background(), projectID, userID, "Updated Workflow Project")
 		require.NoError(t, err)
 		assert.Equal(t, "Updated Workflow Project", updatedProject.Name)
 

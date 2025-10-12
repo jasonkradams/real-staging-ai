@@ -22,8 +22,9 @@ func TestDefaultHandler_CreateImage(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:        "success: create image",
-			requestBody: `{"project_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", "original_url": "http://example.com/image.jpg"}`,
+			name: "success: create image",
+			requestBody: `{"project_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", ` +
+				`"original_url": "http://example.com/image.jpg"}`,
 			setupMock: func(mock *ServiceMock) {
 				mock.CreateImageFunc = func(ctx context.Context, req *CreateImageRequest) (*Image, error) {
 					return &Image{ID: uuid.New()}, nil
@@ -50,8 +51,9 @@ func TestDefaultHandler_CreateImage(t *testing.T) {
 			expectedCode: http.StatusUnprocessableEntity,
 		},
 		{
-			name:        "fail: service error",
-			requestBody: `{"project_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", "original_url": "http://example.com/image.jpg"}`,
+			name: "fail: service error",
+			requestBody: `{"project_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", ` +
+				`"original_url": "http://example.com/image.jpg"}`,
 			setupMock: func(mock *ServiceMock) {
 				mock.CreateImageFunc = func(ctx context.Context, req *CreateImageRequest) (*Image, error) {
 					return nil, errors.New("service error")

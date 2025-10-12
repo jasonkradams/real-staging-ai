@@ -49,8 +49,10 @@ type Image struct {
 type CreateImageRequest struct {
 	ProjectID   uuid.UUID `json:"project_id" validate:"required"`
 	OriginalURL string    `json:"original_url" validate:"required,url"`
-	RoomType    *string   `json:"room_type,omitempty" validate:"omitempty,oneof=living_room bedroom kitchen bathroom dining_room office"`
-	Style       *string   `json:"style,omitempty" validate:"omitempty,oneof=modern contemporary traditional industrial scandinavian"`
+	//nolint:lll // struct tags are long
+	RoomType *string `json:"room_type,omitempty" validate:"omitempty,oneof=living_room bedroom kitchen bathroom dining_room office"`
+	//nolint:lll // struct tags are long
+	Style *string `json:"style,omitempty" validate:"omitempty,oneof=modern contemporary traditional industrial scandinavian"`
 	Seed        *int64    `json:"seed,omitempty" validate:"omitempty,min=1,max=4294967295"`
 }
 

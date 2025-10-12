@@ -265,7 +265,9 @@ func (h *DefaultHandler) handleCheckoutSessionCompleted(ctx context.Context, eve
 			}
 		} else {
 			// Not fatal for webhook handling; just log
-			log.Error(ctx, fmt.Sprintf("Could not find user by client_reference_id=%s to link Stripe customer=%s: %v", clientReferenceID, customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"Could not find user by client_reference_id=%s to link Stripe customer=%s: %v",
+				clientReferenceID, customerID, err))
 		}
 	}
 
@@ -336,11 +338,15 @@ func (h *DefaultHandler) handleSubscriptionCreated(ctx context.Context, event *S
 				cancelAtPeriodEnd = v
 			}
 
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
+			if _, err := subRepo.UpsertByStripeID(
+				ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr,
+				cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
+			); err != nil {
 				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (created): %v", err))
 			}
 		} else {
-			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"No user found for Stripe customer on subscription.created: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -410,11 +416,15 @@ func (h *DefaultHandler) handleSubscriptionUpdated(ctx context.Context, event *S
 				cancelAtPeriodEnd = v
 			}
 
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
+			if _, err := subRepo.UpsertByStripeID(
+				ctx, u.ID.String(), subscriptionID, status, priceIDPtr, cpsPtr, cpePtr,
+				cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
+			); err != nil {
 				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (updated): %v", err))
 			}
 		} else {
-			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"No user found for Stripe customer on subscription.updated: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -484,11 +494,15 @@ func (h *DefaultHandler) handleSubscriptionDeleted(ctx context.Context, event *S
 				cancelAtPeriodEnd = v
 			}
 
-			if _, err := subRepo.UpsertByStripeID(ctx, u.ID.String(), subscriptionID, "canceled", priceIDPtr, cpsPtr, cpePtr, cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd); err != nil {
+			if _, err := subRepo.UpsertByStripeID(
+				ctx, u.ID.String(), subscriptionID, "canceled", priceIDPtr, cpsPtr, cpePtr,
+				cancelAtPtr, canceledAtPtr, cancelAtPeriodEnd,
+			); err != nil {
 				log.Error(ctx, fmt.Sprintf("Failed to upsert subscription (deleted): %v", err))
 			}
 		} else {
-			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on subscription.deleted: %s (err=%v)", customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"No user found for Stripe customer on subscription.deleted: %s (err=%v)", customerID, err))
 		}
 	}
 	return nil
@@ -545,11 +559,14 @@ func (h *DefaultHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 				invNumPtr = &invoiceNumber
 			}
 
-			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
+			if _, err := invRepo.Upsert(
+				ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr,
+			); err != nil {
 				log.Error(ctx, fmt.Sprintf("Failed to upsert invoice (payment_succeeded): %v", err))
 			}
 		} else {
-			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on invoice.payment_succeeded: %s (err=%v)", customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"No user found for Stripe customer on invoice.payment_succeeded: %s (err=%v)", customerID, err))
 		}
 	}
 
@@ -607,11 +624,14 @@ func (h *DefaultHandler) handleInvoicePaymentFailed(ctx context.Context, event *
 				invNumPtr = &invoiceNumber
 			}
 
-			if _, err := invRepo.Upsert(ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr); err != nil {
+			if _, err := invRepo.Upsert(
+				ctx, u.ID.String(), invoiceID, subIDPtr, status, amountDueI, amountPaidI, currencyPtr, invNumPtr,
+			); err != nil {
 				log.Error(ctx, fmt.Sprintf("Failed to upsert invoice (payment_failed): %v", err))
 			}
 		} else {
-			log.Error(ctx, fmt.Sprintf("No user found for Stripe customer on invoice.payment_failed: %s (err=%v)", customerID, err))
+			log.Error(ctx, fmt.Sprintf(
+				"No user found for Stripe customer on invoice.payment_failed: %s (err=%v)", customerID, err))
 		}
 	}
 
@@ -785,7 +805,9 @@ func (h *DefaultHandler) alreadyProcessedStripeEvent(ctx context.Context, eventI
 
 // markStripeEventProcessed records the processed event (idempotency scaffold).
 // Stores the type and raw payload when available.
-func (h *DefaultHandler) markStripeEventProcessed(ctx context.Context, eventID, eventType string, payload []byte) error {
+func (h *DefaultHandler) markStripeEventProcessed(
+	ctx context.Context, eventID, eventType string, payload []byte,
+) error {
 	if h.db == nil {
 		// No database configured (e.g., in tests). Skip persistence.
 		return nil

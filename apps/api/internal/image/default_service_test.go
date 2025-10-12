@@ -53,7 +53,12 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(ctx context.Context, projectIDStr, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+				imageRepo.CreateImageFunc = func(
+					ctx context.Context,
+					projectIDStr, originalURL string,
+					roomType, style *string,
+					seed *int64,
+				) (*queries.Image, error) {
 					return &queries.Image{
 						ID:          pgtype.UUID{Bytes: imageID, Valid: true},
 						ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
@@ -63,7 +68,9 @@ func TestDefaultService_CreateImage(t *testing.T) {
 						UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
 					}, nil
 				}
-				jobRepo.CreateJobFunc = func(ctx context.Context, imageID, jobType string, payloadJSON []byte) (*queries.Job, error) {
+				jobRepo.CreateJobFunc = func(
+					ctx context.Context, imageID, jobType string, payloadJSON []byte,
+				) (*queries.Job, error) {
 					return &queries.Job{}, nil
 				}
 			},
@@ -88,7 +95,12 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(ctx context.Context, projectIDStr, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+				imageRepo.CreateImageFunc = func(
+					ctx context.Context,
+					projectIDStr, originalURL string,
+					roomType, style *string,
+					seed *int64,
+				) (*queries.Image, error) {
 					return nil, errors.New("db error")
 				}
 			},
@@ -101,7 +113,12 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(ctx context.Context, projectIDStr, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+				imageRepo.CreateImageFunc = func(
+					ctx context.Context,
+					projectIDStr, originalURL string,
+					roomType, style *string,
+					seed *int64,
+				) (*queries.Image, error) {
 					return &queries.Image{
 						ID:          pgtype.UUID{Bytes: imageID, Valid: true},
 						ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
@@ -111,7 +128,9 @@ func TestDefaultService_CreateImage(t *testing.T) {
 						UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
 					}, nil
 				}
-				jobRepo.CreateJobFunc = func(ctx context.Context, imageID, jobType string, payloadJSON []byte) (*queries.Job, error) {
+				jobRepo.CreateJobFunc = func(
+					ctx context.Context, imageID, jobType string, payloadJSON []byte,
+				) (*queries.Job, error) {
 					return nil, errors.New("job error")
 				}
 			},
@@ -124,7 +143,12 @@ func TestDefaultService_CreateImage(t *testing.T) {
 				OriginalURL: "http://example.com/image.jpg",
 			},
 			setupMocks: func(imageRepo *RepositoryMock, jobRepo *job.RepositoryMock) {
-				imageRepo.CreateImageFunc = func(ctx context.Context, projectIDStr, originalURL string, roomType, style *string, seed *int64) (*queries.Image, error) {
+				imageRepo.CreateImageFunc = func(
+					ctx context.Context,
+					projectIDStr, originalURL string,
+					roomType, style *string,
+					seed *int64,
+				) (*queries.Image, error) {
 					return &queries.Image{
 						ID:          pgtype.UUID{Bytes: imageID, Valid: true},
 						ProjectID:   pgtype.UUID{Bytes: projectID, Valid: true},
@@ -134,7 +158,9 @@ func TestDefaultService_CreateImage(t *testing.T) {
 						UpdatedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
 					}, nil
 				}
-				jobRepo.CreateJobFunc = func(ctx context.Context, imageID, jobType string, payloadJSON []byte) (*queries.Job, error) {
+				jobRepo.CreateJobFunc = func(
+					ctx context.Context, imageID, jobType string, payloadJSON []byte,
+				) (*queries.Job, error) {
 					return nil, errors.New("json marshal error")
 				}
 			},
@@ -454,7 +480,9 @@ func TestDefaultService_UpdateImageWithStagedURL(t *testing.T) {
 			imageID:   imageID.String(),
 			stagedURL: "http://example.com/staged.jpg",
 			setupMocks: func(imageRepo *RepositoryMock) {
-				imageRepo.UpdateImageWithStagedURLFunc = func(ctx context.Context, imageID, stagedURL, status string) (*queries.Image, error) {
+				imageRepo.UpdateImageWithStagedURLFunc = func(
+					ctx context.Context, imageID, stagedURL, status string,
+				) (*queries.Image, error) {
 					return &queries.Image{},
 						nil
 				}
@@ -481,7 +509,9 @@ func TestDefaultService_UpdateImageWithStagedURL(t *testing.T) {
 			imageID:   imageID.String(),
 			stagedURL: "http://example.com/staged.jpg",
 			setupMocks: func(imageRepo *RepositoryMock) {
-				imageRepo.UpdateImageWithStagedURLFunc = func(ctx context.Context, imageID, stagedURL, status string) (*queries.Image, error) {
+				imageRepo.UpdateImageWithStagedURLFunc = func(
+					ctx context.Context, imageID, stagedURL, status string,
+				) (*queries.Image, error) {
 					return nil, errors.New("db error")
 				}
 			},

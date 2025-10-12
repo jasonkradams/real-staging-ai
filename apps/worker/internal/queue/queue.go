@@ -136,7 +136,8 @@ func NewAsynqQueueClient(cfg *config.Config) (*AsynqQueueClient, error) {
 		c.mu.Unlock()
 
 		// Deliver job to consumer
-		logger.Info(ctx, "asynq task received, delivering to job channel", "task_type", t.Type(), "job_id", jobID, "channel_len", len(c.jobs))
+		logger.Info(ctx, "asynq task received, delivering to job channel",
+			"task_type", t.Type(), "job_id", jobID, "channel_len", len(c.jobs))
 		select {
 		case c.jobs <- jb:
 		case <-ctx.Done():
@@ -164,7 +165,8 @@ func NewAsynqQueueClient(cfg *config.Config) (*AsynqQueueClient, error) {
 	})
 
 	// Start the asynq server in the background.
-	logger.Info(context.Background(), "starting asynq server", "redis_addr", addr, "queue", queueName, "concurrency", concurrency)
+	logger.Info(context.Background(), "starting asynq server",
+		"redis_addr", addr, "queue", queueName, "concurrency", concurrency)
 	go func() {
 		if err := srv.Run(mux); err != nil {
 			logger.Error(context.Background(), "asynq server exited", "error", err)

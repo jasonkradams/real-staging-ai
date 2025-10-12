@@ -78,7 +78,9 @@ func NewAsynqEnqueuerFromEnv(cfg *config.Config) (*AsynqEnqueuer, error) {
 		addr = cfg.Redis.Addr
 	}
 	if addr == "" {
-		return nil, errors.New("redis address is not configured. Please set REDIS_ADDR environment variable or configure in config file")
+		return nil, errors.New(
+			"redis address is not configured. " +
+				"Please set REDIS_ADDR environment variable or configure in config file")
 	}
 
 	q := os.Getenv("JOB_QUEUE_NAME")
@@ -93,8 +95,10 @@ func NewAsynqEnqueuerFromEnv(cfg *config.Config) (*AsynqEnqueuer, error) {
 	}, nil
 }
 
-// EnqueueStageRun enqueues a stage:run task with the provided payload.
-func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPayload, opts *EnqueueOpts) (string, error) {
+// EnqueueStageRun enqueues a stage run job.
+func (e *AsynqEnqueuer) EnqueueStageRun(
+	ctx context.Context, payload StageRunPayload, opts *EnqueueOpts,
+) (string, error) {
 	tracer := otel.Tracer("real-staging-api/queue")
 	ctx, span := tracer.Start(ctx, "queue.EnqueueStageRun")
 	defer span.End()
@@ -159,7 +163,11 @@ func (e *AsynqEnqueuer) EnqueueStageRun(ctx context.Context, payload StageRunPay
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "enqueue error")
-		log.Error(ctx, "enqueue failed", "task_type", TaskTypeStageRun, "image_id", payload.ImageID, "queue", selectedQueue, "error", err)
+		log.Error(ctx, "enqueue failed",
+			"task_type", TaskTypeStageRun,
+			"image_id", payload.ImageID,
+			"queue", selectedQueue,
+			"error", err)
 		return "", fmt.Errorf("enqueue stage:run: %w", err)
 	}
 	span.SetAttributes(

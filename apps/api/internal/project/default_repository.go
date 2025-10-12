@@ -185,7 +185,9 @@ func (s *DefaultRepository) GetProjectByID(ctx context.Context, projectID string
 }
 
 // UpdateProjectByUserID updates an existing project's name with user ownership verification.
-func (s *DefaultRepository) UpdateProjectByUserID(ctx context.Context, projectID, userID, name string) (*Project, error) {
+func (s *DefaultRepository) UpdateProjectByUserID(
+	ctx context.Context, projectID, userID, name string,
+) (*Project, error) {
 	query := `
 		UPDATE projects
 		SET name = $3

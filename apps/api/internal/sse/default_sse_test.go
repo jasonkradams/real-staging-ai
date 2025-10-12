@@ -262,7 +262,8 @@ func TestDefaultSSE_MultipleSubscribers_Isolation(t *testing.T) {
 
 	// A should see processing; B should not
 	waitFor(t, 500*time.Millisecond, func() bool {
-		return strings.Contains(wA.String(), `event: job_update`) && strings.Contains(wA.String(), `data: {"status":"processing"}`)
+		return strings.Contains(wA.String(), `event: job_update`) &&
+			strings.Contains(wA.String(), `data: {"status":"processing"}`)
 	})
 	// Give a short window to ensure B did not get A's update
 	time.Sleep(150 * time.Millisecond)

@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/stretchr/testify/assert"
 	"github.com/real-staging-ai/api/internal/storage/queries"
+	"github.com/stretchr/testify/assert"
 )
 
 // Use moq-generated QuerierMock from queries package for tests
@@ -235,7 +235,10 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "success: get user by stripe customer id",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(
+					ctx context.Context,
+					stripeCustomerID pgtype.Text,
+				) (*queries.User, error) {
 					return &queries.User{StripeCustomerID: stripeCustomerID}, nil
 				}
 			},
@@ -244,7 +247,9 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "fail: not found",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(
+					ctx context.Context, stripeCustomerID pgtype.Text,
+				) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -255,7 +260,9 @@ func TestDefaultRepository_GetByStripeCustomerID(t *testing.T) {
 			name:             "fail: db error",
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.GetUserByStripeCustomerIDFunc = func(ctx context.Context, stripeCustomerID pgtype.Text) (*queries.User, error) {
+				mock.GetUserByStripeCustomerIDFunc = func(
+					ctx context.Context, stripeCustomerID pgtype.Text,
+				) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
@@ -300,7 +307,10 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			userID:           userID.String(),
 			stripeCustomerID: "cus_123",
 			setupMock: func(mock *mockQuerier) {
-				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(
+					ctx context.Context,
+					arg queries.UpdateUserStripeCustomerIDParams,
+				) (*queries.User, error) {
 					return &queries.User{}, nil
 				}
 			},
@@ -316,7 +326,10 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			name:   "fail: not found",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(
+					ctx context.Context,
+					arg queries.UpdateUserStripeCustomerIDParams,
+				) (*queries.User, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -327,7 +340,10 @@ func TestDefaultRepository_UpdateStripeCustomerID(t *testing.T) {
 			name:   "fail: db error",
 			userID: userID.String(),
 			setupMock: func(mock *mockQuerier) {
-				mock.UpdateUserStripeCustomerIDFunc = func(ctx context.Context, arg queries.UpdateUserStripeCustomerIDParams) (*queries.User, error) {
+				mock.UpdateUserStripeCustomerIDFunc = func(
+					ctx context.Context,
+					arg queries.UpdateUserStripeCustomerIDParams,
+				) (*queries.User, error) {
 					return nil, fmt.Errorf("db error")
 				}
 			},
