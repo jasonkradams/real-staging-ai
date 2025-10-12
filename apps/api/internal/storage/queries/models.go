@@ -67,6 +67,14 @@ type Image struct {
 	Error       pgtype.Text        `json:"error"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	// Cost in USD for processing this image
+	CostUsd pgtype.Numeric `json:"cost_usd"`
+	// The AI model ID used to process this image
+	ModelUsed pgtype.Text `json:"model_used"`
+	// Processing time in milliseconds
+	ProcessingTimeMs pgtype.Int4 `json:"processing_time_ms"`
+	// Replicate prediction ID for tracking and billing
+	ReplicatePredictionID pgtype.Text `json:"replicate_prediction_id"`
 }
 
 type Invoice struct {
@@ -115,6 +123,20 @@ type Project struct {
 	UserID    pgtype.UUID        `json:"user_id"`
 	Name      string             `json:"name"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+// System-wide configuration settings
+type Setting struct {
+	// Unique setting identifier
+	Key string `json:"key"`
+	// Setting value (stored as text, parsed by application)
+	Value string `json:"value"`
+	// Human-readable description of the setting
+	Description pgtype.Text `json:"description"`
+	// Timestamp of last update
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	// User who last updated the setting
+	UpdatedBy pgtype.UUID `json:"updated_by"`
 }
 
 type Subscription struct {

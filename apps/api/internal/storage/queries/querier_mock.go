@@ -28,7 +28,7 @@ var _ Querier = &QuerierMock{}
 //			CountUsersFunc: func(ctx context.Context) (int64, error) {
 //				panic("mock out the CountUsers method")
 //			},
-//			CreateImageFunc: func(ctx context.Context, arg CreateImageParams) (*Image, error) {
+//			CreateImageFunc: func(ctx context.Context, arg CreateImageParams) (*CreateImageRow, error) {
 //				panic("mock out the CreateImage method")
 //			},
 //			CreateJobFunc: func(ctx context.Context, arg CreateJobParams) (*Job, error) {
@@ -76,10 +76,10 @@ var _ Querier = &QuerierMock{}
 //			GetAllProjectsFunc: func(ctx context.Context) ([]*GetAllProjectsRow, error) {
 //				panic("mock out the GetAllProjects method")
 //			},
-//			GetImageByIDFunc: func(ctx context.Context, id pgtype.UUID) (*Image, error) {
+//			GetImageByIDFunc: func(ctx context.Context, id pgtype.UUID) (*GetImageByIDRow, error) {
 //				panic("mock out the GetImageByID method")
 //			},
-//			GetImagesByProjectIDFunc: func(ctx context.Context, projectID pgtype.UUID) ([]*Image, error) {
+//			GetImagesByProjectIDFunc: func(ctx context.Context, projectID pgtype.UUID) ([]*GetImagesByProjectIDRow, error) {
 //				panic("mock out the GetImagesByProjectID method")
 //			},
 //			GetInvoiceByStripeIDFunc: func(ctx context.Context, stripeInvoiceID string) (*Invoice, error) {
@@ -115,7 +115,7 @@ var _ Querier = &QuerierMock{}
 //			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
 //				panic("mock out the GetUserByStripeCustomerID method")
 //			},
-//			ListImagesForReconcileFunc: func(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+//			ListImagesForReconcileFunc: func(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error) {
 //				panic("mock out the ListImagesForReconcile method")
 //			},
 //			ListInvoicesByUserIDFunc: func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error) {
@@ -130,13 +130,13 @@ var _ Querier = &QuerierMock{}
 //			StartJobFunc: func(ctx context.Context, id pgtype.UUID) (*Job, error) {
 //				panic("mock out the StartJob method")
 //			},
-//			UpdateImageStatusFunc: func(ctx context.Context, arg UpdateImageStatusParams) (*Image, error) {
+//			UpdateImageStatusFunc: func(ctx context.Context, arg UpdateImageStatusParams) (*UpdateImageStatusRow, error) {
 //				panic("mock out the UpdateImageStatus method")
 //			},
-//			UpdateImageWithErrorFunc: func(ctx context.Context, arg UpdateImageWithErrorParams) (*Image, error) {
+//			UpdateImageWithErrorFunc: func(ctx context.Context, arg UpdateImageWithErrorParams) (*UpdateImageWithErrorRow, error) {
 //				panic("mock out the UpdateImageWithError method")
 //			},
-//			UpdateImageWithStagedURLFunc: func(ctx context.Context, arg UpdateImageWithStagedURLParams) (*Image, error) {
+//			UpdateImageWithStagedURLFunc: func(ctx context.Context, arg UpdateImageWithStagedURLParams) (*UpdateImageWithStagedURLRow, error) {
 //				panic("mock out the UpdateImageWithStagedURL method")
 //			},
 //			UpdateJobStatusFunc: func(ctx context.Context, arg UpdateJobStatusParams) (*Job, error) {
@@ -180,7 +180,7 @@ type QuerierMock struct {
 	CountUsersFunc func(ctx context.Context) (int64, error)
 
 	// CreateImageFunc mocks the CreateImage method.
-	CreateImageFunc func(ctx context.Context, arg CreateImageParams) (*Image, error)
+	CreateImageFunc func(ctx context.Context, arg CreateImageParams) (*CreateImageRow, error)
 
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, arg CreateJobParams) (*Job, error)
@@ -228,10 +228,10 @@ type QuerierMock struct {
 	GetAllProjectsFunc func(ctx context.Context) ([]*GetAllProjectsRow, error)
 
 	// GetImageByIDFunc mocks the GetImageByID method.
-	GetImageByIDFunc func(ctx context.Context, id pgtype.UUID) (*Image, error)
+	GetImageByIDFunc func(ctx context.Context, id pgtype.UUID) (*GetImageByIDRow, error)
 
 	// GetImagesByProjectIDFunc mocks the GetImagesByProjectID method.
-	GetImagesByProjectIDFunc func(ctx context.Context, projectID pgtype.UUID) ([]*Image, error)
+	GetImagesByProjectIDFunc func(ctx context.Context, projectID pgtype.UUID) ([]*GetImagesByProjectIDRow, error)
 
 	// GetInvoiceByStripeIDFunc mocks the GetInvoiceByStripeID method.
 	GetInvoiceByStripeIDFunc func(ctx context.Context, stripeInvoiceID string) (*Invoice, error)
@@ -267,7 +267,7 @@ type QuerierMock struct {
 	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
 
 	// ListImagesForReconcileFunc mocks the ListImagesForReconcile method.
-	ListImagesForReconcileFunc func(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error)
+	ListImagesForReconcileFunc func(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error)
 
 	// ListInvoicesByUserIDFunc mocks the ListInvoicesByUserID method.
 	ListInvoicesByUserIDFunc func(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
@@ -282,13 +282,13 @@ type QuerierMock struct {
 	StartJobFunc func(ctx context.Context, id pgtype.UUID) (*Job, error)
 
 	// UpdateImageStatusFunc mocks the UpdateImageStatus method.
-	UpdateImageStatusFunc func(ctx context.Context, arg UpdateImageStatusParams) (*Image, error)
+	UpdateImageStatusFunc func(ctx context.Context, arg UpdateImageStatusParams) (*UpdateImageStatusRow, error)
 
 	// UpdateImageWithErrorFunc mocks the UpdateImageWithError method.
-	UpdateImageWithErrorFunc func(ctx context.Context, arg UpdateImageWithErrorParams) (*Image, error)
+	UpdateImageWithErrorFunc func(ctx context.Context, arg UpdateImageWithErrorParams) (*UpdateImageWithErrorRow, error)
 
 	// UpdateImageWithStagedURLFunc mocks the UpdateImageWithStagedURL method.
-	UpdateImageWithStagedURLFunc func(ctx context.Context, arg UpdateImageWithStagedURLParams) (*Image, error)
+	UpdateImageWithStagedURLFunc func(ctx context.Context, arg UpdateImageWithStagedURLParams) (*UpdateImageWithStagedURLRow, error)
 
 	// UpdateJobStatusFunc mocks the UpdateJobStatus method.
 	UpdateJobStatusFunc func(ctx context.Context, arg UpdateJobStatusParams) (*Job, error)
@@ -804,7 +804,7 @@ func (mock *QuerierMock) CountUsersCalls() []struct {
 }
 
 // CreateImage calls CreateImageFunc.
-func (mock *QuerierMock) CreateImage(ctx context.Context, arg CreateImageParams) (*Image, error) {
+func (mock *QuerierMock) CreateImage(ctx context.Context, arg CreateImageParams) (*CreateImageRow, error) {
 	if mock.CreateImageFunc == nil {
 		panic("QuerierMock.CreateImageFunc: method is nil but Querier.CreateImage was just called")
 	}
@@ -1376,7 +1376,7 @@ func (mock *QuerierMock) GetAllProjectsCalls() []struct {
 }
 
 // GetImageByID calls GetImageByIDFunc.
-func (mock *QuerierMock) GetImageByID(ctx context.Context, id pgtype.UUID) (*Image, error) {
+func (mock *QuerierMock) GetImageByID(ctx context.Context, id pgtype.UUID) (*GetImageByIDRow, error) {
 	if mock.GetImageByIDFunc == nil {
 		panic("QuerierMock.GetImageByIDFunc: method is nil but Querier.GetImageByID was just called")
 	}
@@ -1412,7 +1412,7 @@ func (mock *QuerierMock) GetImageByIDCalls() []struct {
 }
 
 // GetImagesByProjectID calls GetImagesByProjectIDFunc.
-func (mock *QuerierMock) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*Image, error) {
+func (mock *QuerierMock) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*GetImagesByProjectIDRow, error) {
 	if mock.GetImagesByProjectIDFunc == nil {
 		panic("QuerierMock.GetImagesByProjectIDFunc: method is nil but Querier.GetImagesByProjectID was just called")
 	}
@@ -1844,7 +1844,7 @@ func (mock *QuerierMock) GetUserByStripeCustomerIDCalls() []struct {
 }
 
 // ListImagesForReconcile calls ListImagesForReconcileFunc.
-func (mock *QuerierMock) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+func (mock *QuerierMock) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error) {
 	if mock.ListImagesForReconcileFunc == nil {
 		panic("QuerierMock.ListImagesForReconcileFunc: method is nil but Querier.ListImagesForReconcile was just called")
 	}
@@ -2024,7 +2024,7 @@ func (mock *QuerierMock) StartJobCalls() []struct {
 }
 
 // UpdateImageStatus calls UpdateImageStatusFunc.
-func (mock *QuerierMock) UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*Image, error) {
+func (mock *QuerierMock) UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*UpdateImageStatusRow, error) {
 	if mock.UpdateImageStatusFunc == nil {
 		panic("QuerierMock.UpdateImageStatusFunc: method is nil but Querier.UpdateImageStatus was just called")
 	}
@@ -2060,7 +2060,7 @@ func (mock *QuerierMock) UpdateImageStatusCalls() []struct {
 }
 
 // UpdateImageWithError calls UpdateImageWithErrorFunc.
-func (mock *QuerierMock) UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*Image, error) {
+func (mock *QuerierMock) UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*UpdateImageWithErrorRow, error) {
 	if mock.UpdateImageWithErrorFunc == nil {
 		panic("QuerierMock.UpdateImageWithErrorFunc: method is nil but Querier.UpdateImageWithError was just called")
 	}
@@ -2096,7 +2096,7 @@ func (mock *QuerierMock) UpdateImageWithErrorCalls() []struct {
 }
 
 // UpdateImageWithStagedURL calls UpdateImageWithStagedURLFunc.
-func (mock *QuerierMock) UpdateImageWithStagedURL(ctx context.Context, arg UpdateImageWithStagedURLParams) (*Image, error) {
+func (mock *QuerierMock) UpdateImageWithStagedURL(ctx context.Context, arg UpdateImageWithStagedURLParams) (*UpdateImageWithStagedURLRow, error) {
 	if mock.UpdateImageWithStagedURLFunc == nil {
 		panic("QuerierMock.UpdateImageWithStagedURLFunc: method is nil but Querier.UpdateImageWithStagedURL was just called")
 	}

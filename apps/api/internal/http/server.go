@@ -94,6 +94,7 @@ func NewServer(db storage.Database, s3Service storage.S3Service, imageService im
 
 	// Image routes
 	protected.POST("/images", imgHandler.CreateImage)
+	protected.POST("/images/batch", imgHandler.BatchCreateImages)
 	protected.GET("/images/:id", imgHandler.GetImage)
 	protected.GET("/images/:id/presign", s.presignImageDownloadHandler)
 	protected.DELETE("/images/:id", imgHandler.DeleteImage)

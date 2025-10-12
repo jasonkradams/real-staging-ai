@@ -54,11 +54,11 @@ endif
 
 migrate: ## Run database migrations on the development database
 	@echo "Running database migrations on the development database..."
-	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable up
+	docker compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable up
 
 migrate-down-dev: ## Rollback database migrations on the development database
 	@echo "Running database migrations on the development database..."
-	docker-compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable down -all
+	docker compose -f docker-compose.yml run --rm -T migrate -path . -database postgres://postgres:postgres@postgres:5432/realstaging?sslmode=disable down -all
 
 seed-test: ## Seed the test database with sample data
 	@echo "Seeding the test database..."
@@ -66,7 +66,7 @@ seed-test: ## Seed the test database with sample data
 
 test-integration: migrate-test ## Run integration tests
 	@echo "Starting test infrastructure..."
-	docker-compose -f docker-compose.test.yml up -d --remove-orphans postgres-test redis-test localstack
+	docker compose -f docker-compose.test.yml up -d --remove-orphans postgres-test redis-test localstack
 	@echo "Running integration tests..."
 	cd apps/api && CONFIG_DIR=../../config APP_ENV=test PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
 	cd apps/worker && CONFIG_DIR=../../config APP_ENV=test PGHOST=localhost PGPORT=5433 PGUSER=testuser PGPASSWORD=testpassword PGDATABASE=testdb PGSSLMODE=disable REDIS_ADDR=localhost:6379 go test -tags=integration -p 1 ./...
@@ -177,4 +177,4 @@ tidy: ## Run go mod tidy for each app
 
 reconcile-images: ## Run storage reconciliation CLI (use DRY_RUN=1 for dry-run)
 	@echo "Running storage reconciliation..."
-	docker compose exec api /bin/sh -c "/reconcile --dry-run=$(or $(DRY_RUN),true) --batch-size=$(or $(BATCH_SIZE),100) --concurrency=$(or $(CONCURRENCY),5)"
+	docker compose exec api /bin/sh -c "/app/reconcile --dry-run=$(or $(DRY_RUN),true) --batch-size=$(or $(BATCH_SIZE),100) --concurrency=$(or $(CONCURRENCY),5)"

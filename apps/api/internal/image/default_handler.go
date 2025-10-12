@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -49,6 +50,80 @@ func (h *DefaultHandler) CreateImage(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, img)
+}
+
+// BatchCreateImages handles POST /api/v1/images/batch requests.
+func (h *DefaultHandler) BatchCreateImages(c echo.Context) error {
+	var req BatchCreateImagesRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "bad_request",
+			Message: "Invalid request format",
+		})
+	}
+
+	// Validate batch request
+	if len(req.Images) == 0 {
+		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
+			Error:   "validation_failed",
+			Message: "At least one image is required",
+			ValidationErrors: []ValidationErrorDetail{{
+				Field:   "images",
+				Message: "images array cannot be empty",
+			}},
+		})
+	}
+
+	if len(req.Images) > 50 {
+		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
+			Error:   "validation_failed",
+			Message: "Too many images",
+			ValidationErrors: []ValidationErrorDetail{{
+				Field:   "images",
+				Message: "maximum 50 images per batch request",
+			}},
+		})
+	}
+
+	// Validate each image request
+	var allValidationErrors []ValidationErrorDetail
+	for i, imgReq := range req.Images {
+		if errors := h.validateCreateImageRequest(&imgReq); len(errors) > 0 {
+			for _, err := range errors {
+				allValidationErrors = append(allValidationErrors, ValidationErrorDetail{
+					Field:   fmt.Sprintf("images[%d].%s", i, err.Field),
+					Message: err.Message,
+				})
+			}
+		}
+	}
+
+	if len(allValidationErrors) > 0 {
+		return c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
+			Error:            "validation_failed",
+			Message:          "One or more images have invalid data",
+			ValidationErrors: allValidationErrors,
+		})
+	}
+
+	// Create the images in batch
+	response, err := h.service.BatchCreateImages(c.Request().Context(), req.Images)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "Failed to create images",
+		})
+	}
+
+	// Return 207 Multi-Status if partial success, 201 if all success
+	statusCode := http.StatusCreated
+	if response.Failed > 0 && response.Success > 0 {
+		statusCode = http.StatusMultiStatus
+	} else if response.Failed > 0 {
+		statusCode = http.StatusBadRequest
+	}
+
+	return c.JSON(statusCode, response)
 }
 
 // GetImage handles GET /api/v1/images/{id} requests.

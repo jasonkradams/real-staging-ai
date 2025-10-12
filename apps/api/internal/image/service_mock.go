@@ -19,6 +19,9 @@ var _ Service = &ServiceMock{}
 //
 //		// make and configure a mocked Service
 //		mockedService := &ServiceMock{
+//			BatchCreateImagesFunc: func(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error) {
+//				panic("mock out the BatchCreateImages method")
+//			},
 //			CreateImageFunc: func(ctx context.Context, req *CreateImageRequest) (*Image, error) {
 //				panic("mock out the CreateImage method")
 //			},
@@ -53,6 +56,9 @@ var _ Service = &ServiceMock{}
 //
 //	}
 type ServiceMock struct {
+	// BatchCreateImagesFunc mocks the BatchCreateImages method.
+	BatchCreateImagesFunc func(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error)
+
 	// CreateImageFunc mocks the CreateImage method.
 	CreateImageFunc func(ctx context.Context, req *CreateImageRequest) (*Image, error)
 
@@ -82,6 +88,13 @@ type ServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// BatchCreateImages holds details about calls to the BatchCreateImages method.
+		BatchCreateImages []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Reqs is the reqs argument value.
+			Reqs []CreateImageRequest
+		}
 		// CreateImage holds details about calls to the CreateImage method.
 		CreateImage []struct {
 			// Ctx is the ctx argument value.
@@ -150,6 +163,7 @@ type ServiceMock struct {
 			DbImage *queries.Image
 		}
 	}
+	lockBatchCreateImages        sync.RWMutex
 	lockCreateImage              sync.RWMutex
 	lockDeleteImage              sync.RWMutex
 	lockGetImageByID             sync.RWMutex
@@ -159,6 +173,42 @@ type ServiceMock struct {
 	lockUpdateImageWithError     sync.RWMutex
 	lockUpdateImageWithStagedURL sync.RWMutex
 	lockconvertToImage           sync.RWMutex
+}
+
+// BatchCreateImages calls BatchCreateImagesFunc.
+func (mock *ServiceMock) BatchCreateImages(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error) {
+	if mock.BatchCreateImagesFunc == nil {
+		panic("ServiceMock.BatchCreateImagesFunc: method is nil but Service.BatchCreateImages was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Reqs []CreateImageRequest
+	}{
+		Ctx:  ctx,
+		Reqs: reqs,
+	}
+	mock.lockBatchCreateImages.Lock()
+	mock.calls.BatchCreateImages = append(mock.calls.BatchCreateImages, callInfo)
+	mock.lockBatchCreateImages.Unlock()
+	return mock.BatchCreateImagesFunc(ctx, reqs)
+}
+
+// BatchCreateImagesCalls gets all the calls that were made to BatchCreateImages.
+// Check the length with:
+//
+//	len(mockedService.BatchCreateImagesCalls())
+func (mock *ServiceMock) BatchCreateImagesCalls() []struct {
+	Ctx  context.Context
+	Reqs []CreateImageRequest
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Reqs []CreateImageRequest
+	}
+	mock.lockBatchCreateImages.RLock()
+	calls = mock.calls.BatchCreateImages
+	mock.lockBatchCreateImages.RUnlock()
+	return calls
 }
 
 // CreateImage calls CreateImageFunc.

@@ -62,6 +62,7 @@ export default function ImagesPage() {
   const [imageUrls, setImageUrls] = useState<Record<string, { original?: string; staged?: string }>>({});
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [downloadType, setDownloadType] = useState<'original' | 'staged'>('staged');
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) ?? null,
@@ -117,10 +118,15 @@ export default function ImagesPage() {
   const prefetchImageUrls = useCallback(async (imageList: ImageRecord[]) => {
     const urlMap: Record<string, { original?: string; staged?: string }> = {};
     
+    // Only fetch URLs for images that have been uploaded (not still processing)
+    const imagesToFetch = imageList.filter(img => 
+      img.status !== 'queued' && img.status !== 'processing'
+    );
+    
     // Fetch all URLs in parallel (with throttling to avoid overwhelming the API)
     const chunks = [];
-    for (let i = 0; i < imageList.length; i += 5) {
-      chunks.push(imageList.slice(i, i + 5));
+    for (let i = 0; i < imagesToFetch.length; i += 5) {
+      chunks.push(imagesToFetch.slice(i, i + 5));
     }
 
     for (const chunk of chunks) {
@@ -294,20 +300,29 @@ export default function ImagesPage() {
     }
   }
 
-  async function loadImages(projectId: string) {
+  async function loadImages(projectId: string, isBackground = false) {
     if (!projectId) {
       setImages([]);
       setImageUrls({});
       return;
     }
-    setLoadingImages(true);
-    setStatusMessage("Loading images...");
+    
+    // Only show loading UI for initial loads, not background refreshes
+    if (!isBackground) {
+      setLoadingImages(true);
+      setStatusMessage("Loading images...");
+    }
+    
     try {
       const res = await apiFetch<ImageListResponse>(`/v1/projects/${projectId}/images`);
       const list = res.images ?? [];
       setImages(list);
-      setSelectedImageIds(new Set());
-      setStatusMessage(list.length === 0 ? "No images found for this project yet." : "");
+      
+      // Only clear selection on initial load
+      if (!isBackground) {
+        setSelectedImageIds(new Set());
+        setStatusMessage(list.length === 0 ? "No images found for this project yet." : "");
+      }
       
       // Prefetch image URLs for display
       if (list.length > 0) {
@@ -315,11 +330,16 @@ export default function ImagesPage() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setStatusMessage(message);
-      setImages([]);
-      setImageUrls({});
+      if (!isBackground) {
+        setStatusMessage(message);
+        setImages([]);
+        setImageUrls({});
+      }
+      // Silently fail for background refreshes
     } finally {
-      setLoadingImages(false);
+      if (!isBackground) {
+        setLoadingImages(false);
+      }
     }
   }
 
@@ -336,6 +356,37 @@ export default function ImagesPage() {
     loadImages(selectedProjectId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProjectId]);
+
+  // Auto-polling for processing images
+  useEffect(() => {
+    // Check if there are any images still being processed
+    const hasProcessingImages = images.some(
+      img => img.status === 'queued' || img.status === 'processing'
+    );
+
+    // Clear existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+
+    // Set up polling if there are processing images
+    if (hasProcessingImages && selectedProjectId) {
+      const interval = setInterval(() => {
+        loadImages(selectedProjectId, true); // Pass true for background refresh
+      }, 3000); // Poll every 3 seconds
+
+      setPollingInterval(interval);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images, selectedProjectId]);
 
   return (
     <div className="space-y-8">
@@ -388,9 +439,17 @@ export default function ImagesPage() {
             </button>
           </div>
           {selectedProject && (
-            <p className="text-sm text-gray-600 mt-3">
-              Viewing <span className="font-medium">{selectedProject.name}</span> • {images.length} image{images.length !== 1 ? 's' : ''}
-            </p>
+            <div className="flex items-center gap-3 mt-3">
+              <p className="text-sm text-gray-600">
+                Viewing <span className="font-medium">{selectedProject.name}</span> • {images.length} image{images.length !== 1 ? 's' : ''}
+              </p>
+              {pollingInterval && (
+                <span className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-2 py-1 rounded-full">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Auto-updating
+                </span>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -542,49 +601,60 @@ export default function ImagesPage() {
                 onMouseEnter={() => handleImageHover(image.id)}
                 onMouseLeave={() => setHoveredImageId(null)}
               >
-                <div className="relative aspect-video bg-gray-100 overflow-hidden rounded-t-2xl">
-                  {/* Image Preview - Show staged by default, original on hover */}
-                  {urls ? (
-                    <>
-                    {/* Staged Image (shown by default) */}
-                    {typeof stagedSrc === "string" && (
-                      <NextImage
-                        src={stagedSrc}
-                        alt="Staged"
-                        fill
-                        className={cn(
-                          "absolute inset-0 object-cover transition-all duration-300",
-                          hoveredImageId === image.id ? "opacity-0" : "opacity-100 group-hover:scale-105"
-                        )}
-                        loading="lazy"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    )}
-                    {/* Original Image (shown on hover) */}
-                    {typeof originalSrc === "string" && (
-                      <NextImage
-                        src={originalSrc}
-                        alt="Original"
-                        fill
-                        className={cn(
-                          "absolute inset-0 object-cover transition-opacity duration-300",
-                          hoveredImageId === image.id ? "opacity-100" : "opacity-0"
-                        )}
-                        loading="lazy"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    )}
-                    {/* Fallback if no images loaded yet */}
-                    {!stagedSrc && !originalSrc && (
-                      <div className="flex items-center justify-center h-full">
-                        <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
-                  </div>
+                <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden rounded-t-2xl">
+                  {/* Processing Overlay - Show FIRST if processing */}
+                  {(image.status === 'queued' || image.status === 'processing') ? (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center text-white z-20">
+                      <Loader2 className="h-12 w-12 animate-spin mb-3" />
+                      <p className="text-sm font-medium capitalize">{image.status}</p>
+                      <p className="text-xs text-gray-300 mt-1">
+                        {image.status === 'queued' ? 'Waiting to process...' : 'AI staging in progress...'}
+                      </p>
+                    </div>
+                  ) : (
+                    /* Image Preview - Show staged by default, original on hover */
+                    urls ? (
+                      <>
+                      {/* Staged Image (shown by default) */}
+                      {typeof stagedSrc === "string" && (
+                        <NextImage
+                          src={stagedSrc}
+                          alt="Staged"
+                          fill
+                          className={cn(
+                            "absolute inset-0 object-cover transition-all duration-300",
+                            hoveredImageId === image.id ? "opacity-0" : "opacity-100 group-hover:scale-105"
+                          )}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      )}
+                      {/* Original Image (shown on hover) */}
+                      {typeof originalSrc === "string" && (
+                        <NextImage
+                          src={originalSrc}
+                          alt="Original"
+                          fill
+                          className={cn(
+                            "absolute inset-0 object-cover transition-opacity duration-300",
+                            hoveredImageId === image.id ? "opacity-100" : "opacity-0"
+                          )}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      )}
+                      {/* Fallback if no images loaded yet */}
+                      {!stagedSrc && !originalSrc && (
+                        <div className="flex items-center justify-center h-full">
+                          <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-16 w-16 text-gray-300 animate-spin" />
+                    </div>
+                    )
                   )}
 
                   {/* Selection Indicator */}
@@ -722,23 +792,31 @@ export default function ImagesPage() {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="h-16 w-24 rounded-lg overflow-hidden bg-gray-100">
-                          {typeof thumbSrc === "string" ? (
-                            <NextImage
-                              src={thumbSrc}
-                              alt="Preview"
-                              width={96}
-                              height={64}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : imageUrls[image.id] ? (
-                            <div className="flex items-center justify-center h-full">
-                              <ImageIcon className="h-8 w-8 text-gray-300" />
+                        <div className="relative h-16 w-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          {/* Processing State - Single spinner */}
+                          {(image.status === 'queued' || image.status === 'processing') ? (
+                            <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-700 to-gray-800">
+                              <Loader2 className="h-6 w-6 text-white animate-spin" />
                             </div>
                           ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <Loader2 className="h-6 w-6 text-gray-300 animate-spin" />
-                            </div>
+                            /* Normal image display */
+                            typeof thumbSrc === "string" ? (
+                              <NextImage
+                                src={thumbSrc}
+                                alt="Preview"
+                                width={96}
+                                height={64}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : imageUrls[image.id] ? (
+                              <div className="flex items-center justify-center h-full">
+                                <ImageIcon className="h-8 w-8 text-gray-300" />
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <Loader2 className="h-6 w-6 text-gray-300 animate-spin" />
+                              </div>
+                            )
                           )}
                         </div>
                       </td>
@@ -811,7 +889,7 @@ export default function ImagesPage() {
             <SSEViewer
               onStatus={(status) => {
                 if (status === "ready" || status === "error") {
-                  loadImages(selectedProjectId);
+                  loadImages(selectedProjectId, true); // Use background refresh to avoid page jump
                 }
               }}
             />

@@ -9,9 +9,11 @@ A DIY virtual staging SaaS for real-estate photos. Upload a room photo → recei
 
 ### How It Works
 1. User logs in via Auth0 → frontend gets JWT
-2. Upload original image via **S3 presigned PUT** from API
-3. Create an **image job** → enqueued to Redis (asynq)
-4. Worker processes job: downloads original from S3, sends to Replicate AI for staging, uploads result back to S3
+2. Upload original image(s) via **S3 presigned PUT** from API
+   - Supports single or **multi-file upload** (up to 50 images per batch)
+   - Set default room type/style, or customize per image
+3. Create **image job(s)** → enqueued to Redis (asynq)
+4. Worker processes jobs: downloads original from S3, sends to Replicate AI for staging, uploads result back to S3
 5. API marks image **ready** → client fetches results / receives event updates via SSE
 
 ---

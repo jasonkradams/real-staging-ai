@@ -11,6 +11,7 @@ import (
 // Service defines the interface for image operations.
 type Service interface {
 	CreateImage(ctx context.Context, req *CreateImageRequest) (*Image, error)
+	BatchCreateImages(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error)
 	GetImageByID(ctx context.Context, imageID string) (*Image, error)
 	GetImagesByProjectID(ctx context.Context, projectID string) ([]*Image, error)
 	UpdateImageStatus(ctx context.Context, imageID string, status Status) (*Image, error)

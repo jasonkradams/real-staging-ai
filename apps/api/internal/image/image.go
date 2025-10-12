@@ -78,3 +78,22 @@ type UpdateCostRequest struct {
 	ProcessingTimeMs      int     `json:"processing_time_ms"`
 	ReplicatePredictionID string  `json:"replicate_prediction_id"`
 }
+
+// BatchCreateImagesRequest represents a batch request to create multiple images.
+type BatchCreateImagesRequest struct {
+	Images []CreateImageRequest `json:"images" validate:"required,min=1,max=50,dive"`
+}
+
+// BatchCreateImagesResponse represents the response for batch image creation.
+type BatchCreateImagesResponse struct {
+	Images  []*Image              `json:"images"`
+	Errors  []BatchImageError     `json:"errors,omitempty"`
+	Success int                   `json:"success"`
+	Failed  int                   `json:"failed"`
+}
+
+// BatchImageError represents an error for a specific image in batch creation.
+type BatchImageError struct {
+	Index   int    `json:"index"`
+	Message string `json:"message"`
+}

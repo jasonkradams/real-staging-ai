@@ -266,6 +266,92 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/v1/images/batch:
+    post:
+      summary: Batch create multiple images
+      description: |
+        Create multiple images in a single request. Each image is processed independently,
+        allowing for partial success. Useful for uploading entire properties at once.
+        
+        **Limits**: 1-50 images per request
+        
+        **Response Codes**:
+        - 201: All images created successfully
+        - 207: Partial success (some succeeded, some failed)
+        - 400: All images failed
+        - 422: Validation errors
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchCreateImagesRequest"
+            example:
+              images:
+                - project_id: "550e8400-e29b-41d4-a716-446655440000"
+                  original_url: "https://s3.amazonaws.com/bucket/uploads/user123/image1.jpg"
+                  room_type: "living_room"
+                  style: "modern"
+                - project_id: "550e8400-e29b-41d4-a716-446655440000"
+                  original_url: "https://s3.amazonaws.com/bucket/uploads/user123/image2.jpg"
+                  room_type: "bedroom"
+                - project_id: "550e8400-e29b-41d4-a716-446655440000"
+                  original_url: "https://s3.amazonaws.com/bucket/uploads/user123/image3.jpg"
+      responses:
+        "201":
+          description: All images created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchCreateImagesResponse"
+              example:
+                images:
+                  - id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    project_id: "550e8400-e29b-41d4-a716-446655440000"
+                    original_url: "https://s3.amazonaws.com/bucket/uploads/user123/image1.jpg"
+                    status: "queued"
+                    room_type: "living_room"
+                    style: "modern"
+                    created_at: "2025-01-15T10:30:00Z"
+                    updated_at: "2025-01-15T10:30:00Z"
+                errors: []
+                success: 3
+                failed: 0
+        "207":
+          description: Partial success - some images created, some failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchCreateImagesResponse"
+              example:
+                images:
+                  - id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    project_id: "550e8400-e29b-41d4-a716-446655440000"
+                    original_url: "https://s3.amazonaws.com/bucket/uploads/user123/image1.jpg"
+                    status: "queued"
+                errors:
+                  - index: 1
+                    message: "failed to create image: invalid project ID"
+                  - index: 2
+                    message: "failed to create image: original_url is required"
+                success: 1
+                failed: 2
+        "400":
+          description: All images failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchCreateImagesResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/v1/images/{id}:
     get:
       summary: Get an image by ID
@@ -836,6 +922,50 @@ components:
         seed:
           type: integer
           format: int64
+    BatchCreateImagesRequest:
+      type: object
+      required:
+        - images
+      properties:
+        images:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/CreateImageRequest"
+          description: Array of images to create (1-50 images)
+    BatchCreateImagesResponse:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/Image"
+          description: Successfully created images
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchImageError"
+          description: Errors for failed image creations
+        success:
+          type: integer
+          description: Number of successfully created images
+          example: 8
+        failed:
+          type: integer
+          description: Number of failed image creations
+          example: 2
+    BatchImageError:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed image in the request array
+          example: 3
+        message:
+          type: string
+          description: Error message describing why the image creation failed
+          example: "failed to create image: invalid project ID"
     PresignUploadRequest:
       type: object
       required:

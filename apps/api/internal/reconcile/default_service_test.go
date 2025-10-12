@@ -18,7 +18,7 @@ func TestNewDefaultService(t *testing.T) {
 	// Test the NewDefaultService constructor to ensure coverage
 	dbMock := &storage.DatabaseMock{}
 	s3Mock := &storage.S3ServiceMock{}
-	
+
 	service := NewDefaultService(dbMock, s3Mock)
 	assert.NotNil(t, service)
 	assert.NotNil(t, service.querier)
@@ -42,8 +42,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				DryRun:      true,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{}, nil
 				}
 			},
 			expectError: false,
@@ -64,8 +64,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					return struct{}{}, nil // File exists
@@ -88,8 +88,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					return nil, errors.New("not found")
@@ -115,8 +115,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "ready", "http://s3.amazonaws.com/uploads/test.jpg", "http://s3.amazonaws.com/uploads/test-staged.jpg")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					if fileKey == "uploads/test.jpg" {
@@ -145,11 +145,23 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
-				qMock.UpdateImageWithErrorFunc = func(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.Image, error) {
-					return img, nil
+				qMock.UpdateImageWithErrorFunc = func(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.UpdateImageWithErrorRow, error) {
+					return &queries.UpdateImageWithErrorRow{
+						ID:          img.ID,
+						ProjectID:   img.ProjectID,
+						OriginalUrl: img.OriginalUrl,
+						StagedUrl:   img.StagedUrl,
+						RoomType:    img.RoomType,
+						Style:       img.Style,
+						Seed:        img.Seed,
+						Status:      img.Status,
+						Error:       arg.Error,
+						CreatedAt:   img.CreatedAt,
+						UpdatedAt:   img.UpdatedAt,
+					}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					return nil, errors.New("not found")
@@ -190,7 +202,7 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				Concurrency: 5,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
 					return nil, errors.New("database connection failed")
 				}
 			},
@@ -208,8 +220,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				img1 := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test1.jpg", "")
 				img2 := createTestImage("img-2", "ready", "http://s3.amazonaws.com/uploads/test2.jpg", "http://s3.amazonaws.com/uploads/test2-staged.jpg")
 				img3 := createTestImage("img-3", "queued", "http://s3.amazonaws.com/uploads/test3.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img1, img2, img3}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img1, img2, img3}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					if fileKey == "uploads/test1.jpg" {
@@ -238,10 +250,10 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				DryRun:      true,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
 					// Verify defaults were applied
 					assert.Equal(t, int32(100), arg.Limit)
-					return []*queries.Image{}, nil
+					return []*queries.ListImagesForReconcileRow{}, nil
 				}
 			},
 			expectError: false,
@@ -258,8 +270,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "queued", "ht!tp://invalid-url", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
 			},
 			expectError: false,
@@ -278,8 +290,8 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "ready", "http://s3.amazonaws.com/uploads/test.jpg", "ht!tp://invalid-staged-url")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
 					return struct{}{}, nil // Original exists
@@ -302,10 +314,10 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
 				img := createTestImage("img-1", "queued", "http://s3.amazonaws.com/uploads/test.jpg", "")
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
-					return []*queries.Image{img}, nil
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
+					return []*queries.ListImagesForReconcileRow{img}, nil
 				}
-				qMock.UpdateImageWithErrorFunc = func(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.Image, error) {
+				qMock.UpdateImageWithErrorFunc = func(ctx context.Context, arg queries.UpdateImageWithErrorParams) (*queries.UpdateImageWithErrorRow, error) {
 					return nil, errors.New("database update failed")
 				}
 				s3Mock.HeadFileFunc = func(ctx context.Context, fileKey string) (interface{}, error) {
@@ -328,10 +340,10 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				DryRun:      true,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
 					// Verify project_id filter was applied
 					assert.True(t, arg.Column1.Valid)
-					return []*queries.Image{}, nil
+					return []*queries.ListImagesForReconcileRow{}, nil
 				}
 			},
 			expectError: false,
@@ -345,10 +357,10 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				DryRun:      true,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
 					// Verify status filter was applied
 					assert.Equal(t, "ready", arg.Column2)
-					return []*queries.Image{}, nil
+					return []*queries.ListImagesForReconcileRow{}, nil
 				}
 			},
 			expectError: false,
@@ -362,10 +374,10 @@ func TestReconcileService_ReconcileImages(t *testing.T) {
 				DryRun:      true,
 			},
 			setupMocks: func(qMock *queries.QuerierMock, s3Mock *storage.S3ServiceMock) {
-				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.Image, error) {
+				qMock.ListImagesForReconcileFunc = func(ctx context.Context, arg queries.ListImagesForReconcileParams) ([]*queries.ListImagesForReconcileRow, error) {
 					// Verify cursor was applied
 					assert.True(t, arg.Column3.Valid)
-					return []*queries.Image{}, nil
+					return []*queries.ListImagesForReconcileRow{}, nil
 				}
 			},
 			expectError: false,
@@ -404,11 +416,11 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func createTestImage(id, status, originalURL, stagedURL string) *queries.Image {
+func createTestImage(id, status, originalURL, stagedURL string) *queries.ListImagesForReconcileRow {
 	uid := uuid.MustParse("b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 	imgID := uuid.New()
 
-	img := &queries.Image{
+	img := &queries.ListImagesForReconcileRow{
 		ID:          pgtype.UUID{Bytes: imgID, Valid: true},
 		ProjectID:   pgtype.UUID{Bytes: uid, Valid: true},
 		OriginalUrl: originalURL,

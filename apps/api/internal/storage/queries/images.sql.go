@@ -25,7 +25,21 @@ type CreateImageParams struct {
 	Seed        pgtype.Int8 `json:"seed"`
 }
 
-func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (*Image, error) {
+type CreateImageRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (*CreateImageRow, error) {
 	row := q.db.QueryRow(ctx, CreateImage,
 		arg.ProjectID,
 		arg.OriginalUrl,
@@ -33,7 +47,7 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (*Imag
 		arg.Style,
 		arg.Seed,
 	)
-	var i Image
+	var i CreateImageRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
@@ -76,9 +90,23 @@ FROM images
 WHERE id = $1
 `
 
-func (q *Queries) GetImageByID(ctx context.Context, id pgtype.UUID) (*Image, error) {
+type GetImageByIDRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetImageByID(ctx context.Context, id pgtype.UUID) (*GetImageByIDRow, error) {
 	row := q.db.QueryRow(ctx, GetImageByID, id)
-	var i Image
+	var i GetImageByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
@@ -102,15 +130,29 @@ WHERE project_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*Image, error) {
+type GetImagesByProjectIDRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetImagesByProjectID(ctx context.Context, projectID pgtype.UUID) ([]*GetImagesByProjectIDRow, error) {
 	rows, err := q.db.Query(ctx, GetImagesByProjectID, projectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*Image{}
+	items := []*GetImagesByProjectIDRow{}
 	for rows.Next() {
-		var i Image
+		var i GetImagesByProjectIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
@@ -151,7 +193,21 @@ type ListImagesForReconcileParams struct {
 	Limit   int32       `json:"limit"`
 }
 
-func (q *Queries) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*Image, error) {
+type ListImagesForReconcileRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error) {
 	rows, err := q.db.Query(ctx, ListImagesForReconcile,
 		arg.Column1,
 		arg.Column2,
@@ -162,9 +218,9 @@ func (q *Queries) ListImagesForReconcile(ctx context.Context, arg ListImagesForR
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*Image{}
+	items := []*ListImagesForReconcileRow{}
 	for rows.Next() {
-		var i Image
+		var i ListImagesForReconcileRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
@@ -200,9 +256,23 @@ type UpdateImageStatusParams struct {
 	Status ImageStatus `json:"status"`
 }
 
-func (q *Queries) UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*Image, error) {
+type UpdateImageStatusRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*UpdateImageStatusRow, error) {
 	row := q.db.QueryRow(ctx, UpdateImageStatus, arg.ID, arg.Status)
-	var i Image
+	var i UpdateImageStatusRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
@@ -231,9 +301,23 @@ type UpdateImageWithErrorParams struct {
 	Error pgtype.Text `json:"error"`
 }
 
-func (q *Queries) UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*Image, error) {
+type UpdateImageWithErrorRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*UpdateImageWithErrorRow, error) {
 	row := q.db.QueryRow(ctx, UpdateImageWithError, arg.ID, arg.Error)
-	var i Image
+	var i UpdateImageWithErrorRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
@@ -263,9 +347,23 @@ type UpdateImageWithStagedURLParams struct {
 	Status    ImageStatus `json:"status"`
 }
 
-func (q *Queries) UpdateImageWithStagedURL(ctx context.Context, arg UpdateImageWithStagedURLParams) (*Image, error) {
+type UpdateImageWithStagedURLRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ProjectID   pgtype.UUID        `json:"project_id"`
+	OriginalUrl string             `json:"original_url"`
+	StagedUrl   pgtype.Text        `json:"staged_url"`
+	RoomType    pgtype.Text        `json:"room_type"`
+	Style       pgtype.Text        `json:"style"`
+	Seed        pgtype.Int8        `json:"seed"`
+	Status      ImageStatus        `json:"status"`
+	Error       pgtype.Text        `json:"error"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateImageWithStagedURL(ctx context.Context, arg UpdateImageWithStagedURLParams) (*UpdateImageWithStagedURLRow, error) {
 	row := q.db.QueryRow(ctx, UpdateImageWithStagedURL, arg.ID, arg.StagedUrl, arg.Status)
-	var i Image
+	var i UpdateImageWithStagedURLRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,

@@ -79,9 +79,27 @@ func (s *DefaultService) ReconcileImages(ctx context.Context, opts ReconcileOpti
 	}
 
 	// Fetch images
-	images, err := s.querier.ListImagesForReconcile(ctx, params)
+	rows, err := s.querier.ListImagesForReconcile(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list images: %w", err)
+	}
+
+	// Convert rows to Image type
+	images := make([]*queries.Image, len(rows))
+	for i, row := range rows {
+		images[i] = &queries.Image{
+			ID:          row.ID,
+			ProjectID:   row.ProjectID,
+			OriginalUrl: row.OriginalUrl,
+			StagedUrl:   row.StagedUrl,
+			RoomType:    row.RoomType,
+			Style:       row.Style,
+			Seed:        row.Seed,
+			Status:      row.Status,
+			Error:       row.Error,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+		}
 	}
 
 	logger := logging.Default()

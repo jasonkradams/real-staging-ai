@@ -47,7 +47,7 @@ func (r *DefaultRepository) CreateImage(ctx context.Context, projectID string, o
 		seedInt8 = pgtype.Int8{Int64: *seed, Valid: true}
 	}
 
-	image, err := q.CreateImage(ctx, queries.CreateImageParams{
+	row, err := q.CreateImage(ctx, queries.CreateImageParams{
 		ProjectID:   pgtype.UUID{Bytes: projectUUID, Valid: true},
 		OriginalUrl: originalURL,
 		RoomType:    roomTypeText,
@@ -56,6 +56,21 @@ func (r *DefaultRepository) CreateImage(ctx context.Context, projectID string, o
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create image: %w", err)
+	}
+
+	// Convert CreateImageRow to Image
+	image := &queries.Image{
+		ID:          row.ID,
+		ProjectID:   row.ProjectID,
+		OriginalUrl: row.OriginalUrl,
+		StagedUrl:   row.StagedUrl,
+		RoomType:    row.RoomType,
+		Style:       row.Style,
+		Seed:        row.Seed,
+		Status:      row.Status,
+		Error:       row.Error,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
 
 	return image, nil
@@ -70,9 +85,24 @@ func (r *DefaultRepository) GetImageByID(ctx context.Context, imageID string) (*
 		return nil, fmt.Errorf("invalid image ID: %w", err)
 	}
 
-	image, err := q.GetImageByID(ctx, pgtype.UUID{Bytes: imageUUID, Valid: true})
+	row, err := q.GetImageByID(ctx, pgtype.UUID{Bytes: imageUUID, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image: %w", err)
+	}
+
+	// Convert GetImageByIDRow to Image
+	image := &queries.Image{
+		ID:          row.ID,
+		ProjectID:   row.ProjectID,
+		OriginalUrl: row.OriginalUrl,
+		StagedUrl:   row.StagedUrl,
+		RoomType:    row.RoomType,
+		Style:       row.Style,
+		Seed:        row.Seed,
+		Status:      row.Status,
+		Error:       row.Error,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
 
 	return image, nil
@@ -87,9 +117,27 @@ func (r *DefaultRepository) GetImagesByProjectID(ctx context.Context, projectID 
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	images, err := q.GetImagesByProjectID(ctx, pgtype.UUID{Bytes: projectUUID, Valid: true})
+	rows, err := q.GetImagesByProjectID(ctx, pgtype.UUID{Bytes: projectUUID, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get images: %w", err)
+	}
+
+	// Convert GetImagesByProjectIDRow to Image
+	images := make([]*queries.Image, len(rows))
+	for i, row := range rows {
+		images[i] = &queries.Image{
+			ID:          row.ID,
+			ProjectID:   row.ProjectID,
+			OriginalUrl: row.OriginalUrl,
+			StagedUrl:   row.StagedUrl,
+			RoomType:    row.RoomType,
+			Style:       row.Style,
+			Seed:        row.Seed,
+			Status:      row.Status,
+			Error:       row.Error,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+		}
 	}
 
 	return images, nil
@@ -104,12 +152,27 @@ func (r *DefaultRepository) UpdateImageStatus(ctx context.Context, imageID strin
 		return nil, fmt.Errorf("invalid image ID: %w", err)
 	}
 
-	image, err := q.UpdateImageStatus(ctx, queries.UpdateImageStatusParams{
+	row, err := q.UpdateImageStatus(ctx, queries.UpdateImageStatusParams{
 		ID:     pgtype.UUID{Bytes: imageUUID, Valid: true},
 		Status: queries.ImageStatus(status),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update image status: %w", err)
+	}
+
+	// Convert UpdateImageStatusRow to Image
+	image := &queries.Image{
+		ID:          row.ID,
+		ProjectID:   row.ProjectID,
+		OriginalUrl: row.OriginalUrl,
+		StagedUrl:   row.StagedUrl,
+		RoomType:    row.RoomType,
+		Style:       row.Style,
+		Seed:        row.Seed,
+		Status:      row.Status,
+		Error:       row.Error,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
 
 	return image, nil
@@ -124,13 +187,28 @@ func (r *DefaultRepository) UpdateImageWithStagedURL(ctx context.Context, imageI
 		return nil, fmt.Errorf("invalid image ID: %w", err)
 	}
 
-	image, err := q.UpdateImageWithStagedURL(ctx, queries.UpdateImageWithStagedURLParams{
+	row, err := q.UpdateImageWithStagedURL(ctx, queries.UpdateImageWithStagedURLParams{
 		ID:        pgtype.UUID{Bytes: imageUUID, Valid: true},
 		StagedUrl: pgtype.Text{String: stagedURL, Valid: true},
 		Status:    queries.ImageStatus(status),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update image with staged URL: %w", err)
+	}
+
+	// Convert UpdateImageWithStagedURLRow to Image
+	image := &queries.Image{
+		ID:          row.ID,
+		ProjectID:   row.ProjectID,
+		OriginalUrl: row.OriginalUrl,
+		StagedUrl:   row.StagedUrl,
+		RoomType:    row.RoomType,
+		Style:       row.Style,
+		Seed:        row.Seed,
+		Status:      row.Status,
+		Error:       row.Error,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
 
 	return image, nil
@@ -145,12 +223,27 @@ func (r *DefaultRepository) UpdateImageWithError(ctx context.Context, imageID st
 		return nil, fmt.Errorf("invalid image ID: %w", err)
 	}
 
-	image, err := q.UpdateImageWithError(ctx, queries.UpdateImageWithErrorParams{
+	row, err := q.UpdateImageWithError(ctx, queries.UpdateImageWithErrorParams{
 		ID:    pgtype.UUID{Bytes: imageUUID, Valid: true},
 		Error: pgtype.Text{String: errorMsg, Valid: true},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update image with error: %w", err)
+	}
+
+	// Convert UpdateImageWithErrorRow to Image
+	image := &queries.Image{
+		ID:          row.ID,
+		ProjectID:   row.ProjectID,
+		OriginalUrl: row.OriginalUrl,
+		StagedUrl:   row.StagedUrl,
+		RoomType:    row.RoomType,
+		Style:       row.Style,
+		Seed:        row.Seed,
+		Status:      row.Status,
+		Error:       row.Error,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
 
 	return image, nil

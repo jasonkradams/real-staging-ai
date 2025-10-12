@@ -14,10 +14,10 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/lib/pq v1.10.9
+	github.com/real-staging-ai/api v0.0.0-00010101000000-000000000000
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/replicate/replicate-go v0.26.0
 	github.com/stretchr/testify v1.11.1
-	github.com/real-staging-ai/api v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0

@@ -100,6 +100,35 @@ func (s *DefaultService) CreateImage(ctx context.Context, req *CreateImageReques
 	return domainImage, nil
 }
 
+// BatchCreateImages creates multiple images and queues them for processing.
+func (s *DefaultService) BatchCreateImages(ctx context.Context, reqs []CreateImageRequest) (*BatchCreateImagesResponse, error) {
+	log := logging.NewDefaultLogger()
+	
+	response := &BatchCreateImagesResponse{
+		Images: []*Image{},
+		Errors: []BatchImageError{},
+	}
+
+	// Process each image request
+	for i, req := range reqs {
+		img, err := s.CreateImage(ctx, &req)
+		if err != nil {
+			log.Error(ctx, "batch create: failed to create image", "index", i, "project_id", req.ProjectID.String(), "error", err)
+			response.Errors = append(response.Errors, BatchImageError{
+				Index:   i,
+				Message: err.Error(),
+			})
+			response.Failed++
+		} else {
+			response.Images = append(response.Images, img)
+			response.Success++
+		}
+	}
+
+	log.Info(ctx, "batch create completed", "total", len(reqs), "success", response.Success, "failed", response.Failed)
+	return response, nil
+}
+
 // GetImageByID retrieves a specific image by its ID.
 func (s *DefaultService) GetImageByID(ctx context.Context, imageID string) (*Image, error) {
 	if imageID == "" {
