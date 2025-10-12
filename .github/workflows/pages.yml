@@ -1,10 +1,11 @@
-name: Deploy API Docs to GitHub Pages
+name: Deploy Documentation to GitHub Pages
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'apps/api/web/api/v1/**'
+      - 'apps/docs/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -24,13 +25,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate OpenAPI spec
-        run: make docs
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: Upload static site
+      - name: Install MkDocs dependencies
+        run: |
+          cd apps/docs
+          pip install -r requirements.txt
+
+      - name: Build MkDocs site
+        run: |
+          cd apps/docs
+          mkdocs build
+
+      - name: Validate OpenAPI spec
+        run: make docs-validate
+
+      - name: Combine documentation sites
+        run: |
+          mkdir -p _site
+          # Copy MkDocs site as root
+          cp -r apps/docs/site/* _site/
+          # Copy OpenAPI docs to /api subdirectory
+          mkdir -p _site/api
+          cp -r apps/api/web/api/v1/* _site/api/
+
+      - name: Upload combined site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/api/web/api/v1
+          path: _site
 
   deploy:
     environment:

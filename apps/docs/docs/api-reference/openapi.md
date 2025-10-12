@@ -5,7 +5,7 @@ The complete OpenAPI 3.0 specification for the Real Staging AI API.
 ## Live Documentation
 
 **Hosted Documentation:**  
-[https://jasonkradams.github.io/real-staging-ai/](https://jasonkradams.github.io/real-staging-ai/)
+[https://jasonkradams.github.io/real-staging-ai/api/](https://jasonkradams.github.io/real-staging-ai/api/) - Interactive Swagger UI
 
 **Local Development:**  
 [http://localhost:8080/api/v1/docs/](http://localhost:8080/api/v1/docs/)

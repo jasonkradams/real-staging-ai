@@ -100,17 +100,22 @@ See `docs/configuration.md` for all environment variables. Highlights:
 
 ## Documentation
 
-**Full Documentation:** [docs.real-staging.ai](https://docs.real-staging.ai) (coming soon) or run locally:
+**Full Documentation:**
+- **Live:** https://jasonkradams.github.io/real-staging-ai/ (Material for MkDocs)
+- **API Reference:** https://jasonkradams.github.io/real-staging-ai/api/ (OpenAPI/Swagger)
+- **Local:** `make docs-serve` then open http://localhost:8000
 
+**Local Development:**
 ```bash
+# Serve MkDocs site
 make docs-serve
-# Open http://localhost:8000
-```
 
-**API Reference:**
-- OpenAPI is embedded and served at `/api/v1/docs`
-- Validate spec: `make docs-validate`
-- Latest published docs: https://jasonkradams.github.io/real-staging-ai/
+# Validate OpenAPI spec
+make docs-validate
+
+# Build static site
+make docs-build
+```
 
 ## Conventional Commits
 
@@ -124,6 +129,8 @@ We use Conventional Commits. Examples:
 
 - `apps/api`: Go HTTP API (Echo), domain packages under `internal/<domain>`.
 - `apps/worker`: Go background worker (Asynq for queue), publishes SSE via Redis.
+- `apps/web`: Next.js frontend application.
+- `apps/docs`: Material for MkDocs documentation site.
 - `infra/migrations`: SQL migrations.
-- `apps/api/web/api/v1`: OpenAPI spec and docs (embedded).
-- `docs/`: architecture, configuration, review notes, and TODOs.
+- `config/`: Environment-specific configuration files (dev, test, prod).
+- `apps/api/web/api/v1`: OpenAPI spec and embedded Swagger UI.
