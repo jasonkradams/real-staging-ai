@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/real-staging-ai/api/internal/auth"
 	"github.com/real-staging-ai/api/internal/logging"
 	"github.com/real-staging-ai/api/internal/settings"
 )
@@ -84,13 +85,16 @@ func (h *AdminHandler) UpdateActiveModel(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
-	// Get user ID from context (set by auth middleware)
-	userID := getUserIDFromContext(c)
-	if userID == "" {
-		return echo.NewHTTPError(http.StatusUnauthorized, "User not authenticated")
+	// Get user ID from JWT token
+	userID, err := auth.GetUserID(c)
+	if err != nil {
+		h.log.Error(ctx, "failed to get user ID from token", "error", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, map[string]string{
+			"message": "User not authenticated",
+		})
 	}
 
-	err := h.settingsService.UpdateActiveModel(ctx, req.Value, userID)
+	err = h.settingsService.UpdateActiveModel(ctx, req.Value, userID)
 	if err != nil {
 		h.log.Error(ctx, "failed to update active model", "error", err, "model_id", req.Value)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -148,13 +152,16 @@ func (h *AdminHandler) UpdateSetting(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "value is required")
 	}
 
-	// Get user ID from context (set by auth middleware)
-	userID := getUserIDFromContext(c)
-	if userID == "" {
-		return echo.NewHTTPError(http.StatusUnauthorized, "User not authenticated")
+	// Get user ID from JWT token
+	userID, err := auth.GetUserID(c)
+	if err != nil {
+		h.log.Error(ctx, "failed to get user ID from token", "error", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, map[string]string{
+			"message": "User not authenticated",
+		})
 	}
 
-	err := h.settingsService.UpdateSetting(ctx, key, req.Value, userID)
+	err = h.settingsService.UpdateSetting(ctx, key, req.Value, userID)
 	if err != nil {
 		h.log.Error(ctx, "failed to update setting", "error", err, "key", key)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -167,12 +174,4 @@ func (h *AdminHandler) UpdateSetting(c echo.Context) error {
 		"key":     key,
 		"value":   req.Value,
 	})
-}
-
-// getUserIDFromContext extracts the user ID from the Echo context.
-func getUserIDFromContext(c echo.Context) string {
-	if userID, ok := c.Get("user_id").(string); ok {
-		return userID
-	}
-	return ""
 }
