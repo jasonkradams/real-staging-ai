@@ -78,7 +78,7 @@ func main() {
 	stagingService, err := staging.NewDefaultService(ctx, stagingCfg)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Failed to initialize staging service: %v", err))
-		os.Exit(1)
+		return
 	}
 
 	log.Info(ctx, "Starting Real Staging AI Worker...")

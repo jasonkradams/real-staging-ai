@@ -87,9 +87,7 @@ type DefaultS3Service struct {
 var _ S3Service = (*DefaultS3Service)(nil)
 
 // awsConfigLoader allows overriding AWS config loading in tests.
-var awsConfigLoader = func(ctx context.Context, optFns ...func(*config.LoadOptions) error) (aws.Config, error) {
-	return config.LoadDefaultConfig(ctx, optFns...)
-}
+var awsConfigLoader = config.LoadDefaultConfig
 
 // NewDefaultS3Service creates a new DefaultS3Service instance.
 // s3Cfg must not be nil.

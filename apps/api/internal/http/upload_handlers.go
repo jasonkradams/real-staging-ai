@@ -125,17 +125,18 @@ func validatePresignUploadRequest(req *PresignUploadRequest) []ValidationErrorDe
 
 	// Validate filename
 	filename := strings.TrimSpace(req.Filename)
-	if filename == "" {
+	switch {
+	case filename == "":
 		errors = append(errors, ValidationErrorDetail{
 			Field:   "filename",
 			Message: "filename is required",
 		})
-	} else if len(filename) > 255 {
+	case len(filename) > 255:
 		errors = append(errors, ValidationErrorDetail{
 			Field:   "filename",
 			Message: "filename must be 255 characters or less",
 		})
-	} else if !storage.ValidateFilename(filename) {
+	case !storage.ValidateFilename(filename):
 		errors = append(errors, ValidationErrorDetail{
 			Field:   "filename",
 			Message: "filename must have a valid image extension (.jpg, .jpeg, .png, .webp)",

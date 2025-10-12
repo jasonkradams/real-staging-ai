@@ -6,7 +6,7 @@ linters:
     - govet
     - staticcheck
     - errcheck
-    # - gocritic
+    - gocritic
     # - gosec
     - lll
 run:

@@ -51,7 +51,7 @@ func main() {
 	if err != nil {
 		logger.Error(ctx, "failed to initialize S3 service", "error", err, "bucket", cfg.S3.BucketName)
 		fmt.Fprintf(os.Stderr, "Error: failed to initialize S3 service: %v\n", err)
-		os.Exit(1)
+		return
 	}
 
 	// Create reconcile service
@@ -91,7 +91,7 @@ func main() {
 	if err != nil {
 		logger.Error(ctx, "reconciliation failed", "error", err)
 		fmt.Fprintf(os.Stderr, "Error: reconciliation failed: %v\n", err)
-		os.Exit(1)
+		return
 	}
 
 	logger.Info(ctx, "reconciliation completed",
