@@ -1,9 +1,10 @@
 import './globals.css'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { Sparkles, Upload, ImageIcon } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import AuthButton from '@/components/AuthButton'
 import UserProvider from '@/components/UserProvider'
+import ProtectedNav from '@/components/ProtectedNav'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -30,14 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <span className="gradient-text hidden sm:inline">Real Staging AI</span>
                   </Link>
                   <div className="hidden items-center gap-1 md:flex">
-                    <Link href="/upload" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100">
-                      <Upload className="h-4 w-4" />
-                      Upload
-                    </Link>
-                    <Link href="/images" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100">
-                      <ImageIcon className="h-4 w-4" />
-                      Images
-                    </Link>
+                    <ProtectedNav />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -62,12 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     © {new Date().getFullYear()} Real Staging AI. Built with Next.js & Replicate.
                   </p>
                   <div className="flex gap-4">
-                    <Link href="/upload" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-                      Upload
-                    </Link>
-                    <Link href="/images" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-                      Images
-                    </Link>
+                    {/* Protected links removed from footer - only available when authenticated */}
                   </div>
                 </div>
               </div>

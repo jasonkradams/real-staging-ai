@@ -1,4 +1,4 @@
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from './lib/auth0';
 
 /**
@@ -14,7 +14,36 @@ import { auth0 } from './lib/auth0';
  * - Protecting routes based on authentication
  */
 export async function middleware(request: NextRequest) {
-  return await auth0.middleware(request);
+  const response = await auth0.middleware(request);
+  
+  // Protected routes that require authentication
+  const userProtectedPaths = ['/upload', '/images'];
+  const adminProtectedPaths = ['/admin'];
+  const pathname = request.nextUrl.pathname;
+  
+  // Check if the current path is protected
+  const isUserProtectedPath = userProtectedPaths.some(path => pathname.startsWith(path));
+  const isAdminProtectedPath = adminProtectedPaths.some(path => pathname.startsWith(path));
+  
+  if (isUserProtectedPath || isAdminProtectedPath) {
+    // Get user session
+    const session = await auth0.getSession(request);
+    
+    // If no session, handle based on route type
+    if (!session) {
+      if (isAdminProtectedPath) {
+        // For admin routes, return 404 to hide existence from unauthorized users
+        return new NextResponse(null, { status: 404, statusText: 'Not Found' });
+      } else {
+        // For user routes, redirect to login with returnTo
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('returnTo', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+  }
+  
+  return response;
 }
 
 export const config = {
