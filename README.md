@@ -1,4 +1,8 @@
 ### Overview
+
+[![codecov](https://codecov.io/gh/jasonkradams/virtual-staging-ai/graph/badge.svg?token=SXDCPC1HOK)](https://codecov.io/gh/jasonkradams/virtual-staging-ai)
+[![CI](https://github.com/jasonkradams/virtual-staging-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonkradams/virtual-staging-ai/actions/workflows/ci.yml)
+
 A DIY virtual staging SaaS for real-estate photos. Upload a room photo → receive an AI-staged image using Replicate's SDXL-Lightning model. Fast time-to-market with production-ready AI staging.
 
 ### Tech Summary
@@ -58,6 +62,14 @@ make test
 
 ```bash
 make test-integration
+```
+
+- Generate coverage report (excludes mock files):
+
+```bash
+make coverage          # Generate coverage.out files
+make coverage-html     # Generate HTML reports and open in browser
+make coverage-summary  # Show coverage percentage summary
 ```
 
 ## Integration Tests

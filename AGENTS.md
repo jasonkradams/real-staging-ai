@@ -13,6 +13,9 @@ This document orients contributors to Real Staging AI's codebase and workflows. 
 - `make up` / `make down`: Start/stop dev stack (API, worker, DB, etc.) via Docker Compose.
 - `make test` / `make test-cover`: Run unit tests (per module) with optional coverage HTML.
 - `make test-integration`: Bring up dockerized deps and run integration tests.
+- `make coverage`: Generate coverage reports excluding `*_mock.go` files.
+- `make coverage-html`: Generate HTML coverage reports and show how to open them.
+- `make coverage-summary`: Show coverage percentage summary for API and Worker.
 - `make lint` / `make lint-fix`: Run golangci-lint (in Docker) and optionally apply fixes.
 - `make generate`: Run code generation (sqlc, mocks via `go generate`).
 - Mock generation (moq): define an interface (e.g., in `service.go`) and add `//go:generate go run github.com/matryer/moq@v0.5.3 -out <file> . <Interface>`. Provide the concrete implementation in a matching `default_*.go` file.
