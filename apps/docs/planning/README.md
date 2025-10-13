@@ -25,10 +25,13 @@ This directory contains planning and tracking documents for completing the Real 
 
 ### Critical Priorities (P0)
 
-1. Complete deployment guide
-2. Document admin features
-3. Complete monitoring guide
-4. Create troubleshooting guide
+** HIGHEST: User Profile & Stripe Integration** (Revenue enabling)
+1. Create user profile page with payment management
+2. Integrate Stripe checkout and customer portal
+3. Complete deployment guide
+4. Document admin features
+5. Complete monitoring guide
+6. Create troubleshooting guide
 
 ---
 
@@ -68,6 +71,27 @@ Style guide, formatting standards, templates, code example best practices, quali
 **Length:** ~10 min read
 
 What to do today/this week, how to use these docs, questions to answer first.
+
+### [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) 🆕
+**Purpose:** Complete Stripe payment integration plan  
+**Audience:** Full-stack developers  
+**Length:** ~20 min read
+
+Comprehensive guide to implementing user profiles and payment processing. Includes explanations of how Stripe works, database migrations, API endpoints, frontend components, and testing procedures.
+
+### [STRIPE_INTEGRATION_SUMMARY.md](STRIPE_INTEGRATION_SUMMARY.md) 🆕
+**Purpose:** Executive summary of Stripe integration  
+**Audience:** All team members  
+**Length:** ~10 min read
+
+Quick overview of what was created, what still needs to be built, and next steps for implementation.
+
+### [USER_DROPDOWN_IMPLEMENTATION.md](USER_DROPDOWN_IMPLEMENTATION.md) 🆕
+**Purpose:** User dropdown menu implementation details  
+**Audience:** Frontend developers  
+**Length:** ~5 min read
+
+Documents the enhanced AuthButton with dropdown menu, profile name fetching, and UX improvements.
 
 ---
 

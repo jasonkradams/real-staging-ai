@@ -10,6 +10,37 @@ See [DOCUMENTATION_PLAN.md](DOCUMENTATION_PLAN.md) for detailed information.
 
 ## 🚨 P0 - Critical for 1.0 (Must Complete)
 
+### P0.0: User Profile & Stripe Integration 🔥
+**Priority:** HIGHEST - Revenue enabling  
+**Files:** See [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md)  
+**Assignee:** _____  
+**Target:** Week of Oct 14-18 (parallel track)
+
+**Backend (5-7 days):**
+- [ ] Create migration `0009_extend_user_profile.up.sql`
+- [ ] Build user profile API (`GET /api/v1/user/profile`, `PATCH /api/v1/user/profile`)
+- [ ] Build Stripe checkout API (`POST /api/v1/billing/create-checkout`)
+- [ ] Build customer portal API (`POST /api/v1/billing/portal`)
+- [ ] Write tests for all endpoints
+
+**Frontend (5-7 days):**
+- [ ] Create `/app/profile/page.tsx` with personal info section
+- [ ] Add business information section
+- [ ] Add payment & billing section with Stripe integration
+- [ ] Add preferences section
+- [ ] Add usage/history section
+- [ ] Form validation and error handling
+- [ ] Test complete payment flow
+
+**Documentation:**
+- [x] Create STRIPE_INTEGRATION_PLAN.md with full explanation
+- [ ] Document API endpoints in OpenAPI spec
+- [ ] Add user guide for profile management
+
+**Progress:** 0% → 100%
+
+---
+
 ### P0.1: Complete Deployment Guide ⏳
 **File:** `apps/docs/docs/operations/deployment.md`  
 **Assignee:** _____  
