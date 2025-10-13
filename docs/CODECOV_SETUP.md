@@ -26,7 +26,7 @@ This document explains how to set up Codecov for coverage reporting.
    - Get your badge token from Codecov Settings → Badge
    - Replace `YOUR_TOKEN_HERE` in README.md with the actual token:
      ```markdown
-     [![codecov](https://codecov.io/gh/jasonkradams/virtual-staging-ai/graph/badge.svg?token=YOUR_ACTUAL_TOKEN)](https://codecov.io/gh/jasonkradams/virtual-staging-ai)
+     [![codecov](https://codecov.io/gh/jasonkradams/real-staging-ai/graph/badge.svg?token=YOUR_ACTUAL_TOKEN)](https://codecov.io/gh/jasonkradams/real-staging-ai)
      ```
 
 ## Local Testing
@@ -62,6 +62,6 @@ The GitHub Actions workflow (`.github/workflows/coverage.yml`) automatically:
 
 ## Viewing Coverage
 
-- **Online**: Visit https://codecov.io/gh/jasonkradams/virtual-staging-ai
+- **Online**: Visit https://codecov.io/gh/jasonkradams/real-staging-ai
 - **Badge**: Shows overall coverage on README
 - **PR Comments**: Codecov automatically comments on PRs with coverage changes
