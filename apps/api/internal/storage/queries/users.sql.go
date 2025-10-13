@@ -35,9 +35,17 @@ type CreateUserParams struct {
 	Role             string      `json:"role"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
+type CreateUserRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, CreateUser, arg.Auth0Sub, arg.StripeCustomerID, arg.Role)
-	var i User
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,
@@ -64,9 +72,17 @@ FROM users
 WHERE auth0_sub = $1
 `
 
-func (q *Queries) GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error) {
+type GetUserByAuth0SubRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserByAuth0SubRow, error) {
 	row := q.db.QueryRow(ctx, GetUserByAuth0Sub, auth0Sub)
-	var i User
+	var i GetUserByAuth0SubRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,
@@ -83,9 +99,17 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error) {
+type GetUserByIDRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (*GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, GetUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,
@@ -102,15 +126,135 @@ FROM users
 WHERE stripe_customer_id = $1
 `
 
-func (q *Queries) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
+type GetUserByStripeCustomerIDRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*GetUserByStripeCustomerIDRow, error) {
 	row := q.db.QueryRow(ctx, GetUserByStripeCustomerID, stripeCustomerID)
-	var i User
+	var i GetUserByStripeCustomerIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,
 		&i.StripeCustomerID,
 		&i.Role,
 		&i.CreatedAt,
+	)
+	return &i, err
+}
+
+const GetUserProfileByAuth0Sub = `-- name: GetUserProfileByAuth0Sub :one
+SELECT 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at
+FROM users
+WHERE auth0_sub = $1
+`
+
+type GetUserProfileByAuth0SubRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	Email            pgtype.Text        `json:"email"`
+	FullName         pgtype.Text        `json:"full_name"`
+	CompanyName      pgtype.Text        `json:"company_name"`
+	Phone            pgtype.Text        `json:"phone"`
+	BillingAddress   []byte             `json:"billing_address"`
+	ProfilePhotoUrl  pgtype.Text        `json:"profile_photo_url"`
+	Preferences      []byte             `json:"preferences"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserProfileByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserProfileByAuth0SubRow, error) {
+	row := q.db.QueryRow(ctx, GetUserProfileByAuth0Sub, auth0Sub)
+	var i GetUserProfileByAuth0SubRow
+	err := row.Scan(
+		&i.ID,
+		&i.Auth0Sub,
+		&i.StripeCustomerID,
+		&i.Role,
+		&i.Email,
+		&i.FullName,
+		&i.CompanyName,
+		&i.Phone,
+		&i.BillingAddress,
+		&i.ProfilePhotoUrl,
+		&i.Preferences,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const GetUserProfileByID = `-- name: GetUserProfileByID :one
+SELECT 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at
+FROM users
+WHERE id = $1
+`
+
+type GetUserProfileByIDRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	Email            pgtype.Text        `json:"email"`
+	FullName         pgtype.Text        `json:"full_name"`
+	CompanyName      pgtype.Text        `json:"company_name"`
+	Phone            pgtype.Text        `json:"phone"`
+	BillingAddress   []byte             `json:"billing_address"`
+	ProfilePhotoUrl  pgtype.Text        `json:"profile_photo_url"`
+	Preferences      []byte             `json:"preferences"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserProfileByID(ctx context.Context, id pgtype.UUID) (*GetUserProfileByIDRow, error) {
+	row := q.db.QueryRow(ctx, GetUserProfileByID, id)
+	var i GetUserProfileByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Auth0Sub,
+		&i.StripeCustomerID,
+		&i.Role,
+		&i.Email,
+		&i.FullName,
+		&i.CompanyName,
+		&i.Phone,
+		&i.BillingAddress,
+		&i.ProfilePhotoUrl,
+		&i.Preferences,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -127,15 +271,23 @@ type ListUsersParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
+type ListUsersRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error) {
 	rows, err := q.db.Query(ctx, ListUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*User{}
+	items := []*ListUsersRow{}
 	for rows.Next() {
-		var i User
+		var i ListUsersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Auth0Sub,
@@ -153,6 +305,90 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 	return items, nil
 }
 
+const UpdateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET 
+  email = COALESCE($2, email),
+  full_name = $3,
+  company_name = $4,
+  phone = $5,
+  billing_address = $6,
+  profile_photo_url = $7,
+  preferences = COALESCE($8, preferences)
+WHERE id = $1
+RETURNING 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at
+`
+
+type UpdateUserProfileParams struct {
+	ID              pgtype.UUID `json:"id"`
+	Email           pgtype.Text `json:"email"`
+	FullName        pgtype.Text `json:"full_name"`
+	CompanyName     pgtype.Text `json:"company_name"`
+	Phone           pgtype.Text `json:"phone"`
+	BillingAddress  []byte      `json:"billing_address"`
+	ProfilePhotoUrl pgtype.Text `json:"profile_photo_url"`
+	Preferences     []byte      `json:"preferences"`
+}
+
+type UpdateUserProfileRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	Email            pgtype.Text        `json:"email"`
+	FullName         pgtype.Text        `json:"full_name"`
+	CompanyName      pgtype.Text        `json:"company_name"`
+	Phone            pgtype.Text        `json:"phone"`
+	BillingAddress   []byte             `json:"billing_address"`
+	ProfilePhotoUrl  pgtype.Text        `json:"profile_photo_url"`
+	Preferences      []byte             `json:"preferences"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (*UpdateUserProfileRow, error) {
+	row := q.db.QueryRow(ctx, UpdateUserProfile,
+		arg.ID,
+		arg.Email,
+		arg.FullName,
+		arg.CompanyName,
+		arg.Phone,
+		arg.BillingAddress,
+		arg.ProfilePhotoUrl,
+		arg.Preferences,
+	)
+	var i UpdateUserProfileRow
+	err := row.Scan(
+		&i.ID,
+		&i.Auth0Sub,
+		&i.StripeCustomerID,
+		&i.Role,
+		&i.Email,
+		&i.FullName,
+		&i.CompanyName,
+		&i.Phone,
+		&i.BillingAddress,
+		&i.ProfilePhotoUrl,
+		&i.Preferences,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const UpdateUserRole = `-- name: UpdateUserRole :one
 UPDATE users
 SET role = $2
@@ -165,9 +401,17 @@ type UpdateUserRoleParams struct {
 	Role string      `json:"role"`
 }
 
-func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error) {
+type UpdateUserRoleRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*UpdateUserRoleRow, error) {
 	row := q.db.QueryRow(ctx, UpdateUserRole, arg.ID, arg.Role)
-	var i User
+	var i UpdateUserRoleRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,
@@ -190,9 +434,17 @@ type UpdateUserStripeCustomerIDParams struct {
 	StripeCustomerID pgtype.Text `json:"stripe_customer_id"`
 }
 
-func (q *Queries) UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error) {
+type UpdateUserStripeCustomerIDRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	Auth0Sub         string             `json:"auth0_sub"`
+	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
+	Role             string             `json:"role"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*UpdateUserStripeCustomerIDRow, error) {
 	row := q.db.QueryRow(ctx, UpdateUserStripeCustomerID, arg.ID, arg.StripeCustomerID)
-	var i User
+	var i UpdateUserStripeCustomerIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Auth0Sub,

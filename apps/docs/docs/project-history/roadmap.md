@@ -176,7 +176,9 @@ Features are prioritized based on:
 ✅ Comprehensive guides  
 ✅ API reference  
 ✅ Architecture documentation  
-✅ Production deployment guides  
+🚧 Production deployment guides (in progress)  
+🚧 Admin features documentation (in progress)  
+🚧 Troubleshooting guide (in progress)  
 
 ## Versioning
 
@@ -191,8 +193,15 @@ We follow [Semantic Versioning](https://semver.org/):
 **1.0 Release Criteria:**
 - [ ] Full test coverage (>80%)
 - [ ] Production deployment proven
-- [ ] API stability guaranteed
-- [ ] Documentation complete
+- [x] API stability guaranteed
+- [ ] **Documentation complete (75% - see [planning docs](../../../planning/))**
+  - [x] Architecture & API Reference
+  - [x] Getting Started & Guides
+  - [ ] Complete Deployment Guide (P0)
+  - [ ] Admin Features Documentation (P0)
+  - [ ] Complete Monitoring Guide (P0)
+  - [ ] Troubleshooting Guide (P0)
+  - [ ] Frontend User Guide (P1)
 - [ ] Performance benchmarks met
 - [ ] Security audit passed
 

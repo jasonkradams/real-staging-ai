@@ -13,6 +13,9 @@ This document orients contributors to Real Staging AI's codebase and workflows. 
 - `make up` / `make down`: Start/stop dev stack (API, worker, DB, etc.) via Docker Compose.
 - `make test` / `make test-cover`: Run unit tests (per module) with optional coverage HTML.
 - `make test-integration`: Bring up dockerized deps and run integration tests.
+- `make coverage`: Generate coverage reports excluding `*_mock.go` files.
+- `make coverage-html`: Generate HTML coverage reports and show how to open them.
+- `make coverage-summary`: Show coverage percentage summary for API and Worker.
 - `make lint` / `make lint-fix`: Run golangci-lint (in Docker) and optionally apply fixes.
 - `make generate`: Run code generation (sqlc, mocks via `go generate`).
 - Mock generation (moq): define an interface (e.g., in `service.go`) and add `//go:generate go run github.com/matryer/moq@v0.5.3 -out <file> . <Interface>`. Provide the concrete implementation in a matching `default_*.go` file.
@@ -30,6 +33,15 @@ This document orients contributors to Real Staging AI's codebase and workflows. 
 - Framework: standard `go test` with tags. Unit tests live alongside code; integration tests in `apps/api/tests/integration`.
 - Commands: `make test` (fast), `make test-integration` (dockerized Postgres/Redis/S3), `make test-cover` (coverage report).
 - Conventions: functions `TestXxx(t *testing.T)`; use table-driven tests; test names begin with `success: ` or `fail: ` and always include a happy path; prefer `t.Setenv()` over `os.Setenv()`; keep external calls mocked except in integration suites.
+
+## Pre-Commit Workflow
+Before committing any changes, **always** run the following commands in order and ensure all pass:
+1. `make generate` - Regenerate code (sqlc, mocks)
+2. `make lint` - Verify code style (0 issues required)
+3. `make test` - Run unit tests (all must pass)
+4. `make test-integration` - Run integration tests (all must pass)
+
+This workflow ensures code quality, prevents broken builds, and catches issues early. **Do not commit if any of these steps fail.**
 
 ## Commit & Pull Request Guidelines
 - Commits: follow Conventional Commits (e.g., `feat(api): add presign upload endpoint`).

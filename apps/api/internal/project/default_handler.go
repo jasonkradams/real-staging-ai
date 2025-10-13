@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 
 	"github.com/real-staging-ai/api/internal/auth"
@@ -80,10 +81,13 @@ func (h *DefaultHandler) Create(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+
+	// Get or create user - we only need the ID
+	var userID pgtype.UUID
+	existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -91,6 +95,7 @@ func (h *DefaultHandler) Create(c echo.Context) error {
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID
 		} else {
 			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -98,12 +103,14 @@ func (h *DefaultHandler) Create(c echo.Context) error {
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID
 	}
 
 	p := Project{Name: req.Name}
 
 	repo := NewDefaultRepository(h.db)
-	created, err := repo.CreateProject(c.Request().Context(), &p, u.ID.String())
+	created, err := repo.CreateProject(c.Request().Context(), &p, userID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   fmt.Sprintf("internal_server_error > %v", err),
@@ -131,10 +138,13 @@ func (h *DefaultHandler) List(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+
+	// Get or create user - we only need the ID
+	var userID pgtype.UUID
+	existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -142,6 +152,7 @@ func (h *DefaultHandler) List(c echo.Context) error {
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID
 		} else {
 			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -149,10 +160,12 @@ func (h *DefaultHandler) List(c echo.Context) error {
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID
 	}
 
 	repo := NewDefaultRepository(h.db)
-	projects, err := repo.GetProjectsByUserID(c.Request().Context(), u.ID.String())
+	projects, err := repo.GetProjectsByUserID(c.Request().Context(), userID.String())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -183,10 +196,13 @@ func (h *DefaultHandler) GetByID(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+
+	// Get or create user - we only need the ID
+	var userID pgtype.UUID
+	existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -194,6 +210,7 @@ func (h *DefaultHandler) GetByID(c echo.Context) error {
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID
 		} else {
 			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -201,10 +218,12 @@ func (h *DefaultHandler) GetByID(c echo.Context) error {
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID
 	}
 
 	repo := NewDefaultRepository(h.db)
-	p, err := repo.GetProjectByIDAndUserID(c.Request().Context(), projectID, u.ID.String())
+	p, err := repo.GetProjectByIDAndUserID(c.Request().Context(), projectID, userID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -257,10 +276,13 @@ func (h *DefaultHandler) Update(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+
+	// Get or create user - we only need the ID
+	var userID pgtype.UUID
+	existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -268,6 +290,7 @@ func (h *DefaultHandler) Update(c echo.Context) error {
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID
 		} else {
 			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -275,10 +298,12 @@ func (h *DefaultHandler) Update(c echo.Context) error {
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID
 	}
 
 	repo := NewDefaultRepository(h.db)
-	updated, err := repo.UpdateProjectByUserID(c.Request().Context(), projectID, u.ID.String(), req.Name)
+	updated, err := repo.UpdateProjectByUserID(c.Request().Context(), projectID, userID.String(), req.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
@@ -315,10 +340,13 @@ func (h *DefaultHandler) Delete(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+
+	// Get or create user - we only need the ID
+	var userID pgtype.UUID
+	existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			u, err = uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := uRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				c.Logger().Errorf("Failed to create user: %v", err)
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -326,6 +354,7 @@ func (h *DefaultHandler) Delete(c echo.Context) error {
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID
 		} else {
 			c.Logger().Errorf("Failed to get user by auth0 sub: %v", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -333,10 +362,12 @@ func (h *DefaultHandler) Delete(c echo.Context) error {
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID
 	}
 
 	repo := NewDefaultRepository(h.db)
-	if err := repo.DeleteProjectByUserID(c.Request().Context(), projectID, u.ID.String()); err != nil {
+	if err := repo.DeleteProjectByUserID(c.Request().Context(), projectID, userID.String()); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c.JSON(http.StatusNotFound, ErrorResponse{
 				Error:   "not_found",

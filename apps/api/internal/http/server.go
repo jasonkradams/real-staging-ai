@@ -19,6 +19,7 @@ import (
 	"github.com/real-staging-ai/api/internal/sse"
 	"github.com/real-staging-ai/api/internal/storage"
 	"github.com/real-staging-ai/api/internal/stripe"
+	"github.com/real-staging-ai/api/internal/user"
 	webdocs "github.com/real-staging-ai/api/web"
 )
 
@@ -129,6 +130,13 @@ func NewServer(
 	protected.GET("/billing/subscriptions", bh.GetMySubscriptions)
 	protected.GET("/billing/invoices", bh.GetMyInvoices)
 
+	// User profile routes
+	userRepo := user.NewDefaultRepository(s.db)
+	profileService := user.NewDefaultProfileService(userRepo)
+	profileHandler := NewProfileHandler(profileService, logging.Default())
+	protected.GET("/user/profile", profileHandler.GetProfile)
+	protected.PATCH("/user/profile", profileHandler.UpdateProfile)
+
 	// Admin routes (feature-flagged)
 	admin := protected.Group("/admin")
 	reconcileSvc := reconcile.NewDefaultService(s.db, s.s3Service)
@@ -138,7 +146,7 @@ func NewServer(
 	// Admin settings routes
 	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
 	settingsService := settings.NewDefaultService(settingsRepo)
-	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	adminHandler := NewAdminHandler(settingsService, s.db, logging.Default())
 	admin.GET("/models", adminHandler.ListModels)
 	admin.GET("/models/active", adminHandler.GetActiveModel)
 	admin.PUT("/models/active", adminHandler.UpdateActiveModel)
@@ -213,6 +221,13 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	api.GET("/billing/subscriptions", withTestUser(bh.GetMySubscriptions))
 	api.GET("/billing/invoices", withTestUser(bh.GetMyInvoices))
 
+	// User profile routes (test server)
+	userRepo := user.NewDefaultRepository(s.db)
+	profileService := user.NewDefaultProfileService(userRepo)
+	profileHandler := NewProfileHandler(profileService, logging.Default())
+	api.GET("/user/profile", withTestUser(profileHandler.GetProfile))
+	api.PATCH("/user/profile", withTestUser(profileHandler.UpdateProfile))
+
 	// Admin routes (public in test server, feature-flagged)
 	admin := api.Group("/admin")
 	reconcileSvc := reconcile.NewDefaultService(s.db, s.s3Service)
@@ -222,7 +237,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	// Admin settings routes (test server)
 	settingsRepo := settings.NewDefaultRepository(s.db.Pool())
 	settingsService := settings.NewDefaultService(settingsRepo)
-	adminHandler := NewAdminHandler(settingsService, logging.Default())
+	adminHandler := NewAdminHandler(settingsService, s.db, logging.Default())
 	admin.GET("/models", withTestUser(adminHandler.ListModels))
 	admin.GET("/models/active", withTestUser(adminHandler.GetActiveModel))
 	admin.PUT("/models/active", withTestUser(adminHandler.UpdateActiveModel))

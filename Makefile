@@ -40,6 +40,42 @@ test-cover: ## Run unit tests with coverage
 	@echo "--> Running web tests"
 	cd apps/web && npm run test:coverage
 
+coverage: ## Generate coverage report excluding mocks
+	@echo "Generating coverage report (excluding mocks)..."
+	@echo "--> Running api tests with coverage"
+	cd apps/api && APP_ENV=../../config go test -timeout 30s -coverprofile=coverage.tmp.out ./... && \
+		cat coverage.tmp.out | grep -v _mock.go > coverage.out && \
+		rm coverage.tmp.out
+	@echo "--> Running worker tests with coverage"
+	cd apps/worker && APP_ENV=../../config go test -timeout 60s -coverprofile=coverage.tmp.out ./... && \
+		cat coverage.tmp.out | grep -v _mock.go > coverage.out && \
+		rm coverage.tmp.out
+	@echo ""
+	@echo "Coverage reports generated:"
+	@echo "  - apps/api/coverage.out"
+	@echo "  - apps/worker/coverage.out"
+
+coverage-html: coverage ## Generate HTML coverage report (excluding mocks)
+	@echo "Generating HTML coverage reports..."
+	cd apps/api && go tool cover -html=coverage.out -o coverage.html
+	cd apps/worker && go tool cover -html=coverage.out -o coverage.html
+	@echo ""
+	@echo "HTML reports generated:"
+	@echo "  - apps/api/coverage.html"
+	@echo "  - apps/worker/coverage.html"
+	@echo ""
+	@echo "Open in browser:"
+	@echo "  open apps/api/coverage.html"
+	@echo "  open apps/worker/coverage.html"
+
+coverage-summary: coverage ## Show coverage summary
+	@echo ""
+	@echo "=== API Coverage Summary ==="
+	cd apps/api && go tool cover -func=coverage.out | tail -1
+	@echo ""
+	@echo "=== Worker Coverage Summary ==="
+	cd apps/worker && go tool cover -func=coverage.out | tail -1
+
 migrate-test: migrate-down-all ## Run database migrations on the test database
 	@echo "Running database migrations on the test database..."
 	$(MAKE) migrate-up-all

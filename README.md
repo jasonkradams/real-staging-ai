@@ -1,4 +1,8 @@
 ### Overview
+
+[![codecov](https://codecov.io/gh/jasonkradams/virtual-staging-ai/graph/badge.svg?token=SXDCPC1HOK)](https://codecov.io/gh/jasonkradams/virtual-staging-ai)
+[![CI](https://github.com/jasonkradams/virtual-staging-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonkradams/virtual-staging-ai/actions/workflows/ci.yml)
+
 A DIY virtual staging SaaS for real-estate photos. Upload a room photo → receive an AI-staged image using Replicate's SDXL-Lightning model. Fast time-to-market with production-ready AI staging.
 
 ### Tech Summary
@@ -60,6 +64,14 @@ make test
 make test-integration
 ```
 
+- Generate coverage report (excludes mock files):
+
+```bash
+make coverage          # Generate coverage.out files
+make coverage-html     # Generate HTML reports and open in browser
+make coverage-summary  # Show coverage percentage summary
+```
+
 ## Integration Tests
 
 - Standard suite lives under `apps/api/tests/integration/` and `apps/worker/tests/integration/`.
@@ -104,6 +116,11 @@ See `docs/configuration.md` for all environment variables. Highlights:
 - **Live:** https://jasonkradams.github.io/real-staging-ai/ (Material for MkDocs)
 - **API Reference:** https://jasonkradams.github.io/real-staging-ai/api/ (OpenAPI/Swagger)
 - **Local:** `make docs-serve` then open http://localhost:8000
+
+**Documentation Status (75% Complete):**
+- 📋 [Documentation Plan](./apps/docs/planning/DOCUMENTATION_PLAN.md) - Comprehensive plan for 1.0 completion
+- ✅ [Progress Checklist](./apps/docs/planning/DOCUMENTATION_CHECKLIST.md) - Track documentation work
+- 📊 [Status Summary](./apps/docs/planning/DOCUMENTATION_SUMMARY.md) - Executive overview
 
 **Local Development:**
 ```bash

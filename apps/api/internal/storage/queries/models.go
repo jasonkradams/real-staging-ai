@@ -160,4 +160,12 @@ type User struct {
 	StripeCustomerID pgtype.Text        `json:"stripe_customer_id"`
 	Role             string             `json:"role"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	Email            pgtype.Text        `json:"email"`
+	FullName         pgtype.Text        `json:"full_name"`
+	CompanyName      pgtype.Text        `json:"company_name"`
+	Phone            pgtype.Text        `json:"phone"`
+	BillingAddress   []byte             `json:"billing_address"`
+	ProfilePhotoUrl  pgtype.Text        `json:"profile_photo_url"`
+	Preferences      []byte             `json:"preferences"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
