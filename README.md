@@ -105,6 +105,11 @@ See `docs/configuration.md` for all environment variables. Highlights:
 - **API Reference:** https://jasonkradams.github.io/real-staging-ai/api/ (OpenAPI/Swagger)
 - **Local:** `make docs-serve` then open http://localhost:8000
 
+**Documentation Status (75% Complete):**
+- 📋 [Documentation Plan](./apps/docs/planning/DOCUMENTATION_PLAN.md) - Comprehensive plan for 1.0 completion
+- ✅ [Progress Checklist](./apps/docs/planning/DOCUMENTATION_CHECKLIST.md) - Track documentation work
+- 📊 [Status Summary](./apps/docs/planning/DOCUMENTATION_SUMMARY.md) - Executive overview
+
 **Local Development:**
 ```bash
 # Serve MkDocs site
