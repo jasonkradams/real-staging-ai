@@ -194,20 +194,20 @@ func (h *AdminHandler) resolveUserUUID(c echo.Context) (string, error) {
 
 	// Look up user by Auth0 sub
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(ctx, auth0Sub)
+	existingUser, err := uRepo.GetByAuth0Sub(ctx, auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// User doesn't exist, create them
-			u, err = uRepo.Create(ctx, auth0Sub, "", "user")
+			newUser, err := uRepo.Create(ctx, auth0Sub, "", "user")
 			if err != nil {
 				h.log.Error(ctx, "failed to create user", "error", err, "auth0_sub", auth0Sub)
 				return "", err
 			}
-		} else {
-			h.log.Error(ctx, "failed to get user by auth0 sub", "error", err, "auth0_sub", auth0Sub)
-			return "", err
+			return newUser.ID.String(), nil
 		}
+		h.log.Error(ctx, "failed to get user by auth0 sub", "error", err, "auth0_sub", auth0Sub)
+		return "", err
 	}
 
-	return u.ID.String(), nil
+	return existingUser.ID.String(), nil
 }

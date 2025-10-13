@@ -74,27 +74,28 @@ func (s *Server) presignUploadHandler(c echo.Context) error {
 	}
 
 	userRepo := user.NewDefaultRepository(s.db)
-	u, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	existingUser, err := userRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
+	var userID string
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// User not found, create a new one
-			u, err = userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
+			newUser, err := userRepo.Create(c.Request().Context(), auth0Sub, "", "user")
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, ErrorResponse{
 					Error:   "internal_server_error",
 					Message: "Failed to create user",
 				})
 			}
+			userID = newUser.ID.String()
 		} else {
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error:   "internal_server_error",
 				Message: "Failed to get user",
 			})
 		}
+	} else {
+		userID = existingUser.ID.String()
 	}
-
-	// Use authenticated user's ID for S3 key scoping
-	userID := u.ID.String()
 
 	// Generate presigned upload URL using injected S3 service
 	result, err := s.s3Service.GeneratePresignedUploadURL(

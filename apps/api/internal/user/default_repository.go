@@ -31,7 +31,7 @@ func NewDefaultRepository(db storage.Database) *DefaultRepository {
 // Create creates a new user in the database.
 func (r *DefaultRepository) Create(
 	ctx context.Context, auth0Sub, stripeCustomerID, role string,
-) (*queries.User, error) {
+) (*queries.CreateUserRow, error) {
 	var stripeCustomerIDType pgtype.Text
 	if stripeCustomerID != "" {
 		stripeCustomerIDType = pgtype.Text{String: stripeCustomerID, Valid: true}
@@ -52,7 +52,7 @@ func (r *DefaultRepository) Create(
 }
 
 // GetByID retrieves a user by their ID.
-func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*queries.User, error) {
+func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*queries.GetUserByIDRow, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -72,7 +72,7 @@ func (r *DefaultRepository) GetByID(ctx context.Context, userID string) (*querie
 }
 
 // GetByAuth0Sub retrieves a user by their Auth0 subject ID.
-func (r *DefaultRepository) GetByAuth0Sub(ctx context.Context, auth0Sub string) (*queries.User, error) {
+func (r *DefaultRepository) GetByAuth0Sub(ctx context.Context, auth0Sub string) (*queries.GetUserByAuth0SubRow, error) {
 	user, err := r.queries.GetUserByAuth0Sub(ctx, auth0Sub)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -85,7 +85,9 @@ func (r *DefaultRepository) GetByAuth0Sub(ctx context.Context, auth0Sub string) 
 }
 
 // GetByStripeCustomerID retrieves a user by their Stripe customer ID.
-func (r *DefaultRepository) GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*queries.User, error) {
+func (r *DefaultRepository) GetByStripeCustomerID(
+	ctx context.Context, stripeCustomerID string,
+) (*queries.GetUserByStripeCustomerIDRow, error) {
 	stripeCustomerIDType := pgtype.Text{String: stripeCustomerID, Valid: true}
 
 	user, err := r.queries.GetUserByStripeCustomerID(ctx, stripeCustomerIDType)
@@ -102,7 +104,7 @@ func (r *DefaultRepository) GetByStripeCustomerID(ctx context.Context, stripeCus
 // UpdateStripeCustomerID updates a user's Stripe customer ID.
 func (r *DefaultRepository) UpdateStripeCustomerID(
 	ctx context.Context, userID, stripeCustomerID string,
-) (*queries.User, error) {
+) (*queries.UpdateUserStripeCustomerIDRow, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -129,7 +131,7 @@ func (r *DefaultRepository) UpdateStripeCustomerID(
 }
 
 // UpdateRole updates a user's role.
-func (r *DefaultRepository) UpdateRole(ctx context.Context, userID, role string) (*queries.User, error) {
+func (r *DefaultRepository) UpdateRole(ctx context.Context, userID, role string) (*queries.UpdateUserRoleRow, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -171,7 +173,7 @@ func (r *DefaultRepository) Delete(ctx context.Context, userID string) error {
 }
 
 // List retrieves a paginated list of users.
-func (r *DefaultRepository) List(ctx context.Context, limit, offset int) ([]*queries.User, error) {
+func (r *DefaultRepository) List(ctx context.Context, limit, offset int) ([]*queries.ListUsersRow, error) {
 	params := queries.ListUsersParams{
 		Limit:  int32(limit),  // #nosec G115 -- Limit/offset are validated by caller
 		Offset: int32(offset), // #nosec G115 -- Limit/offset are validated by caller
@@ -193,4 +195,98 @@ func (r *DefaultRepository) Count(ctx context.Context) (int64, error) {
 	}
 
 	return count, nil
+}
+
+// GetProfileByID retrieves a full user profile by user ID.
+func (r *DefaultRepository) GetProfileByID(ctx context.Context, userID string) (*queries.GetUserProfileByIDRow, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
+
+	profile, err := r.queries.GetUserProfileByID(ctx, userUUIDType)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, pgx.ErrNoRows
+		}
+		return nil, fmt.Errorf("unable to get user profile by ID: %w", err)
+	}
+
+	return profile, nil
+}
+
+// GetProfileByAuth0Sub retrieves a full user profile by Auth0 subject ID.
+func (r *DefaultRepository) GetProfileByAuth0Sub(
+	ctx context.Context, auth0Sub string,
+) (*queries.GetUserProfileByAuth0SubRow, error) {
+	profile, err := r.queries.GetUserProfileByAuth0Sub(ctx, auth0Sub)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, pgx.ErrNoRows
+		}
+		return nil, fmt.Errorf("unable to get user profile by Auth0 sub: %w", err)
+	}
+
+	return profile, nil
+}
+
+// UpdateProfile updates a user's profile information.
+func (r *DefaultRepository) UpdateProfile(
+	ctx context.Context, userID string, profile *ProfileUpdate,
+) (*queries.UpdateUserProfileRow, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	userUUIDType := pgtype.UUID{Bytes: userUUID, Valid: true}
+
+	// Convert optional fields to pgtype
+	var emailType, fullNameType, companyNameType, phoneType, profilePhotoURLType pgtype.Text
+	var billingAddressType, preferencesType []byte
+
+	if profile.Email != nil {
+		emailType = pgtype.Text{String: *profile.Email, Valid: true}
+	}
+	if profile.FullName != nil {
+		fullNameType = pgtype.Text{String: *profile.FullName, Valid: true}
+	}
+	if profile.CompanyName != nil {
+		companyNameType = pgtype.Text{String: *profile.CompanyName, Valid: true}
+	}
+	if profile.Phone != nil {
+		phoneType = pgtype.Text{String: *profile.Phone, Valid: true}
+	}
+	if profile.ProfilePhotoURL != nil {
+		profilePhotoURLType = pgtype.Text{String: *profile.ProfilePhotoURL, Valid: true}
+	}
+	if profile.BillingAddress != nil {
+		billingAddressType = profile.BillingAddress
+	}
+	if profile.Preferences != nil {
+		preferencesType = profile.Preferences
+	}
+
+	params := queries.UpdateUserProfileParams{
+		ID:              userUUIDType,
+		Email:           emailType,
+		FullName:        fullNameType,
+		CompanyName:     companyNameType,
+		Phone:           phoneType,
+		BillingAddress:  billingAddressType,
+		ProfilePhotoUrl: profilePhotoURLType,
+		Preferences:     preferencesType,
+	}
+
+	updated, err := r.queries.UpdateUserProfile(ctx, params)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, pgx.ErrNoRows
+		}
+		return nil, fmt.Errorf("unable to update user profile: %w", err)
+	}
+
+	return updated, nil
 }

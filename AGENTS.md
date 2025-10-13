@@ -31,6 +31,15 @@ This document orients contributors to Real Staging AI's codebase and workflows. 
 - Commands: `make test` (fast), `make test-integration` (dockerized Postgres/Redis/S3), `make test-cover` (coverage report).
 - Conventions: functions `TestXxx(t *testing.T)`; use table-driven tests; test names begin with `success: ` or `fail: ` and always include a happy path; prefer `t.Setenv()` over `os.Setenv()`; keep external calls mocked except in integration suites.
 
+## Pre-Commit Workflow
+Before committing any changes, **always** run the following commands in order and ensure all pass:
+1. `make generate` - Regenerate code (sqlc, mocks)
+2. `make lint` - Verify code style (0 issues required)
+3. `make test` - Run unit tests (all must pass)
+4. `make test-integration` - Run integration tests (all must pass)
+
+This workflow ensures code quality, prevents broken builds, and catches issues early. **Do not commit if any of these steps fail.**
+
 ## Commit & Pull Request Guidelines
 - Commits: follow Conventional Commits (e.g., `feat(api): add presign upload endpoint`).
 - We use Conventional Commits for all changes. Format: `type(scope): subject`.

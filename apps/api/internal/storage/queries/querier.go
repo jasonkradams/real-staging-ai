@@ -18,7 +18,7 @@ type Querier interface {
 	CreateJob(ctx context.Context, arg CreateJobParams) (*Job, error)
 	CreateProcessedEvent(ctx context.Context, arg CreateProcessedEventParams) (*ProcessedEvent, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (*CreateUserRow, error)
 	DeleteImage(ctx context.Context, id pgtype.UUID) error
 	DeleteImagesByProjectID(ctx context.Context, projectID pgtype.UUID) error
 	DeleteJob(ctx context.Context, id pgtype.UUID) error
@@ -43,13 +43,15 @@ type Querier interface {
 	GetProjectByID(ctx context.Context, id pgtype.UUID) (*GetProjectByIDRow, error)
 	GetProjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]*GetProjectsByUserIDRow, error)
 	GetSubscriptionByStripeID(ctx context.Context, stripeSubscriptionID string) (*Subscription, error)
-	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error)
-	GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error)
-	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+	GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserByAuth0SubRow, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (*GetUserByIDRow, error)
+	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*GetUserByStripeCustomerIDRow, error)
+	GetUserProfileByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserProfileByAuth0SubRow, error)
+	GetUserProfileByID(ctx context.Context, id pgtype.UUID) (*GetUserProfileByIDRow, error)
 	ListImagesForReconcile(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error)
 	ListInvoicesByUserID(ctx context.Context, arg ListInvoicesByUserIDParams) ([]*Invoice, error)
 	ListSubscriptionsByUserID(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
-	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error)
 	StartJob(ctx context.Context, id pgtype.UUID) (*Job, error)
 	UpdateImageStatus(ctx context.Context, arg UpdateImageStatusParams) (*UpdateImageStatusRow, error)
 	UpdateImageWithError(ctx context.Context, arg UpdateImageWithErrorParams) (*UpdateImageWithErrorRow, error)
@@ -57,8 +59,9 @@ type Querier interface {
 	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (*Job, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (*UpdateProjectRow, error)
 	UpdateProjectByUserID(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error)
-	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error)
-	UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (*UpdateUserProfileRow, error)
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*UpdateUserRoleRow, error)
+	UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*UpdateUserStripeCustomerIDRow, error)
 	// Invoices persistence queries for sqlc generation
 	// Upsert by unique stripe_invoice_id. We do not modify user_id on conflict.
 	UpsertInvoiceByStripeID(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error)

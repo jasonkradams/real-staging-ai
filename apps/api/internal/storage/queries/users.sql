@@ -43,3 +43,65 @@ LIMIT $1 OFFSET $2;
 -- name: CountUsers :one
 SELECT COUNT(*)
 FROM users;
+
+-- name: GetUserProfileByID :one
+SELECT 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at
+FROM users
+WHERE id = $1;
+
+-- name: GetUserProfileByAuth0Sub :one
+SELECT 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at
+FROM users
+WHERE auth0_sub = $1;
+
+-- name: UpdateUserProfile :one
+UPDATE users
+SET 
+  email = COALESCE(sqlc.narg('email'), email),
+  full_name = sqlc.narg('full_name'),
+  company_name = sqlc.narg('company_name'),
+  phone = sqlc.narg('phone'),
+  billing_address = sqlc.narg('billing_address'),
+  profile_photo_url = sqlc.narg('profile_photo_url'),
+  preferences = COALESCE(sqlc.narg('preferences'), preferences)
+WHERE id = $1
+RETURNING 
+  id, 
+  auth0_sub, 
+  stripe_customer_id, 
+  role, 
+  email,
+  full_name,
+  company_name,
+  phone,
+  billing_address,
+  profile_photo_url,
+  preferences,
+  created_at,
+  updated_at;

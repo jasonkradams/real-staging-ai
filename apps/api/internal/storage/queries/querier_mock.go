@@ -40,7 +40,7 @@ var _ Querier = &QuerierMock{}
 //			CreateProjectFunc: func(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error) {
 //				panic("mock out the CreateProject method")
 //			},
-//			CreateUserFunc: func(ctx context.Context, arg CreateUserParams) (*User, error) {
+//			CreateUserFunc: func(ctx context.Context, arg CreateUserParams) (*CreateUserRow, error) {
 //				panic("mock out the CreateUser method")
 //			},
 //			DeleteImageFunc: func(ctx context.Context, id pgtype.UUID) error {
@@ -106,14 +106,20 @@ var _ Querier = &QuerierMock{}
 //			GetSubscriptionByStripeIDFunc: func(ctx context.Context, stripeSubscriptionID string) (*Subscription, error) {
 //				panic("mock out the GetSubscriptionByStripeID method")
 //			},
-//			GetUserByAuth0SubFunc: func(ctx context.Context, auth0Sub string) (*User, error) {
+//			GetUserByAuth0SubFunc: func(ctx context.Context, auth0Sub string) (*GetUserByAuth0SubRow, error) {
 //				panic("mock out the GetUserByAuth0Sub method")
 //			},
-//			GetUserByIDFunc: func(ctx context.Context, id pgtype.UUID) (*User, error) {
+//			GetUserByIDFunc: func(ctx context.Context, id pgtype.UUID) (*GetUserByIDRow, error) {
 //				panic("mock out the GetUserByID method")
 //			},
-//			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
+//			GetUserByStripeCustomerIDFunc: func(ctx context.Context, stripeCustomerID pgtype.Text) (*GetUserByStripeCustomerIDRow, error) {
 //				panic("mock out the GetUserByStripeCustomerID method")
+//			},
+//			GetUserProfileByAuth0SubFunc: func(ctx context.Context, auth0Sub string) (*GetUserProfileByAuth0SubRow, error) {
+//				panic("mock out the GetUserProfileByAuth0Sub method")
+//			},
+//			GetUserProfileByIDFunc: func(ctx context.Context, id pgtype.UUID) (*GetUserProfileByIDRow, error) {
+//				panic("mock out the GetUserProfileByID method")
 //			},
 //			ListImagesForReconcileFunc: func(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error) {
 //				panic("mock out the ListImagesForReconcile method")
@@ -124,7 +130,7 @@ var _ Querier = &QuerierMock{}
 //			ListSubscriptionsByUserIDFunc: func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error) {
 //				panic("mock out the ListSubscriptionsByUserID method")
 //			},
-//			ListUsersFunc: func(ctx context.Context, arg ListUsersParams) ([]*User, error) {
+//			ListUsersFunc: func(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error) {
 //				panic("mock out the ListUsers method")
 //			},
 //			StartJobFunc: func(ctx context.Context, id pgtype.UUID) (*Job, error) {
@@ -148,10 +154,13 @@ var _ Querier = &QuerierMock{}
 //			UpdateProjectByUserIDFunc: func(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error) {
 //				panic("mock out the UpdateProjectByUserID method")
 //			},
-//			UpdateUserRoleFunc: func(ctx context.Context, arg UpdateUserRoleParams) (*User, error) {
+//			UpdateUserProfileFunc: func(ctx context.Context, arg UpdateUserProfileParams) (*UpdateUserProfileRow, error) {
+//				panic("mock out the UpdateUserProfile method")
+//			},
+//			UpdateUserRoleFunc: func(ctx context.Context, arg UpdateUserRoleParams) (*UpdateUserRoleRow, error) {
 //				panic("mock out the UpdateUserRole method")
 //			},
-//			UpdateUserStripeCustomerIDFunc: func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error) {
+//			UpdateUserStripeCustomerIDFunc: func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*UpdateUserStripeCustomerIDRow, error) {
 //				panic("mock out the UpdateUserStripeCustomerID method")
 //			},
 //			UpsertInvoiceByStripeIDFunc: func(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error) {
@@ -192,7 +201,7 @@ type QuerierMock struct {
 	CreateProjectFunc func(ctx context.Context, arg CreateProjectParams) (*CreateProjectRow, error)
 
 	// CreateUserFunc mocks the CreateUser method.
-	CreateUserFunc func(ctx context.Context, arg CreateUserParams) (*User, error)
+	CreateUserFunc func(ctx context.Context, arg CreateUserParams) (*CreateUserRow, error)
 
 	// DeleteImageFunc mocks the DeleteImage method.
 	DeleteImageFunc func(ctx context.Context, id pgtype.UUID) error
@@ -258,13 +267,19 @@ type QuerierMock struct {
 	GetSubscriptionByStripeIDFunc func(ctx context.Context, stripeSubscriptionID string) (*Subscription, error)
 
 	// GetUserByAuth0SubFunc mocks the GetUserByAuth0Sub method.
-	GetUserByAuth0SubFunc func(ctx context.Context, auth0Sub string) (*User, error)
+	GetUserByAuth0SubFunc func(ctx context.Context, auth0Sub string) (*GetUserByAuth0SubRow, error)
 
 	// GetUserByIDFunc mocks the GetUserByID method.
-	GetUserByIDFunc func(ctx context.Context, id pgtype.UUID) (*User, error)
+	GetUserByIDFunc func(ctx context.Context, id pgtype.UUID) (*GetUserByIDRow, error)
 
 	// GetUserByStripeCustomerIDFunc mocks the GetUserByStripeCustomerID method.
-	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error)
+	GetUserByStripeCustomerIDFunc func(ctx context.Context, stripeCustomerID pgtype.Text) (*GetUserByStripeCustomerIDRow, error)
+
+	// GetUserProfileByAuth0SubFunc mocks the GetUserProfileByAuth0Sub method.
+	GetUserProfileByAuth0SubFunc func(ctx context.Context, auth0Sub string) (*GetUserProfileByAuth0SubRow, error)
+
+	// GetUserProfileByIDFunc mocks the GetUserProfileByID method.
+	GetUserProfileByIDFunc func(ctx context.Context, id pgtype.UUID) (*GetUserProfileByIDRow, error)
 
 	// ListImagesForReconcileFunc mocks the ListImagesForReconcile method.
 	ListImagesForReconcileFunc func(ctx context.Context, arg ListImagesForReconcileParams) ([]*ListImagesForReconcileRow, error)
@@ -276,7 +291,7 @@ type QuerierMock struct {
 	ListSubscriptionsByUserIDFunc func(ctx context.Context, arg ListSubscriptionsByUserIDParams) ([]*Subscription, error)
 
 	// ListUsersFunc mocks the ListUsers method.
-	ListUsersFunc func(ctx context.Context, arg ListUsersParams) ([]*User, error)
+	ListUsersFunc func(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error)
 
 	// StartJobFunc mocks the StartJob method.
 	StartJobFunc func(ctx context.Context, id pgtype.UUID) (*Job, error)
@@ -299,11 +314,14 @@ type QuerierMock struct {
 	// UpdateProjectByUserIDFunc mocks the UpdateProjectByUserID method.
 	UpdateProjectByUserIDFunc func(ctx context.Context, arg UpdateProjectByUserIDParams) (*UpdateProjectByUserIDRow, error)
 
+	// UpdateUserProfileFunc mocks the UpdateUserProfile method.
+	UpdateUserProfileFunc func(ctx context.Context, arg UpdateUserProfileParams) (*UpdateUserProfileRow, error)
+
 	// UpdateUserRoleFunc mocks the UpdateUserRole method.
-	UpdateUserRoleFunc func(ctx context.Context, arg UpdateUserRoleParams) (*User, error)
+	UpdateUserRoleFunc func(ctx context.Context, arg UpdateUserRoleParams) (*UpdateUserRoleRow, error)
 
 	// UpdateUserStripeCustomerIDFunc mocks the UpdateUserStripeCustomerID method.
-	UpdateUserStripeCustomerIDFunc func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error)
+	UpdateUserStripeCustomerIDFunc func(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*UpdateUserStripeCustomerIDRow, error)
 
 	// UpsertInvoiceByStripeIDFunc mocks the UpsertInvoiceByStripeID method.
 	UpsertInvoiceByStripeIDFunc func(ctx context.Context, arg UpsertInvoiceByStripeIDParams) (*Invoice, error)
@@ -536,6 +554,20 @@ type QuerierMock struct {
 			// StripeCustomerID is the stripeCustomerID argument value.
 			StripeCustomerID pgtype.Text
 		}
+		// GetUserProfileByAuth0Sub holds details about calls to the GetUserProfileByAuth0Sub method.
+		GetUserProfileByAuth0Sub []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Auth0Sub is the auth0Sub argument value.
+			Auth0Sub string
+		}
+		// GetUserProfileByID holds details about calls to the GetUserProfileByID method.
+		GetUserProfileByID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID pgtype.UUID
+		}
 		// ListImagesForReconcile holds details about calls to the ListImagesForReconcile method.
 		ListImagesForReconcile []struct {
 			// Ctx is the ctx argument value.
@@ -613,6 +645,13 @@ type QuerierMock struct {
 			// Arg is the arg argument value.
 			Arg UpdateProjectByUserIDParams
 		}
+		// UpdateUserProfile holds details about calls to the UpdateUserProfile method.
+		UpdateUserProfile []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Arg is the arg argument value.
+			Arg UpdateUserProfileParams
+		}
 		// UpdateUserRole holds details about calls to the UpdateUserRole method.
 		UpdateUserRole []struct {
 			// Ctx is the ctx argument value.
@@ -681,6 +720,8 @@ type QuerierMock struct {
 	lockGetUserByAuth0Sub              sync.RWMutex
 	lockGetUserByID                    sync.RWMutex
 	lockGetUserByStripeCustomerID      sync.RWMutex
+	lockGetUserProfileByAuth0Sub       sync.RWMutex
+	lockGetUserProfileByID             sync.RWMutex
 	lockListImagesForReconcile         sync.RWMutex
 	lockListInvoicesByUserID           sync.RWMutex
 	lockListSubscriptionsByUserID      sync.RWMutex
@@ -692,6 +733,7 @@ type QuerierMock struct {
 	lockUpdateJobStatus                sync.RWMutex
 	lockUpdateProject                  sync.RWMutex
 	lockUpdateProjectByUserID          sync.RWMutex
+	lockUpdateUserProfile              sync.RWMutex
 	lockUpdateUserRole                 sync.RWMutex
 	lockUpdateUserStripeCustomerID     sync.RWMutex
 	lockUpsertInvoiceByStripeID        sync.RWMutex
@@ -948,7 +990,7 @@ func (mock *QuerierMock) CreateProjectCalls() []struct {
 }
 
 // CreateUser calls CreateUserFunc.
-func (mock *QuerierMock) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
+func (mock *QuerierMock) CreateUser(ctx context.Context, arg CreateUserParams) (*CreateUserRow, error) {
 	if mock.CreateUserFunc == nil {
 		panic("QuerierMock.CreateUserFunc: method is nil but Querier.CreateUser was just called")
 	}
@@ -1736,7 +1778,7 @@ func (mock *QuerierMock) GetSubscriptionByStripeIDCalls() []struct {
 }
 
 // GetUserByAuth0Sub calls GetUserByAuth0SubFunc.
-func (mock *QuerierMock) GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*User, error) {
+func (mock *QuerierMock) GetUserByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserByAuth0SubRow, error) {
 	if mock.GetUserByAuth0SubFunc == nil {
 		panic("QuerierMock.GetUserByAuth0SubFunc: method is nil but Querier.GetUserByAuth0Sub was just called")
 	}
@@ -1772,7 +1814,7 @@ func (mock *QuerierMock) GetUserByAuth0SubCalls() []struct {
 }
 
 // GetUserByID calls GetUserByIDFunc.
-func (mock *QuerierMock) GetUserByID(ctx context.Context, id pgtype.UUID) (*User, error) {
+func (mock *QuerierMock) GetUserByID(ctx context.Context, id pgtype.UUID) (*GetUserByIDRow, error) {
 	if mock.GetUserByIDFunc == nil {
 		panic("QuerierMock.GetUserByIDFunc: method is nil but Querier.GetUserByID was just called")
 	}
@@ -1808,7 +1850,7 @@ func (mock *QuerierMock) GetUserByIDCalls() []struct {
 }
 
 // GetUserByStripeCustomerID calls GetUserByStripeCustomerIDFunc.
-func (mock *QuerierMock) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*User, error) {
+func (mock *QuerierMock) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID pgtype.Text) (*GetUserByStripeCustomerIDRow, error) {
 	if mock.GetUserByStripeCustomerIDFunc == nil {
 		panic("QuerierMock.GetUserByStripeCustomerIDFunc: method is nil but Querier.GetUserByStripeCustomerID was just called")
 	}
@@ -1840,6 +1882,78 @@ func (mock *QuerierMock) GetUserByStripeCustomerIDCalls() []struct {
 	mock.lockGetUserByStripeCustomerID.RLock()
 	calls = mock.calls.GetUserByStripeCustomerID
 	mock.lockGetUserByStripeCustomerID.RUnlock()
+	return calls
+}
+
+// GetUserProfileByAuth0Sub calls GetUserProfileByAuth0SubFunc.
+func (mock *QuerierMock) GetUserProfileByAuth0Sub(ctx context.Context, auth0Sub string) (*GetUserProfileByAuth0SubRow, error) {
+	if mock.GetUserProfileByAuth0SubFunc == nil {
+		panic("QuerierMock.GetUserProfileByAuth0SubFunc: method is nil but Querier.GetUserProfileByAuth0Sub was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Auth0Sub string
+	}{
+		Ctx:      ctx,
+		Auth0Sub: auth0Sub,
+	}
+	mock.lockGetUserProfileByAuth0Sub.Lock()
+	mock.calls.GetUserProfileByAuth0Sub = append(mock.calls.GetUserProfileByAuth0Sub, callInfo)
+	mock.lockGetUserProfileByAuth0Sub.Unlock()
+	return mock.GetUserProfileByAuth0SubFunc(ctx, auth0Sub)
+}
+
+// GetUserProfileByAuth0SubCalls gets all the calls that were made to GetUserProfileByAuth0Sub.
+// Check the length with:
+//
+//	len(mockedQuerier.GetUserProfileByAuth0SubCalls())
+func (mock *QuerierMock) GetUserProfileByAuth0SubCalls() []struct {
+	Ctx      context.Context
+	Auth0Sub string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Auth0Sub string
+	}
+	mock.lockGetUserProfileByAuth0Sub.RLock()
+	calls = mock.calls.GetUserProfileByAuth0Sub
+	mock.lockGetUserProfileByAuth0Sub.RUnlock()
+	return calls
+}
+
+// GetUserProfileByID calls GetUserProfileByIDFunc.
+func (mock *QuerierMock) GetUserProfileByID(ctx context.Context, id pgtype.UUID) (*GetUserProfileByIDRow, error) {
+	if mock.GetUserProfileByIDFunc == nil {
+		panic("QuerierMock.GetUserProfileByIDFunc: method is nil but Querier.GetUserProfileByID was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  pgtype.UUID
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockGetUserProfileByID.Lock()
+	mock.calls.GetUserProfileByID = append(mock.calls.GetUserProfileByID, callInfo)
+	mock.lockGetUserProfileByID.Unlock()
+	return mock.GetUserProfileByIDFunc(ctx, id)
+}
+
+// GetUserProfileByIDCalls gets all the calls that were made to GetUserProfileByID.
+// Check the length with:
+//
+//	len(mockedQuerier.GetUserProfileByIDCalls())
+func (mock *QuerierMock) GetUserProfileByIDCalls() []struct {
+	Ctx context.Context
+	ID  pgtype.UUID
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  pgtype.UUID
+	}
+	mock.lockGetUserProfileByID.RLock()
+	calls = mock.calls.GetUserProfileByID
+	mock.lockGetUserProfileByID.RUnlock()
 	return calls
 }
 
@@ -1952,7 +2066,7 @@ func (mock *QuerierMock) ListSubscriptionsByUserIDCalls() []struct {
 }
 
 // ListUsers calls ListUsersFunc.
-func (mock *QuerierMock) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
+func (mock *QuerierMock) ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error) {
 	if mock.ListUsersFunc == nil {
 		panic("QuerierMock.ListUsersFunc: method is nil but Querier.ListUsers was just called")
 	}
@@ -2239,8 +2353,44 @@ func (mock *QuerierMock) UpdateProjectByUserIDCalls() []struct {
 	return calls
 }
 
+// UpdateUserProfile calls UpdateUserProfileFunc.
+func (mock *QuerierMock) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (*UpdateUserProfileRow, error) {
+	if mock.UpdateUserProfileFunc == nil {
+		panic("QuerierMock.UpdateUserProfileFunc: method is nil but Querier.UpdateUserProfile was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Arg UpdateUserProfileParams
+	}{
+		Ctx: ctx,
+		Arg: arg,
+	}
+	mock.lockUpdateUserProfile.Lock()
+	mock.calls.UpdateUserProfile = append(mock.calls.UpdateUserProfile, callInfo)
+	mock.lockUpdateUserProfile.Unlock()
+	return mock.UpdateUserProfileFunc(ctx, arg)
+}
+
+// UpdateUserProfileCalls gets all the calls that were made to UpdateUserProfile.
+// Check the length with:
+//
+//	len(mockedQuerier.UpdateUserProfileCalls())
+func (mock *QuerierMock) UpdateUserProfileCalls() []struct {
+	Ctx context.Context
+	Arg UpdateUserProfileParams
+} {
+	var calls []struct {
+		Ctx context.Context
+		Arg UpdateUserProfileParams
+	}
+	mock.lockUpdateUserProfile.RLock()
+	calls = mock.calls.UpdateUserProfile
+	mock.lockUpdateUserProfile.RUnlock()
+	return calls
+}
+
 // UpdateUserRole calls UpdateUserRoleFunc.
-func (mock *QuerierMock) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*User, error) {
+func (mock *QuerierMock) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (*UpdateUserRoleRow, error) {
 	if mock.UpdateUserRoleFunc == nil {
 		panic("QuerierMock.UpdateUserRoleFunc: method is nil but Querier.UpdateUserRole was just called")
 	}
@@ -2276,7 +2426,7 @@ func (mock *QuerierMock) UpdateUserRoleCalls() []struct {
 }
 
 // UpdateUserStripeCustomerID calls UpdateUserStripeCustomerIDFunc.
-func (mock *QuerierMock) UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*User, error) {
+func (mock *QuerierMock) UpdateUserStripeCustomerID(ctx context.Context, arg UpdateUserStripeCustomerIDParams) (*UpdateUserStripeCustomerIDRow, error) {
 	if mock.UpdateUserStripeCustomerIDFunc == nil {
 		panic("QuerierMock.UpdateUserStripeCustomerIDFunc: method is nil but Querier.UpdateUserStripeCustomerID was just called")
 	}
