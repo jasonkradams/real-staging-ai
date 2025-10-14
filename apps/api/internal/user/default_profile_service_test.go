@@ -176,7 +176,10 @@ func TestDefaultProfileService_GetProfileByAuth0Sub(t *testing.T) {
 			name:     "success: get profile by auth0 sub",
 			auth0Sub: auth0Sub,
 			setupMock: func(repo *RepositoryMock) {
-				repo.GetProfileByAuth0SubFunc = func(ctx context.Context, sub string) (*queries.GetUserProfileByAuth0SubRow, error) {
+				repo.GetProfileByAuth0SubFunc = func(
+					ctx context.Context,
+					sub string,
+				) (*queries.GetUserProfileByAuth0SubRow, error) {
 					return &queries.GetUserProfileByAuth0SubRow{
 						ID:               pgtype.UUID{Bytes: userID, Valid: true},
 						StripeCustomerID: pgtype.Text{Valid: false},
@@ -202,7 +205,10 @@ func TestDefaultProfileService_GetProfileByAuth0Sub(t *testing.T) {
 			name:     "fail: user not found",
 			auth0Sub: auth0Sub,
 			setupMock: func(repo *RepositoryMock) {
-				repo.GetProfileByAuth0SubFunc = func(ctx context.Context, sub string) (*queries.GetUserProfileByAuth0SubRow, error) {
+				repo.GetProfileByAuth0SubFunc = func(
+					ctx context.Context,
+					sub string,
+				) (*queries.GetUserProfileByAuth0SubRow, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -213,7 +219,10 @@ func TestDefaultProfileService_GetProfileByAuth0Sub(t *testing.T) {
 			name:     "fail: database error",
 			auth0Sub: auth0Sub,
 			setupMock: func(repo *RepositoryMock) {
-				repo.GetProfileByAuth0SubFunc = func(ctx context.Context, sub string) (*queries.GetUserProfileByAuth0SubRow, error) {
+				repo.GetProfileByAuth0SubFunc = func(
+					ctx context.Context,
+					sub string,
+				) (*queries.GetUserProfileByAuth0SubRow, error) {
 					return nil, errors.New("database error")
 				}
 			},
@@ -275,7 +284,11 @@ func TestDefaultProfileService_UpdateProfile(t *testing.T) {
 				Preferences:     prefs,
 			},
 			setupMock: func(repo *RepositoryMock) {
-				repo.UpdateProfileFunc = func(ctx context.Context, userIDStr string, update *ProfileUpdate) (*queries.UpdateUserProfileRow, error) {
+				repo.UpdateProfileFunc = func(
+					ctx context.Context,
+					userIDStr string,
+					update *ProfileUpdate,
+				) (*queries.UpdateUserProfileRow, error) {
 					return &queries.UpdateUserProfileRow{
 						ID:               pgtype.UUID{Bytes: userID, Valid: true},
 						StripeCustomerID: pgtype.Text{Valid: false},
@@ -317,7 +330,11 @@ func TestDefaultProfileService_UpdateProfile(t *testing.T) {
 				FullName: &fullName,
 			},
 			setupMock: func(repo *RepositoryMock) {
-				repo.UpdateProfileFunc = func(ctx context.Context, userIDStr string, update *ProfileUpdate) (*queries.UpdateUserProfileRow, error) {
+				repo.UpdateProfileFunc = func(
+					ctx context.Context,
+					userIDStr string,
+					update *ProfileUpdate,
+				) (*queries.UpdateUserProfileRow, error) {
 					return &queries.UpdateUserProfileRow{
 						ID:               pgtype.UUID{Bytes: userID, Valid: true},
 						StripeCustomerID: pgtype.Text{Valid: false},
@@ -398,7 +415,11 @@ func TestDefaultProfileService_UpdateProfile(t *testing.T) {
 				Email: &email,
 			},
 			setupMock: func(repo *RepositoryMock) {
-				repo.UpdateProfileFunc = func(ctx context.Context, userIDStr string, update *ProfileUpdate) (*queries.UpdateUserProfileRow, error) {
+				repo.UpdateProfileFunc = func(
+					ctx context.Context,
+					userIDStr string,
+					update *ProfileUpdate,
+				) (*queries.UpdateUserProfileRow, error) {
 					return nil, pgx.ErrNoRows
 				}
 			},
@@ -412,8 +433,11 @@ func TestDefaultProfileService_UpdateProfile(t *testing.T) {
 				Email: &email,
 			},
 			setupMock: func(repo *RepositoryMock) {
-				//nolint:lll // Test setup with long function signature
-				repo.UpdateProfileFunc = func(ctx context.Context, userIDStr string, update *ProfileUpdate) (*queries.UpdateUserProfileRow, error) {
+				repo.UpdateProfileFunc = func(
+					ctx context.Context,
+					userIDStr string,
+					update *ProfileUpdate,
+				) (*queries.UpdateUserProfileRow, error) {
 					return nil, errors.New("database error")
 				}
 			},
