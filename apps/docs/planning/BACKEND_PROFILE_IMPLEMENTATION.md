@@ -426,9 +426,9 @@ infra/migrations/
 - [x] Routes wired into server
 - [x] Code compiles successfully
 
-### Testing (To Do)
-- [ ] Write unit tests for ProfileService
-- [ ] Write unit tests for ProfileHandler
+### Testing (In Progress)
+- [x] Write unit tests for ProfileService - **100% coverage of reachable code**
+- [x] Write unit tests for ProfileHandler - **Comprehensive coverage**
 - [ ] Write integration tests for profile endpoints
 - [ ] Test with real Auth0 tokens
 - [ ] Test with various JSON payloads
