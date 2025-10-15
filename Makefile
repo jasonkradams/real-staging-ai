@@ -236,10 +236,11 @@ down-web: ## Stop the web server
 
 clean: ## Remove unused and unnecessary files
 	@echo "Removing unused and unnecessary files..."
-	cd apps/api && go clean -cache -testcache -modcache
-	cd apps/worker && go clean -cache -testcache -modcache
+	cd apps/api && go clean -cache -testcache -modcache &
+	cd apps/worker && go clean -cache -testcache -modcache &
 	rm -rf apps/api/bin apps/api/pkg apps/worker/bin apps/worker/pkg &
 	rm -rf apps/web/.next &
+	rm -rf apps/docs/site &
 	find . -type f -name "cover*.out" -exec rm -rf {} + &
 	find . -type f -name "cover*.html" -exec rm -rf {} + &
 	find . -type f -name .localstack -exec rm -rf {} + &
