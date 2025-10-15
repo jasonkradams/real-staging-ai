@@ -2,6 +2,9 @@
 coverage.html
 coverage.*.out
 coverage.out
+coverage_handler.html
+coverage_handler.out
+coverage_profile.out
 
 # NPM Test Coverage
 coverage/
@@ -9,9 +12,9 @@ coverage/
 .localstack/
 .env*
 
-# Local secrets (do not commit)
-secrets.yml
-.secrets/
+# # Local secrets (do not commit)
+# secrets.yml
+# .secrets/
 
 # Local config overrides (do not commit)
 config/local-override.yml
