@@ -1,11 +1,51 @@
 'use client';
 
 import { useUser } from '@auth0/nextjs-auth0';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Sparkles, Upload, ImageIcon, Zap, Shield, Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
+import type { BackendProfile } from '@/lib/profile';
 
 export default function Page() {
   const { user, isLoading, error } = useUser();
+  const [profileName, setProfileName] = useState<string | null>(null);
+
+  const displayName = (() => {
+    if (profileName && profileName.trim().length > 0) return profileName;
+    if (user?.name && !user.name.includes('@')) return user.name;
+    if (user?.given_name) return user.family_name ? `${user.given_name} ${user.family_name}` : user.given_name;
+    if (user?.nickname) return user.nickname;
+    const local = user?.email?.split('@')[0];
+    if (local) {
+      const pretty = local
+        .replace(/[._-]+/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      return pretty || local;
+    }
+    return 'there';
+  })();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      try {
+        const p = await apiFetch<BackendProfile>('/v1/user/profile');
+        if (!cancelled && p?.full_name) {
+          setProfileName(p.full_name);
+        }
+      } catch {
+        // ignore, fall back to Auth0 name heuristics
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -190,7 +230,7 @@ export default function Page() {
             Dashboard
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold">
-            Welcome back, <span className="gradient-text">{user.name || user.email?.split('@')[0]}</span>!
+            Welcome back, <span className="gradient-text">{displayName}</span>!
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Start staging properties or manage your existing projects. Everything you need is right at your fingertips.

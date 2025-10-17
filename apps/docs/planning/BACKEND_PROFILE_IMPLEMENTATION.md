@@ -13,6 +13,7 @@ Complete backend implementation of user profile API endpoints with full CRUD ope
 - ✅ Repository pattern with clean interfaces
 - ✅ Service layer with validation
 - ✅ HTTP handlers with proper auth
+- ✅ Handlers ensure a `users` row exists on first access (profile + billing)
 - ✅ Wired into Echo HTTP server
 - ✅ Compiles successfully
 - ✅ Migrations applied to dev and test databases
@@ -190,7 +191,7 @@ type ProfileUpdateRequest struct {
 // User profile routes
 userRepo := user.NewDefaultRepository(s.db)
 profileService := user.NewDefaultProfileService(userRepo)
-profileHandler := NewProfileHandler(profileService, logging.Default())
+profileHandler := NewProfileHandler(profileService, userRepo, logging.Default())
 protected.GET("/user/profile", profileHandler.GetProfile)
 protected.PATCH("/user/profile", profileHandler.UpdateProfile)
 ```
@@ -436,9 +437,9 @@ infra/migrations/
 
 ### Frontend Integration
 - [ ] Update Next.js mock API to call real backend
-- [ ] Test profile fetch on page load
+- [x] Test profile fetch on page load
 - [ ] Test profile update on save
-- [ ] Verify name displays in AuthButton dropdown
+- [x] Verify name displays in AuthButton dropdown
 - [ ] Test end-to-end flow
 
 ### Documentation

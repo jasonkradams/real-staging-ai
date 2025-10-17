@@ -133,7 +133,7 @@ func NewServer(
 	// User profile routes
 	userRepo := user.NewDefaultRepository(s.db)
 	profileService := user.NewDefaultProfileService(userRepo)
-	profileHandler := NewProfileHandler(profileService, logging.Default())
+	profileHandler := NewProfileHandler(profileService, userRepo, logging.Default())
 	protected.GET("/user/profile", profileHandler.GetProfile)
 	protected.PATCH("/user/profile", profileHandler.UpdateProfile)
 
@@ -224,7 +224,7 @@ func NewTestServer(db storage.Database, s3Service storage.S3Service, imageServic
 	// User profile routes (test server)
 	userRepo := user.NewDefaultRepository(s.db)
 	profileService := user.NewDefaultProfileService(userRepo)
-	profileHandler := NewProfileHandler(profileService, logging.Default())
+	profileHandler := NewProfileHandler(profileService, userRepo, logging.Default())
 	api.GET("/user/profile", withTestUser(profileHandler.GetProfile))
 	api.PATCH("/user/profile", withTestUser(profileHandler.UpdateProfile))
 

@@ -1,8 +1,10 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
 	"github.com/real-staging-ai/api/internal/auth"
@@ -13,13 +15,19 @@ import (
 // ProfileHandler handles user profile HTTP requests.
 type ProfileHandler struct {
 	profileService user.ProfileService
+	userRepo       user.Repository
 	log            logging.Logger
 }
 
 // NewProfileHandler creates a new ProfileHandler.
-func NewProfileHandler(profileService user.ProfileService, log logging.Logger) *ProfileHandler {
+func NewProfileHandler(
+	profileService user.ProfileService,
+	userRepo user.Repository,
+	log logging.Logger,
+) *ProfileHandler {
 	return &ProfileHandler{
 		profileService: profileService,
+		userRepo:       userRepo,
 		log:            log,
 	}
 }
@@ -33,6 +41,19 @@ func (h *ProfileHandler) GetProfile(c echo.Context) error {
 	if err != nil {
 		h.log.Error(ctx, "failed to get auth0 subject", "error", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+	}
+
+	// Ensure user exists (create if missing)
+	if _, err := h.userRepo.GetByAuth0Sub(ctx, auth0Sub); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			if _, createErr := h.userRepo.Create(ctx, auth0Sub, "", "user"); createErr != nil {
+				h.log.Error(ctx, "failed to create user", "error", createErr, "auth0_sub", auth0Sub)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to resolve user")
+			}
+		} else {
+			h.log.Error(ctx, "failed to get user by auth0 sub", "error", err, "auth0_sub", auth0Sub)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to resolve user")
+		}
 	}
 
 	// Get profile by Auth0 subject
@@ -54,6 +75,19 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 	if err != nil {
 		h.log.Error(ctx, "failed to get auth0 subject", "error", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+	}
+
+	// Ensure user exists (create if missing)
+	if _, err := h.userRepo.GetByAuth0Sub(ctx, auth0Sub); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			if _, createErr := h.userRepo.Create(ctx, auth0Sub, "", "user"); createErr != nil {
+				h.log.Error(ctx, "failed to create user", "error", createErr, "auth0_sub", auth0Sub)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to resolve user")
+			}
+		} else {
+			h.log.Error(ctx, "failed to get user by auth0 sub", "error", err, "auth0_sub", auth0Sub)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to resolve user")
+		}
 	}
 
 	// Get current profile to obtain user ID

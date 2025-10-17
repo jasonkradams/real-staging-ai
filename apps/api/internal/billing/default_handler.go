@@ -50,16 +50,23 @@ func (h *DefaultHandler) GetMySubscriptions(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Error:   "internal_server_error",
-			Message: "Failed to resolve user",
-		})
+	var userID string
+	if existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub); err != nil {
+		// Create user on first access
+		if newUser, createErr := uRepo.Create(c.Request().Context(), auth0Sub, "", "user"); createErr != nil {
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to resolve user",
+			})
+		} else {
+			userID = newUser.ID.String()
+		}
+	} else {
+		userID = existingUser.ID.String()
 	}
 
 	subRepo := stripe.NewSubscriptionsRepository(h.db)
-	rows, err := subRepo.ListByUserID(c.Request().Context(), u.ID.String(), limit, offset)
+	rows, err := subRepo.ListByUserID(c.Request().Context(), userID, limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",
@@ -106,16 +113,23 @@ func (h *DefaultHandler) GetMyInvoices(c echo.Context) error {
 	}
 
 	uRepo := user.NewDefaultRepository(h.db)
-	u, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Error:   "internal_server_error",
-			Message: "Failed to resolve user",
-		})
+	var userID string
+	if existingUser, err := uRepo.GetByAuth0Sub(c.Request().Context(), auth0Sub); err != nil {
+		// Create user on first access
+		if newUser, createErr := uRepo.Create(c.Request().Context(), auth0Sub, "", "user"); createErr != nil {
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "internal_server_error",
+				Message: "Failed to resolve user",
+			})
+		} else {
+			userID = newUser.ID.String()
+		}
+	} else {
+		userID = existingUser.ID.String()
 	}
 
 	invRepo := stripe.NewInvoicesRepository(h.db)
-	rows, err := invRepo.ListByUserID(c.Request().Context(), u.ID.String(), limit, offset)
+	rows, err := invRepo.ListByUserID(c.Request().Context(), userID, limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_server_error",

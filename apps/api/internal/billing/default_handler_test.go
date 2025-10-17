@@ -44,9 +44,57 @@ func TestGetMySubscriptions(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 	}
-
 	handler := NewDefaultHandler(nil)
 	runHandlerTableTest(t, handler.GetMySubscriptions, tests)
+}
+
+// Helper to test create-on-missing user behavior for both invoices and subscriptions
+func testCreateUserWhenMissing(t *testing.T, getHandler func(*DefaultHandler) func(echo.Context) error) {
+	t.Helper()
+	now := time.Now()
+	call := 0
+	db := &storage.DatabaseMock{
+		QueryRowFunc: func(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+			call++
+			if call == 1 {
+				// First call: GetByAuth0Sub -> no rows
+				return rowStub{scan: func(dest ...any) error { return pgx.ErrNoRows }}
+			}
+			// Second call: Create user -> return a valid row
+			return rowStub{scan: mockUserRow(now)}
+		},
+		QueryFunc: func(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+			// Return empty list
+			return &rowsIterStub{}, nil
+		},
+	}
+	h := NewDefaultHandler(db)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Test-User", "auth0|testuser")
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if err := getHandler(h)(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+}
+
+// Ensure that when the user lookup returns no rows, the handler creates a user and proceeds (invoices).
+func TestGetMyInvoices_DB_CreateUserWhenMissing(t *testing.T) {
+	testCreateUserWhenMissing(t, func(h *DefaultHandler) func(echo.Context) error {
+		return h.GetMyInvoices
+	})
+}
+
+// Ensure that when the user lookup returns no rows, the handler creates a user and proceeds (subscriptions).
+func TestGetMySubscriptions_DB_CreateUserWhenMissing(t *testing.T) {
+	testCreateUserWhenMissing(t, func(h *DefaultHandler) func(echo.Context) error {
+		return h.GetMySubscriptions
+	})
 }
 
 // Minimal pgx.Row stub used for DatabaseMock.QueryRow responses

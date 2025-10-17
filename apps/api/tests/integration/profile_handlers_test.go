@@ -63,11 +63,16 @@ func TestGetProfile_Integration(t *testing.T) {
 			},
 		},
 		{
-			name:           "fail: user not found",
+			name:           "success: create user on first access",
 			userHeader:     "auth0|nonexistent",
-			expectedStatus: http.StatusInternalServerError,
+			expectedStatus: http.StatusOK,
 			validate: func(t *testing.T, response []byte) {
-				assert.Contains(t, string(response), "Failed to retrieve profile")
+				var profile user.ProfileResponse
+				err := json.Unmarshal(response, &profile)
+				require.NoError(t, err)
+				// Should have created a new user with default role
+				assert.Equal(t, "user", profile.Role)
+				assert.NotEmpty(t, profile.ID)
 			},
 		},
 	}
