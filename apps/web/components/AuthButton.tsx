@@ -4,6 +4,8 @@ import { useUser } from '@auth0/nextjs-auth0';
 import { LogIn, LogOut, Loader2, User as UserIcon, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import type { BackendProfile } from '@/lib/profile';
 
 /**
  * AuthButton displays login/logout button based on user session state
@@ -18,11 +20,10 @@ export default function AuthButton() {
   // Fetch user's configured profile name
   useEffect(() => {
     if (user) {
-      fetch('/api/user/profile')
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data?.fullName) {
-            setProfileName(data.fullName);
+      apiFetch<BackendProfile>('/v1/user/profile')
+        .then((data) => {
+          if (data?.full_name) {
+            setProfileName(data.full_name);
           }
         })
         .catch(() => {

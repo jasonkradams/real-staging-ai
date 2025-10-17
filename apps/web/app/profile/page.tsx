@@ -19,6 +19,9 @@ import {
   Home,
   Receipt
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
+import { toFormData, buildUpdatePayload } from '@/lib/profile';
+import type { BackendProfile } from '@/lib/profile';
 
 interface Subscription {
   id: string;
@@ -69,27 +72,10 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch('/api/user/profile');
-      if (res.ok) {
-        const data = await res.json();
-        
-        // Populate form
-        setFormData({
-          fullName: data.fullName || '',
-          companyName: data.companyName || '',
-          phone: data.phone || '',
-          addressLine1: data.billingAddress?.line1 || '',
-          addressLine2: data.billingAddress?.line2 || '',
-          city: data.billingAddress?.city || '',
-          state: data.billingAddress?.state || '',
-          postalCode: data.billingAddress?.postalCode || '',
-          country: data.billingAddress?.country || 'US',
-          emailNotifications: data.preferences?.emailNotifications ?? true,
-          marketingEmails: data.preferences?.marketingEmails ?? false,
-          defaultRoomType: data.preferences?.defaultRoomType || 'living_room',
-          defaultStyle: data.preferences?.defaultStyle || 'modern',
-        });
-      }
+      const data = await apiFetch<BackendProfile>('/v1/user/profile');
+
+      // Populate form from backend (snake_case) using mapper
+      setFormData(toFormData(data));
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     } finally {
@@ -99,12 +85,9 @@ export default function ProfilePage() {
 
   const fetchSubscription = async () => {
     try {
-      const res = await fetch('/api/v1/billing/subscriptions');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          setSubscription(data.items[0]);
-        }
+      const data = await apiFetch<{ items: Subscription[] }>('/v1/billing/subscriptions');
+      if (data.items && data.items.length > 0) {
+        setSubscription(data.items[0]);
       }
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
@@ -116,36 +99,13 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      const res = await fetch('/api/user/profile', {
+      const payload = buildUpdatePayload(formData);
+      await apiFetch<BackendProfile>('/v1/user/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          companyName: formData.companyName,
-          phone: formData.phone,
-          billingAddress: {
-            line1: formData.addressLine1,
-            line2: formData.addressLine2,
-            city: formData.city,
-            state: formData.state,
-            postalCode: formData.postalCode,
-            country: formData.country,
-          },
-          preferences: {
-            emailNotifications: formData.emailNotifications,
-            marketingEmails: formData.marketingEmails,
-            defaultRoomType: formData.defaultRoomType,
-            defaultStyle: formData.defaultStyle,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
-
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
-        fetchProfile(); // Refresh
-      } else {
-        throw new Error('Failed to update profile');
-      }
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      fetchProfile(); // Refresh
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
     } finally {
@@ -156,14 +116,11 @@ export default function ProfilePage() {
 
   const handleSubscribe = async () => {
     try {
-      const res = await fetch('/api/v1/billing/create-checkout', {
+      const data = await apiFetch<{ url: string }>('/v1/billing/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceId: 'price_1ABC123' }), // Replace with actual price ID
       });
-
-      if (res.ok) {
-        const data = await res.json();
+      if (data?.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       }
     } catch (error) {
@@ -173,12 +130,10 @@ export default function ProfilePage() {
 
   const handleManageBilling = async () => {
     try {
-      const res = await fetch('/api/v1/billing/portal', {
+      const data = await apiFetch<{ url: string }>('/v1/billing/portal', {
         method: 'POST',
       });
-
-      if (res.ok) {
-        const data = await res.json();
+      if (data?.url) {
         window.location.href = data.url; // Redirect to Stripe Customer Portal
       }
     } catch (error) {
