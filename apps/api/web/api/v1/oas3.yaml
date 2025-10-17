@@ -711,6 +711,158 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/v1/user/profile:
+    get:
+      summary: Get authenticated user's profile
+      description: |
+        Retrieve the complete profile for the authenticated user.
+        
+        **Auto-creation behavior:** If the user doesn't exist in the database yet
+        (first API access), a new user record will be automatically created with
+        default values and returned.
+        
+        **Profile fields include:**
+        - Personal information (email, full name, phone)
+        - Business information (company name, billing address)
+        - User preferences (notifications, default staging settings)
+        - Account metadata (role, Stripe customer ID, timestamps)
+      tags:
+        - User Profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                email: "john.doe@example.com"
+                full_name: "John Doe"
+                company_name: "Acme Real Estate"
+                phone: "+1 (555) 123-4567"
+                billing_address:
+                  line1: "123 Main St"
+                  line2: "Suite 100"
+                  city: "San Francisco"
+                  state: "CA"
+                  postal_code: "94102"
+                  country: "US"
+                profile_photo_url: "https://example.com/photos/johndoe.jpg"
+                preferences:
+                  email_notifications: true
+                  marketing_emails: false
+                  default_room_type: "living_room"
+                  default_style: "modern"
+                role: "user"
+                stripe_customer_id: "cus_ABC123"
+                created_at: "2025-01-15T10:30:00Z"
+                updated_at: "2025-01-15T14:22:00Z"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update authenticated user's profile
+      description: |
+        Update the profile for the authenticated user. All fields are optional,
+        allowing partial updates.
+        
+        **Auto-creation behavior:** If the user doesn't exist in the database yet,
+        a new user record will be automatically created before applying the updates.
+        
+        **Validation rules:**
+        - `email`: 3-255 characters
+        - `full_name`: 1-100 characters
+        - `company_name`: 1-100 characters
+        - `phone`: 1-20 characters
+        - `billing_address`: Valid JSON structure (no nested validation)
+        - `preferences`: Valid JSON structure (no nested validation)
+        
+        **Note:** Only fields provided in the request will be updated. Omitted
+        fields will retain their current values.
+      tags:
+        - User Profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+            examples:
+              full_update:
+                summary: Update all fields
+                value:
+                  email: "newemail@example.com"
+                  full_name: "Jane Smith"
+                  company_name: "Smith Realty"
+                  phone: "+1 (555) 987-6543"
+                  billing_address:
+                    line1: "456 Oak Ave"
+                    city: "Portland"
+                    state: "OR"
+                    postal_code: "97201"
+                    country: "US"
+                  preferences:
+                    email_notifications: true
+                    marketing_emails: true
+                    default_room_type: "bedroom"
+                    default_style: "contemporary"
+                  profile_photo_url: "https://example.com/photos/janesmith.jpg"
+              partial_update:
+                summary: Update only name and phone
+                value:
+                  full_name: "Jane Doe-Smith"
+                  phone: "+1 (555) 111-2222"
+              preferences_only:
+                summary: Update only preferences
+                value:
+                  preferences:
+                    email_notifications: false
+                    default_style: "scandinavian"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid request body or malformed JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "bad_request"
+                message: "Invalid request body"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          description: |
+            Failed to update profile. Common causes:
+            - Validation error (email too short, phone too long, etc.)
+            - Database error
+            - Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                validation_error:
+                  summary: Validation failed
+                  value:
+                    error: "validation_error"
+                    message: "Failed to update profile: email must be at least 3 characters"
+                database_error:
+                  summary: Database error
+                  value:
+                    error: "internal_server_error"
+                    message: "Failed to update profile"
 components:
   securitySchemes:
     bearerAuth:
@@ -1034,3 +1186,219 @@ components:
         due_date:
           type: string
           format: date-time
+    UserProfile:
+      type: object
+      required:
+        - id
+        - role
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: User's email address
+          example: "john.doe@example.com"
+        full_name:
+          type: string
+          nullable: true
+          description: User's full name
+          example: "John Doe"
+          minLength: 1
+          maxLength: 100
+        company_name:
+          type: string
+          nullable: true
+          description: Business or company name
+          example: "Acme Real Estate"
+          minLength: 1
+          maxLength: 100
+        phone:
+          type: string
+          nullable: true
+          description: Phone number
+          example: "+1 (555) 123-4567"
+          minLength: 1
+          maxLength: 20
+        billing_address:
+          type: object
+          nullable: true
+          description: Structured billing address
+          properties:
+            line1:
+              type: string
+              example: "123 Main St"
+            line2:
+              type: string
+              example: "Suite 100"
+            city:
+              type: string
+              example: "San Francisco"
+            state:
+              type: string
+              example: "CA"
+            postal_code:
+              type: string
+              example: "94102"
+            country:
+              type: string
+              example: "US"
+              description: "ISO 3166-1 alpha-2 country code"
+        profile_photo_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to user's profile photo
+          example: "https://example.com/photos/johndoe.jpg"
+        preferences:
+          type: object
+          nullable: true
+          description: User preferences for application behavior
+          properties:
+            email_notifications:
+              type: boolean
+              example: true
+            marketing_emails:
+              type: boolean
+              example: false
+            default_room_type:
+              type: string
+              example: "living_room"
+              enum:
+                - living_room
+                - bedroom
+                - kitchen
+                - bathroom
+                - dining_room
+                - office
+            default_style:
+              type: string
+              example: "modern"
+              enum:
+                - modern
+                - contemporary
+                - traditional
+                - scandinavian
+                - industrial
+                - bohemian
+        role:
+          type: string
+          description: User role
+          example: "user"
+          enum:
+            - user
+            - admin
+        stripe_customer_id:
+          type: string
+          nullable: true
+          description: Stripe customer identifier
+          example: "cus_ABC123"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user was created
+          example: "2025-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user profile was last updated
+          example: "2025-01-15T14:22:00Z"
+    UpdateUserProfileRequest:
+      type: object
+      description: |
+        Request body for updating user profile. All fields are optional.
+        Only provided fields will be updated.
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (3-255 characters)
+          example: "newemail@example.com"
+          minLength: 3
+          maxLength: 255
+        full_name:
+          type: string
+          description: User's full name (1-100 characters)
+          example: "Jane Smith"
+          minLength: 1
+          maxLength: 100
+        company_name:
+          type: string
+          description: Business or company name (1-100 characters)
+          example: "Smith Realty"
+          minLength: 1
+          maxLength: 100
+        phone:
+          type: string
+          description: Phone number (1-20 characters)
+          example: "+1 (555) 987-6543"
+          minLength: 1
+          maxLength: 20
+        billing_address:
+          type: object
+          description: Structured billing address
+          properties:
+            line1:
+              type: string
+              example: "456 Oak Ave"
+            line2:
+              type: string
+              example: "Apt 5B"
+            city:
+              type: string
+              example: "Portland"
+            state:
+              type: string
+              example: "OR"
+            postal_code:
+              type: string
+              example: "97201"
+            country:
+              type: string
+              example: "US"
+              description: "ISO 3166-1 alpha-2 country code"
+        profile_photo_url:
+          type: string
+          format: uri
+          description: URL to user's profile photo
+          example: "https://example.com/photos/janesmith.jpg"
+        preferences:
+          type: object
+          description: User preferences
+          properties:
+            email_notifications:
+              type: boolean
+              description: Enable email notifications for job updates
+              example: true
+            marketing_emails:
+              type: boolean
+              description: Enable marketing and promotional emails
+              example: false
+            default_room_type:
+              type: string
+              description: Default room type for new stagings
+              example: "bedroom"
+              enum:
+                - living_room
+                - bedroom
+                - kitchen
+                - bathroom
+                - dining_room
+                - office
+            default_style:
+              type: string
+              description: Default style for new stagings
+              example: "contemporary"
+              enum:
+                - modern
+                - contemporary
+                - traditional
+                - scandinavian
+                - industrial
+                - bohemian

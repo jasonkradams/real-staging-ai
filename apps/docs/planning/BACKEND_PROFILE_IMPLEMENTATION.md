@@ -443,10 +443,10 @@ infra/migrations/
 - [ ] Test end-to-end flow
 
 ### Documentation
-- [ ] Add to OpenAPI spec (`web/api/v1/oas3.yaml`)
-- [ ] Update API documentation
-- [ ] Add example requests/responses
-- [ ] Document error codes
+- [x] Add to OpenAPI spec (`web/api/v1/oas3.yaml`) - **Complete with full schemas**
+- [x] Update API documentation - **Complete with descriptions**
+- [x] Add example requests/responses - **Multiple examples provided**
+- [x] Document error codes - **All status codes documented**
 
 ---
 
